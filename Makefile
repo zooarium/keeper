@@ -29,6 +29,14 @@ test: fmt
 		golang:1.26-alpine \
 		sh -c "apk add --no-cache build-base && go test -v ./..."
 
+# Run benchmarks inside the container
+benchmark:
+	docker run --rm -v $(shell pwd):/app -w /app \
+		-e CGO_ENABLED=1 \
+		-e CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
+		golang:1.26-alpine \
+		sh -c "apk add --no-cache build-base && go test -bench=. -run=^# -benchmem ./..."
+
 # Format code and manage imports
 fmt:
 	docker run --rm -v $(shell pwd):/app -w /app golang:1.26-alpine sh -c "go install golang.org/x/tools/cmd/goimports@latest && goimports -w ."
@@ -148,6 +156,7 @@ help:
 	@echo "  logs          Follow container logs"
 	@echo "  ps            List running containers"
 	@echo "  test          Run unit tests"
+	@echo "  benchmark     Run benchmarks"
 	@echo "  fmt           Format code (goimports)"
 	@echo "  lint          Run linter"
 	@echo "  swag          Generate Swagger docs"

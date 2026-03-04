@@ -18,7 +18,7 @@ type App struct {
 // Annotations of the App.
 func (App) Annotations() []schema.Annotation {
 	return []schema.Annotation{
-		entsql.Annotation{Table: "app"},
+		entsql.Annotation{Table: "kpr_app"},
 	}
 }
 

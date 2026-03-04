@@ -9,22 +9,22 @@ import (
 )
 
 var (
-	// AppColumns holds the columns for the "app" table.
-	AppColumns = []*schema.Column{
+	// KprAppColumns holds the columns for the "kpr_app" table.
+	KprAppColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "status", Type: field.TypeInt8, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
-	// AppTable holds the schema information for the "app" table.
-	AppTable = &schema.Table{
-		Name:       "app",
-		Columns:    AppColumns,
-		PrimaryKey: []*schema.Column{AppColumns[0]},
+	// KprAppTable holds the schema information for the "kpr_app" table.
+	KprAppTable = &schema.Table{
+		Name:       "kpr_app",
+		Columns:    KprAppColumns,
+		PrimaryKey: []*schema.Column{KprAppColumns[0]},
 	}
-	// UserColumns holds the columns for the "user" table.
-	UserColumns = []*schema.Column{
+	// KprUserColumns holds the columns for the "kpr_user" table.
+	KprUserColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "firstname", Type: field.TypeString},
 		{Name: "lastname", Type: field.TypeString},
@@ -35,33 +35,33 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "app_id", Type: field.TypeInt},
 	}
-	// UserTable holds the schema information for the "user" table.
-	UserTable = &schema.Table{
-		Name:       "user",
-		Columns:    UserColumns,
-		PrimaryKey: []*schema.Column{UserColumns[0]},
+	// KprUserTable holds the schema information for the "kpr_user" table.
+	KprUserTable = &schema.Table{
+		Name:       "kpr_user",
+		Columns:    KprUserColumns,
+		PrimaryKey: []*schema.Column{KprUserColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "user_app_users",
-				Columns:    []*schema.Column{UserColumns[8]},
-				RefColumns: []*schema.Column{AppColumns[0]},
+				Symbol:     "kpr_user_kpr_app_users",
+				Columns:    []*schema.Column{KprUserColumns[8]},
+				RefColumns: []*schema.Column{KprAppColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
-		AppTable,
-		UserTable,
+		KprAppTable,
+		KprUserTable,
 	}
 )
 
 func init() {
-	AppTable.Annotation = &entsql.Annotation{
-		Table: "app",
+	KprAppTable.Annotation = &entsql.Annotation{
+		Table: "kpr_app",
 	}
-	UserTable.ForeignKeys[0].RefTable = AppTable
-	UserTable.Annotation = &entsql.Annotation{
-		Table: "user",
+	KprUserTable.ForeignKeys[0].RefTable = KprAppTable
+	KprUserTable.Annotation = &entsql.Annotation{
+		Table: "kpr_user",
 	}
 }

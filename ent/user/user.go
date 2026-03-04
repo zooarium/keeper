@@ -33,12 +33,12 @@ const (
 	// EdgeApp holds the string denoting the app edge name in mutations.
 	EdgeApp = "app"
 	// Table holds the table name of the user in the database.
-	Table = "user"
+	Table = "kpr_user"
 	// AppTable is the table that holds the app relation/edge.
-	AppTable = "user"
+	AppTable = "kpr_user"
 	// AppInverseTable is the table name for the App entity.
 	// It exists in this package in order to avoid circular dependency with the "app" package.
-	AppInverseTable = "app"
+	AppInverseTable = "kpr_app"
 	// AppColumn is the table column denoting the app relation/edge.
 	AppColumn = "app_id"
 )

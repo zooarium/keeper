@@ -64,7 +64,7 @@ Keeper is a microservice for user management, providing RESTful APIs for authent
 - **Standardized Responses**: All API responses follow a consistent JSON format defined in `internal/platform/render`.
 - **Context Propagation**: `context.Context` is passed through all layers for cancellation and timeouts.
 - **Graceful Shutdown**: The API server handles `SIGINT` and `SIGTERM` for graceful termination.
-- **Database Conventions**: All database table names **must** be in singular format (e.g., `user` instead of `users`). This is enforced in the Ent schema using `entsql.Annotation`.
+- **Database Conventions**: All database table names **must** be in singular format (e.g., `user` instead of `users`) and **must** include a `kpr_` prefix (e.g., `kpr_user`). This is enforced in the Ent schema using `entsql.Annotation`.
 
 ## Naming Conventions
 - **Packages**: Short, lowercase, single-word names (e.g., `user`, `auth`). Avoid underscores or mixedCaps.
@@ -77,7 +77,7 @@ Keeper is a microservice for user management, providing RESTful APIs for authent
     - **Services**: `[Entity]Service`.
     - **Repositories**: `[Entity]Repository`.
     - **Models**: Use `[Entity]` for domain models and `[Action][Entity]Request/Response` for DTOs.
-- **Database**: Table names and Ent schemas **must** be singular (e.g., `user`).
+- **Database**: Table names and Ent schemas **must** be singular and include the `kpr_` prefix (e.g., `kpr_user`).
 
 ## Development Workflow
 
@@ -112,6 +112,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 - `make build-local`: Build the API binary on the host machine.
 - `make help`: Display all available Makefile commands.
 - `make test`: Run unit tests in a fresh Go container.
+- `make benchmark`: Run performance benchmarks in a fresh Go container.
 - `make logs`: Follow container logs.
 - `make swag`: Regenerate Swagger documentation.
 - `make migrate-gen name=NAME`: Generate a new database migration.
@@ -124,46 +125,30 @@ To ensure codebase health and consistency, the following steps **must** be compl
 3.  **Generate Migration**: `make migrate-gen name=change_description`.
 4.  **Apply**: `make migrate-apply` (or restart the app for auto-migration).
 
-### Database Schema (user table)
+### Database Schema (kpr_user table)
 
 | Field      | Type      | Description                          |
-
 |------------|-----------|--------------------------------------|
-
 | ID         | int       | Primary Key (Auto-increment)         |
-
-| AppID      | int       | Foreign Key to app                   |
-
+| AppID      | int       | Foreign Key to kpr_app               |
 | Firstname  | string    | User's first name                    |
-
 | Lastname   | string    | User's last name                     |
-
 | Email      | string    | Unique email address                 |
-
 | Password   | string    | Hashed password (sensitive)          |
-
 | Status     | smallint  | 0 (Inactive), 1 (Active)             |
-
 | CreatedAt  | datetime  | Creation timestamp                   |
-
 | UpdatedAt  | datetime  | Last update timestamp                |
 
 
 
-### Database Schema (app table)
+### Database Schema (kpr_app table)
 
 | Field      | Type      | Description                          |
-
 |------------|-----------|--------------------------------------|
-
 | ID         | int       | Primary Key (Auto-increment)         |
-
 | Name       | string    | Unique app name                      |
-
 | Status     | smallint  | 0 (Inactive), 1 (Active)             |
-
 | CreatedAt  | datetime  | Creation timestamp                   |
-
 | UpdatedAt  | datetime  | Last update timestamp                |
 
 

@@ -187,3 +187,58 @@ func TestService_Delete(t *testing.T) {
 	_, err = svc.GetByID(ctx, u.ID)
 	assert.Error(t, err)
 }
+
+func BenchmarkService_Create(b *testing.B) {
+	client := enttest.Open(b, "sqlite3", "file:ent_bench_create?mode=memory&cache=shared&_fk=1")
+	defer client.Close()
+
+	repo := NewUserRepository(client)
+	jwtManager := auth.NewJWTManager("secret", time.Hour)
+	svc := NewUserService(repo, jwtManager)
+
+	ctx := context.Background()
+	app, _ := client.App.Create().SetName("Bench App").Save(ctx)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		email := "bench_" + string(rune(i)) + "@example.com"
+		_, _ = svc.Create(ctx, CreateUserRequest{
+			AppID:     app.ID,
+			Firstname: "Bench",
+			Lastname:  "User",
+			Email:     email,
+			Password:  "password123",
+		})
+	}
+}
+
+func BenchmarkService_Authenticate(b *testing.B) {
+	client := enttest.Open(b, "sqlite3", "file:ent_bench_auth?mode=memory&cache=shared&_fk=1")
+	defer client.Close()
+
+	repo := NewUserRepository(client)
+	jwtManager := auth.NewJWTManager("secret", time.Hour)
+	svc := NewUserService(repo, jwtManager)
+
+	ctx := context.Background()
+	email := "bench_auth@example.com"
+	password := "password123"
+
+	app, _ := client.App.Create().SetName("Bench Auth App").Save(ctx)
+	_, _ = svc.Create(ctx, CreateUserRequest{
+		AppID:     app.ID,
+		Firstname: "Bench",
+		Lastname:  "Auth",
+		Email:     email,
+		Password:  password,
+	})
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = svc.Authenticate(ctx, AuthRequest{
+			Email:    email,
+			Password: password,
+		})
+	}
+}
+

@@ -25,12 +25,12 @@ const (
 	// EdgeUsers holds the string denoting the users edge name in mutations.
 	EdgeUsers = "users"
 	// Table holds the table name of the app in the database.
-	Table = "app"
+	Table = "kpr_app"
 	// UsersTable is the table that holds the users relation/edge.
-	UsersTable = "user"
+	UsersTable = "kpr_user"
 	// UsersInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
-	UsersInverseTable = "user"
+	UsersInverseTable = "kpr_user"
 	// UsersColumn is the table column denoting the users relation/edge.
 	UsersColumn = "app_id"
 )
