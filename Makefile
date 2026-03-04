@@ -1,4 +1,4 @@
-.PHONY: build up down restart refresh logs ps test lint swag clean shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql
+.PHONY: build up down restart refresh logs ps test lint swag clean shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script
 
 # Docker Compose commands
 build:
@@ -134,6 +134,15 @@ migrate-apply:
 		--dir "file://ent/migrate/migrations" \
 		--allow-dirty
 
+# Run any script from the scripts directory
+run-script:
+	@if [ -z "$(name)" ]; then echo "Usage: make run-script name=<script_name> args=\"<args>\""; exit 1; fi
+	docker run --rm -v $(shell pwd):/app -w /app \
+		-e CGO_ENABLED=1 \
+		-e CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
+		golang:1.26-alpine \
+		sh -c "apk add --no-cache build-base && go run scripts/$(name).go $(args)"
+
 # Run SQL query against the database
 sql:
 	@if [ -z "$(query)" ]; then echo "Usage: make sql query=\"SQL_QUERY\""; exit 1; fi
@@ -172,6 +181,8 @@ help:
 	@echo "  go-upgrade    Upgrade Go version (use version=1.x)"
 	@echo "  migrate-gen   Generate migration (use name=...)"
 	@echo "  migrate-apply Apply migrations"
+	@echo "  run-script    Run script from scripts/ (use name=... args=...)"
 	@echo "  sql           Run SQL query (use query=...)"
 	@echo "  clean         Deep clean containers/images"
 	@echo "  help          Show this help message"
+

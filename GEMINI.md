@@ -96,6 +96,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 8.  **Update README.md**: Ensure any new features, endpoints, or configuration changes are documented in `README.md`.
 9.  **Update GEMINI.md**: Ensure this project guide is updated to reflect any changes in architecture, workflows, or documentation standards.
 10.  **Run All Tests**: Verify that all tests pass by running `make test`.
+11.  **Custom Scripts**: You **MUST** always run any custom script using the `make run-script` command to ensure a consistent environment and proper dependency handling.
 
 ### Common Commands (Makefile)
 - `make build`: Build Docker images.
@@ -117,6 +118,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 - `make swag`: Regenerate Swagger documentation.
 - `make migrate-gen name=NAME`: Generate a new database migration.
 - `make migrate-apply`: Apply pending migrations.
+- `make run-script name=NAME args="ARGS"`: Run a script from the `scripts/` directory in a fresh Go container.
 - `make sql query=QUERY`: Run a SQL query against the SQLite database.
 
 ### Database Migrations
