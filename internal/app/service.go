@@ -4,9 +4,16 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-
-	"keeper/ent"
 )
+
+// AppRepository defines the data access contract for apps.
+type AppRepository interface {
+	Create(ctx context.Context, a App) (*App, error)
+	GetByID(ctx context.Context, id int) (*App, error)
+	List(ctx context.Context) ([]*App, error)
+	Update(ctx context.Context, id int, a *App) (*App, error)
+	Delete(ctx context.Context, id int) error
+}
 
 // AppService defines the business logic for apps.
 type AppService interface {
@@ -18,11 +25,11 @@ type AppService interface {
 }
 
 type appService struct {
-	repo *AppRepository
+	repo AppRepository
 }
 
 // NewAppService creates a new app service.
-func NewAppService(repo *AppRepository) AppService {
+func NewAppService(repo AppRepository) AppService {
 	return &appService{repo: repo}
 }
 
@@ -34,41 +41,26 @@ func (s *appService) Create(ctx context.Context, req CreateAppRequest) (*App, er
 		status = req.Status
 	}
 
-	a := &ent.App{
+	created, err := s.repo.Create(ctx, App{
 		Name:   req.Name,
 		Status: status,
-	}
-
-	created, err := s.repo.Create(ctx, a)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("repository create: %w", err)
 	}
 
 	slog.Info("app created successfully", "id", created.ID, "name", created.Name)
-	return s.toDomain(created), nil
+	return created, nil
 }
 
 func (s *appService) GetByID(ctx context.Context, id int) (*App, error) {
 	slog.Info("getting app by id", "id", id)
-	a, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
-	return s.toDomain(a), nil
+	return s.repo.GetByID(ctx, id)
 }
 
 func (s *appService) List(ctx context.Context) ([]*App, error) {
 	slog.Info("listing apps")
-	apps, err := s.repo.List(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	domainApps := make([]*App, len(apps))
-	for i, a := range apps {
-		domainApps[i] = s.toDomain(a)
-	}
-	return domainApps, nil
+	return s.repo.List(ctx)
 }
 
 func (s *appService) Update(ctx context.Context, id int, req UpdateAppRequest) (*App, error) {
@@ -91,7 +83,7 @@ func (s *appService) Update(ctx context.Context, id int, req UpdateAppRequest) (
 	}
 
 	slog.Info("app updated successfully", "id", id)
-	return s.toDomain(updated), nil
+	return updated, nil
 }
 
 func (s *appService) Delete(ctx context.Context, id int) error {
@@ -102,14 +94,4 @@ func (s *appService) Delete(ctx context.Context, id int) error {
 	}
 	slog.Info("app deleted successfully", "id", id)
 	return nil
-}
-
-func (s *appService) toDomain(a *ent.App) *App {
-	return &App{
-		ID:        a.ID,
-		Name:      a.Name,
-		Status:    a.Status,
-		CreatedAt: a.CreatedAt,
-		UpdatedAt: a.UpdatedAt,
-	}
 }

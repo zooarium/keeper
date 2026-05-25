@@ -6,11 +6,20 @@ import (
 	"fmt"
 	"log/slog"
 
-	"keeper/ent"
 	"keeper/pkg/auth"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+// UserRepository defines the data access contract for users.
+type UserRepository interface {
+	Create(ctx context.Context, u User) (*User, error)
+	GetByID(ctx context.Context, id int) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	List(ctx context.Context) ([]*User, error)
+	Update(ctx context.Context, id int, u *User) (*User, error)
+	Delete(ctx context.Context, id int) error
+}
 
 // UserService defines the business logic for users.
 type UserService interface {
@@ -23,12 +32,12 @@ type UserService interface {
 }
 
 type userService struct {
-	repo *UserRepository
+	repo UserRepository
 	jwt  *auth.JWTManager
 }
 
 // NewUserService creates a new user service.
-func NewUserService(repo *UserRepository, jwt *auth.JWTManager) UserService {
+func NewUserService(repo UserRepository, jwt *auth.JWTManager) UserService {
 	return &userService{repo: repo, jwt: jwt}
 }
 
@@ -40,33 +49,26 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*User,
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
-	u := &ent.User{
+	created, err := s.repo.Create(ctx, User{
 		AppID:     req.AppID,
 		Firstname: req.Firstname,
 		Lastname:  req.Lastname,
 		Email:     req.Email,
 		Password:  string(hashedPassword),
 		Status:    1,
-	}
-
-	created, err := s.repo.Create(ctx, u)
+	})
 	if err != nil {
 		slog.Error("failed to create user in repository", "email", req.Email, "error", err)
 		return nil, fmt.Errorf("repository create: %w", err)
 	}
 
 	slog.Info("user created successfully", "id", created.ID, "email", created.Email)
-	return s.toDomain(created), nil
+	return created, nil
 }
 
 func (s *userService) GetByID(ctx context.Context, id int) (*User, error) {
 	slog.Info("getting user by id", "id", id)
-	u, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		// slog.Warn/Error is already called in repository
-		return nil, err
-	}
-	return s.toDomain(u), nil
+	return s.repo.GetByID(ctx, id)
 }
 
 func (s *userService) List(ctx context.Context) ([]*User, error) {
@@ -75,12 +77,7 @@ func (s *userService) List(ctx context.Context) ([]*User, error) {
 		slog.Error("failed to list users", "error", err)
 		return nil, err
 	}
-
-	domainUsers := make([]*User, len(users))
-	for i, u := range users {
-		domainUsers[i] = s.toDomain(u)
-	}
-	return domainUsers, nil
+	return users, nil
 }
 
 func (s *userService) Update(ctx context.Context, id int, req UpdateUserRequest) (*User, error) {
@@ -122,7 +119,7 @@ func (s *userService) Update(ctx context.Context, id int, req UpdateUserRequest)
 	}
 
 	slog.Info("user updated successfully", "id", id)
-	return s.toDomain(updated), nil
+	return updated, nil
 }
 
 func (s *userService) Delete(ctx context.Context, id int) error {
@@ -159,25 +156,6 @@ func (s *userService) Authenticate(ctx context.Context, req AuthRequest) (*AuthR
 	slog.Info("user authenticated successfully", "id", u.ID, "email", u.Email)
 	return &AuthResponse{
 		Token: token,
-		User:  *s.toDomain(u),
+		User:  *u,
 	}, nil
-}
-
-func (s *userService) toDomain(u *ent.User) *User {
-	domainUser := &User{
-		ID:        u.ID,
-		AppID:     u.AppID,
-		Firstname: u.Firstname,
-		Lastname:  u.Lastname,
-		Email:     u.Email,
-		Status:    u.Status,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
-	}
-
-	if u.Edges.App != nil {
-		domainUser.AppName = u.Edges.App.Name
-	}
-
-	return domainUser
 }

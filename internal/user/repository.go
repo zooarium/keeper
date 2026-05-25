@@ -9,18 +9,16 @@ import (
 	"keeper/ent/user"
 )
 
-// UserRepository handles database operations for users.
-type UserRepository struct {
+type userRepository struct {
 	client *ent.Client
 }
 
 // NewUserRepository creates a new user repository.
-func NewUserRepository(client *ent.Client) *UserRepository {
-	return &UserRepository{client: client}
+func NewUserRepository(client *ent.Client) *userRepository {
+	return &userRepository{client: client}
 }
 
-// Create creates a new user in the database.
-func (r *UserRepository) Create(ctx context.Context, u *ent.User) (*ent.User, error) {
+func (r *userRepository) Create(ctx context.Context, u User) (*User, error) {
 	created, err := r.client.User.
 		Create().
 		SetAppID(u.AppID).
@@ -37,8 +35,7 @@ func (r *UserRepository) Create(ctx context.Context, u *ent.User) (*ent.User, er
 	return r.GetByID(ctx, created.ID)
 }
 
-// GetByID retrieves a user by their ID.
-func (r *UserRepository) GetByID(ctx context.Context, id int) (*ent.User, error) {
+func (r *userRepository) GetByID(ctx context.Context, id int) (*User, error) {
 	u, err := r.client.User.Query().
 		Where(user.IDEQ(id)).
 		WithApp().
@@ -51,11 +48,10 @@ func (r *UserRepository) GetByID(ctx context.Context, id int) (*ent.User, error)
 		slog.Error("database error: failed to get user by id", "id", id, "error", err)
 		return nil, err
 	}
-	return u, nil
+	return r.mapToModel(u), nil
 }
 
-// GetByEmail retrieves a user by their email.
-func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*ent.User, error) {
+func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	u, err := r.client.User.Query().
 		Where(user.EmailEQ(email)).
 		WithApp().
@@ -68,21 +64,23 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*ent.Use
 		slog.Error("database error: failed to get user by email", "email", email, "error", err)
 		return nil, err
 	}
-	return u, nil
+	return r.mapToModel(u), nil
 }
 
-// List retrieves all users.
-func (r *UserRepository) List(ctx context.Context) ([]*ent.User, error) {
+func (r *userRepository) List(ctx context.Context) ([]*User, error) {
 	users, err := r.client.User.Query().WithApp().All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list users", "error", err)
 		return nil, err
 	}
-	return users, nil
+	result := make([]*User, len(users))
+	for i, u := range users {
+		result[i] = r.mapToModel(u)
+	}
+	return result, nil
 }
 
-// Update updates an existing user.
-func (r *UserRepository) Update(ctx context.Context, id int, u *ent.User) (*ent.User, error) {
+func (r *userRepository) Update(ctx context.Context, id int, u *User) (*User, error) {
 	updated, err := r.client.User.UpdateOneID(id).
 		SetAppID(u.AppID).
 		SetFirstname(u.Firstname).
@@ -98,8 +96,7 @@ func (r *UserRepository) Update(ctx context.Context, id int, u *ent.User) (*ent.
 	return r.GetByID(ctx, updated.ID)
 }
 
-// Delete deletes a user by their ID.
-func (r *UserRepository) Delete(ctx context.Context, id int) error {
+func (r *userRepository) Delete(ctx context.Context, id int) error {
 	err := r.client.User.DeleteOneID(id).Exec(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -110,4 +107,22 @@ func (r *UserRepository) Delete(ctx context.Context, id int) error {
 		return err
 	}
 	return nil
+}
+
+func (r *userRepository) mapToModel(u *ent.User) *User {
+	result := &User{
+		ID:        u.ID,
+		AppID:     u.AppID,
+		Firstname: u.Firstname,
+		Lastname:  u.Lastname,
+		Email:     u.Email,
+		Password:  u.Password,
+		Status:    u.Status,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
+	}
+	if u.Edges.App != nil {
+		result.AppName = u.Edges.App.Name
+	}
+	return result
 }

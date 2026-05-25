@@ -8,18 +8,16 @@ import (
 	"keeper/ent"
 )
 
-// AppRepository handles database operations for apps.
-type AppRepository struct {
+type appRepository struct {
 	client *ent.Client
 }
 
 // NewAppRepository creates a new app repository.
-func NewAppRepository(client *ent.Client) *AppRepository {
-	return &AppRepository{client: client}
+func NewAppRepository(client *ent.Client) *appRepository {
+	return &appRepository{client: client}
 }
 
-// Create creates a new app in the database.
-func (r *AppRepository) Create(ctx context.Context, a *ent.App) (*ent.App, error) {
+func (r *appRepository) Create(ctx context.Context, a App) (*App, error) {
 	created, err := r.client.App.
 		Create().
 		SetName(a.Name).
@@ -29,11 +27,10 @@ func (r *AppRepository) Create(ctx context.Context, a *ent.App) (*ent.App, error
 		slog.Error("database error: failed to create app", "name", a.Name, "error", err)
 		return nil, err
 	}
-	return created, nil
+	return r.mapToModel(created), nil
 }
 
-// GetByID retrieves an app by its ID.
-func (r *AppRepository) GetByID(ctx context.Context, id int) (*ent.App, error) {
+func (r *appRepository) GetByID(ctx context.Context, id int) (*App, error) {
 	a, err := r.client.App.Get(ctx, id)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -43,21 +40,23 @@ func (r *AppRepository) GetByID(ctx context.Context, id int) (*ent.App, error) {
 		slog.Error("database error: failed to get app by id", "id", id, "error", err)
 		return nil, err
 	}
-	return a, nil
+	return r.mapToModel(a), nil
 }
 
-// List retrieves all apps.
-func (r *AppRepository) List(ctx context.Context) ([]*ent.App, error) {
+func (r *appRepository) List(ctx context.Context) ([]*App, error) {
 	apps, err := r.client.App.Query().All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list apps", "error", err)
 		return nil, err
 	}
-	return apps, nil
+	result := make([]*App, len(apps))
+	for i, a := range apps {
+		result[i] = r.mapToModel(a)
+	}
+	return result, nil
 }
 
-// Update updates an existing app.
-func (r *AppRepository) Update(ctx context.Context, id int, a *ent.App) (*ent.App, error) {
+func (r *appRepository) Update(ctx context.Context, id int, a *App) (*App, error) {
 	updated, err := r.client.App.UpdateOneID(id).
 		SetName(a.Name).
 		SetStatus(a.Status).
@@ -66,11 +65,10 @@ func (r *AppRepository) Update(ctx context.Context, id int, a *ent.App) (*ent.Ap
 		slog.Error("database error: failed to update app", "id", id, "error", err)
 		return nil, err
 	}
-	return updated, nil
+	return r.mapToModel(updated), nil
 }
 
-// Delete deletes an app by its ID.
-func (r *AppRepository) Delete(ctx context.Context, id int) error {
+func (r *appRepository) Delete(ctx context.Context, id int) error {
 	err := r.client.App.DeleteOneID(id).Exec(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -81,4 +79,14 @@ func (r *AppRepository) Delete(ctx context.Context, id int) error {
 		return err
 	}
 	return nil
+}
+
+func (r *appRepository) mapToModel(a *ent.App) *App {
+	return &App{
+		ID:        a.ID,
+		Name:      a.Name,
+		Status:    a.Status,
+		CreatedAt: a.CreatedAt,
+		UpdatedAt: a.UpdatedAt,
+	}
 }
