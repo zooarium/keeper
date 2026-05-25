@@ -32,17 +32,17 @@ func (r *userRepository) Create(ctx context.Context, u User) (*User, error) {
 		slog.Error("database error: failed to create user", "email", u.Email, "error", err)
 		return nil, err
 	}
-	return r.GetByID(ctx, created.ID)
+	return r.GetByID(ctx, u.AppID, created.ID)
 }
 
-func (r *userRepository) GetByID(ctx context.Context, id int) (*User, error) {
+func (r *userRepository) GetByID(ctx context.Context, appID, id int) (*User, error) {
 	u, err := r.client.User.Query().
-		Where(user.IDEQ(id)).
+		Where(user.IDEQ(id), user.AppIDEQ(appID)).
 		WithApp().
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			slog.Warn("user not found in database", "id", id)
+			slog.Warn("user not found in database", "id", id, "app_id", appID)
 			return nil, fmt.Errorf("user not found: %w", err)
 		}
 		slog.Error("database error: failed to get user by id", "id", id, "error", err)
@@ -67,8 +67,11 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, e
 	return r.mapToModel(u), nil
 }
 
-func (r *userRepository) List(ctx context.Context) ([]*User, error) {
-	users, err := r.client.User.Query().WithApp().All(ctx)
+func (r *userRepository) List(ctx context.Context, appID int) ([]*User, error) {
+	users, err := r.client.User.Query().
+		Where(user.AppIDEQ(appID)).
+		WithApp().
+		All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list users", "error", err)
 		return nil, err
@@ -80,8 +83,9 @@ func (r *userRepository) List(ctx context.Context) ([]*User, error) {
 	return result, nil
 }
 
-func (r *userRepository) Update(ctx context.Context, id int, u *User) (*User, error) {
-	updated, err := r.client.User.UpdateOneID(id).
+func (r *userRepository) Update(ctx context.Context, appID, id int, u *User) (*User, error) {
+	count, err := r.client.User.Update().
+		Where(user.IDEQ(id), user.AppIDEQ(appID)).
 		SetAppID(u.AppID).
 		SetFirstname(u.Firstname).
 		SetLastname(u.Lastname).
@@ -93,18 +97,24 @@ func (r *userRepository) Update(ctx context.Context, id int, u *User) (*User, er
 		slog.Error("database error: failed to update user", "id", id, "error", err)
 		return nil, err
 	}
-	return r.GetByID(ctx, updated.ID)
+	if count == 0 {
+		slog.Warn("user not found for update", "id", id, "app_id", appID)
+		return nil, fmt.Errorf("user not found")
+	}
+	return r.GetByID(ctx, u.AppID, id)
 }
 
-func (r *userRepository) Delete(ctx context.Context, id int) error {
-	err := r.client.User.DeleteOneID(id).Exec(ctx)
+func (r *userRepository) Delete(ctx context.Context, appID, id int) error {
+	count, err := r.client.User.Delete().
+		Where(user.IDEQ(id), user.AppIDEQ(appID)).
+		Exec(ctx)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			slog.Warn("user not found for deletion", "id", id)
-			return fmt.Errorf("user not found: %w", err)
-		}
 		slog.Error("database error: failed to delete user", "id", id, "error", err)
 		return err
+	}
+	if count == 0 {
+		slog.Warn("user not found for deletion", "id", id, "app_id", appID)
+		return fmt.Errorf("user not found")
 	}
 	return nil
 }
@@ -123,6 +133,7 @@ func (r *userRepository) mapToModel(u *ent.User) *User {
 	}
 	if u.Edges.App != nil {
 		result.AppName = u.Edges.App.Name
+		result.AppStatus = u.Edges.App.Status
 	}
 	return result
 }

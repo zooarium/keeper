@@ -117,11 +117,22 @@ func (h *AppHandler) ListApps(w http.ResponseWriter, r *http.Request) {
 // @Security Bearer
 // @Router /apps/{id} [get]
 func (h *AppHandler) GetAppByID(w http.ResponseWriter, r *http.Request) {
+	claims, ok := auth.GetClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		slog.Warn("invalid app id in request", "id", idStr)
 		render.Error(w, http.StatusBadRequest, "invalid app id")
+		return
+	}
+
+	if id != claims.AppID {
+		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
 
@@ -150,11 +161,22 @@ func (h *AppHandler) GetAppByID(w http.ResponseWriter, r *http.Request) {
 // @Security Bearer
 // @Router /apps/{id} [put]
 func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
+	claims, ok := auth.GetClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		slog.Warn("invalid app id in update request", "id", idStr)
 		render.Error(w, http.StatusBadRequest, "invalid app id")
+		return
+	}
+
+	if id != claims.AppID {
+		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
 
@@ -173,7 +195,7 @@ func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 
 	a, err := h.svc.Update(r.Context(), id, req)
 	if err != nil {
-		render.Error(w, http.StatusInternalServerError, err.Error())
+		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -193,6 +215,12 @@ func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 // @Security Bearer
 // @Router /apps/{id} [delete]
 func (h *AppHandler) DeleteApp(w http.ResponseWriter, r *http.Request) {
+	claims, ok := auth.GetClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -201,8 +229,13 @@ func (h *AppHandler) DeleteApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if id != claims.AppID {
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
 	if err := h.svc.Delete(r.Context(), id); err != nil {
-		render.Error(w, http.StatusInternalServerError, err.Error())
+		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 

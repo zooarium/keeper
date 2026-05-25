@@ -51,6 +51,10 @@ func (h *UserHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 	return r
 }
 
+func (h *UserHandler) claims(r *http.Request) (*auth.UserClaims, bool) {
+	return auth.GetClaimsFromContext(r.Context())
+}
+
 // CreateUser godoc
 // @Summary Create a new user
 // @Description Create a new user with the provided details
@@ -65,6 +69,12 @@ func (h *UserHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 // @Security Bearer
 // @Router /users [post]
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+	c, ok := h.claims(r)
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	var req CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		slog.Warn("failed to decode create user request", "error", err)
@@ -78,10 +88,15 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.AppID != c.AppID {
+		slog.Warn("create user rejected: app_id mismatch", "claims_app_id", c.AppID, "req_app_id", req.AppID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
 	u, err := h.svc.Create(r.Context(), req)
 	if err != nil {
-		// slog.Error is already called in service
-		render.Error(w, http.StatusInternalServerError, err.Error())
+		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -90,7 +105,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // ListUsers godoc
 // @Summary List all users
-// @Description Get a list of all registered users
+// @Description Get a list of all users belonging to the caller's app
 // @Tags users
 // @Produce json
 // @Success 200 {object} render.Response{data=[]User}
@@ -99,9 +114,15 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Security Bearer
 // @Router /users [get]
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	users, err := h.svc.List(r.Context())
+	c, ok := h.claims(r)
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	users, err := h.svc.List(r.Context(), c.AppID)
 	if err != nil {
-		render.Error(w, http.StatusInternalServerError, err.Error())
+		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -110,17 +131,24 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 // GetUserByID godoc
 // @Summary Get user by ID
-// @Description Get a single user by their unique ID
+// @Description Get a single user by their unique ID (must belong to caller's app)
 // @Tags users
 // @Produce json
 // @Param id path int true "User ID"
 // @Success 200 {object} render.Response{data=User}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 404 {object} render.Response
 // @Security Bearer
 // @Router /users/{id} [get]
 func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
+	c, ok := h.claims(r)
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -129,7 +157,7 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.svc.GetByID(r.Context(), id)
+	u, err := h.svc.GetByID(r.Context(), c.AppID, id)
 	if err != nil {
 		slog.Warn("user not found", "id", id)
 		render.Error(w, http.StatusNotFound, "user not found")
@@ -141,7 +169,7 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 // UpdateUser godoc
 // @Summary Update user
-// @Description Update an existing user's details
+// @Description Update an existing user's details (must belong to caller's app)
 // @Tags users
 // @Accept json
 // @Produce json
@@ -150,10 +178,17 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} render.Response{data=User}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /users/{id} [put]
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	c, ok := h.claims(r)
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -175,9 +210,9 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.svc.Update(r.Context(), id, req)
+	u, err := h.svc.Update(r.Context(), c.AppID, id, req)
 	if err != nil {
-		render.Error(w, http.StatusInternalServerError, err.Error())
+		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -186,17 +221,24 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 // DeleteUser godoc
 // @Summary Delete user
-// @Description Remove a user from the system by ID
+// @Description Remove a user from the system by ID (must belong to caller's app)
 // @Tags users
 // @Produce json
 // @Param id path int true "User ID"
 // @Success 204 "No Content"
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /users/{id} [delete]
 func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	c, ok := h.claims(r)
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -205,8 +247,8 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.svc.Delete(r.Context(), id); err != nil {
-		render.Error(w, http.StatusInternalServerError, err.Error())
+	if err := h.svc.Delete(r.Context(), c.AppID, id); err != nil {
+		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 

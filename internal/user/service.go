@@ -14,20 +14,20 @@ import (
 // UserRepository defines the data access contract for users.
 type UserRepository interface {
 	Create(ctx context.Context, u User) (*User, error)
-	GetByID(ctx context.Context, id int) (*User, error)
+	GetByID(ctx context.Context, appID, id int) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	List(ctx context.Context) ([]*User, error)
-	Update(ctx context.Context, id int, u *User) (*User, error)
-	Delete(ctx context.Context, id int) error
+	List(ctx context.Context, appID int) ([]*User, error)
+	Update(ctx context.Context, appID, id int, u *User) (*User, error)
+	Delete(ctx context.Context, appID, id int) error
 }
 
 // UserService defines the business logic for users.
 type UserService interface {
 	Create(ctx context.Context, req CreateUserRequest) (*User, error)
-	GetByID(ctx context.Context, id int) (*User, error)
-	List(ctx context.Context) ([]*User, error)
-	Update(ctx context.Context, id int, req UpdateUserRequest) (*User, error)
-	Delete(ctx context.Context, id int) error
+	GetByID(ctx context.Context, appID, id int) (*User, error)
+	List(ctx context.Context, appID int) ([]*User, error)
+	Update(ctx context.Context, appID, id int, req UpdateUserRequest) (*User, error)
+	Delete(ctx context.Context, appID, id int) error
 	Authenticate(ctx context.Context, req AuthRequest) (*AuthResponse, error)
 }
 
@@ -66,13 +66,13 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*User,
 	return created, nil
 }
 
-func (s *userService) GetByID(ctx context.Context, id int) (*User, error) {
+func (s *userService) GetByID(ctx context.Context, appID, id int) (*User, error) {
 	slog.Info("getting user by id", "id", id)
-	return s.repo.GetByID(ctx, id)
+	return s.repo.GetByID(ctx, appID, id)
 }
 
-func (s *userService) List(ctx context.Context) ([]*User, error) {
-	users, err := s.repo.List(ctx)
+func (s *userService) List(ctx context.Context, appID int) ([]*User, error) {
+	users, err := s.repo.List(ctx, appID)
 	if err != nil {
 		slog.Error("failed to list users", "error", err)
 		return nil, err
@@ -80,9 +80,9 @@ func (s *userService) List(ctx context.Context) ([]*User, error) {
 	return users, nil
 }
 
-func (s *userService) Update(ctx context.Context, id int, req UpdateUserRequest) (*User, error) {
+func (s *userService) Update(ctx context.Context, appID, id int, req UpdateUserRequest) (*User, error) {
 	slog.Info("updating user", "id", id)
-	existing, err := s.repo.GetByID(ctx, id)
+	existing, err := s.repo.GetByID(ctx, appID, id)
 	if err != nil {
 		slog.Error("failed to get user for update", "id", id, "error", err)
 		return nil, err
@@ -112,7 +112,7 @@ func (s *userService) Update(ctx context.Context, id int, req UpdateUserRequest)
 		existing.Status = *req.Status
 	}
 
-	updated, err := s.repo.Update(ctx, id, existing)
+	updated, err := s.repo.Update(ctx, appID, id, existing)
 	if err != nil {
 		slog.Error("failed to update user in repository", "id", id, "error", err)
 		return nil, err
@@ -122,9 +122,9 @@ func (s *userService) Update(ctx context.Context, id int, req UpdateUserRequest)
 	return updated, nil
 }
 
-func (s *userService) Delete(ctx context.Context, id int) error {
+func (s *userService) Delete(ctx context.Context, appID, id int) error {
 	slog.Info("deleting user", "id", id)
-	err := s.repo.Delete(ctx, id)
+	err := s.repo.Delete(ctx, appID, id)
 	if err != nil {
 		slog.Error("failed to delete user", "id", id, "error", err)
 		return err
@@ -138,6 +138,16 @@ func (s *userService) Authenticate(ctx context.Context, req AuthRequest) (*AuthR
 	u, err := s.repo.GetByEmail(ctx, req.Email)
 	if err != nil {
 		slog.Warn("authentication failed: user not found", "email", req.Email)
+		return nil, errors.New("invalid credentials")
+	}
+
+	if u.Status != 1 {
+		slog.Warn("authentication failed: user inactive", "email", req.Email, "user_id", u.ID)
+		return nil, errors.New("invalid credentials")
+	}
+
+	if u.AppStatus != 1 {
+		slog.Warn("authentication failed: app inactive", "email", req.Email, "app_id", u.AppID)
 		return nil, errors.New("invalid credentials")
 	}
 

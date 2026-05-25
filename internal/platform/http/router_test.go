@@ -20,7 +20,7 @@ type mockUserService struct {
 	user.UserService
 }
 
-func (m *mockUserService) List(ctx context.Context) ([]*user.User, error) {
+func (m *mockUserService) List(ctx context.Context, appID int) ([]*user.User, error) {
 	return []*user.User{}, nil
 }
 

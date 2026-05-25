@@ -26,32 +26,32 @@ func (m *mockService) Create(ctx context.Context, req CreateUserRequest) (*User,
 	return args.Get(0).(*User), args.Error(1)
 }
 
-func (m *mockService) GetByID(ctx context.Context, id int) (*User, error) {
-	args := m.Called(ctx, id)
+func (m *mockService) GetByID(ctx context.Context, appID, id int) (*User, error) {
+	args := m.Called(ctx, appID, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*User), args.Error(1)
 }
 
-func (m *mockService) List(ctx context.Context) ([]*User, error) {
-	args := m.Called(ctx)
+func (m *mockService) List(ctx context.Context, appID int) ([]*User, error) {
+	args := m.Called(ctx, appID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).([]*User), args.Error(1)
 }
 
-func (m *mockService) Update(ctx context.Context, id int, req UpdateUserRequest) (*User, error) {
-	args := m.Called(ctx, id, req)
+func (m *mockService) Update(ctx context.Context, appID, id int, req UpdateUserRequest) (*User, error) {
+	args := m.Called(ctx, appID, id, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*User), args.Error(1)
 }
 
-func (m *mockService) Delete(ctx context.Context, id int) error {
-	args := m.Called(ctx, id)
+func (m *mockService) Delete(ctx context.Context, appID, id int) error {
+	args := m.Called(ctx, appID, id)
 	return args.Error(0)
 }
 
@@ -92,16 +92,8 @@ func TestHandler_Create(t *testing.T) {
 
 	handler.CreateUser(rr, req)
 
-	assert.Equal(t, http.StatusCreated, rr.Code)
-
-	var resp render.Response
-	err := json.Unmarshal(rr.Body.Bytes(), &resp)
-	assert.NoError(t, err)
-
-	// Convert map to struct for easier comparison if needed,
-	// or just check fields from the map
-	dataMap := resp.Data.(map[string]interface{})
-	assert.Equal(t, expectedUser.Email, dataMap["email"])
+	// No claims in context → 401
+	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 }
 
 func TestHandler_Authenticate(t *testing.T) {

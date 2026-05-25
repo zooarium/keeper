@@ -25,7 +25,6 @@ func TestService_Create(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Create an app first as it's required for user
 	app, err := client.App.Create().SetName("Test App").Save(ctx)
 	assert.NoError(t, err)
 
@@ -62,7 +61,6 @@ func TestService_Authenticate(t *testing.T) {
 	email := "auth@example.com"
 	password := "password123"
 
-	// Create an app first as it's required for user
 	app, err := client.App.Create().SetName("Auth App").Save(ctx)
 	assert.NoError(t, err)
 
@@ -105,6 +103,54 @@ func TestService_Authenticate(t *testing.T) {
 		assert.Nil(t, res)
 		assert.Equal(t, "invalid credentials", err.Error())
 	})
+
+	t.Run("InactiveUser", func(t *testing.T) {
+		inactive := int8(0)
+		_, err := svc.Create(ctx, CreateUserRequest{
+			AppID:     app.ID,
+			Firstname: "Inactive",
+			Lastname:  "User",
+			Email:     "inactive@example.com",
+			Password:  password,
+		})
+		assert.NoError(t, err)
+
+		u, err := svc.List(ctx, app.ID)
+		assert.NoError(t, err)
+		var inactiveID int
+		for _, usr := range u {
+			if usr.Email == "inactive@example.com" {
+				inactiveID = usr.ID
+			}
+		}
+
+		_, err = svc.Update(ctx, app.ID, inactiveID, UpdateUserRequest{Status: &inactive})
+		assert.NoError(t, err)
+
+		res, err := svc.Authenticate(ctx, AuthRequest{Email: "inactive@example.com", Password: password})
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.Equal(t, "invalid credentials", err.Error())
+	})
+
+	t.Run("InactiveApp", func(t *testing.T) {
+		inactiveApp, err := client.App.Create().SetName("Inactive App").SetStatus(0).Save(ctx)
+		assert.NoError(t, err)
+
+		_, err = svc.Create(ctx, CreateUserRequest{
+			AppID:     inactiveApp.ID,
+			Firstname: "App",
+			Lastname:  "User",
+			Email:     "appuser@example.com",
+			Password:  password,
+		})
+		assert.NoError(t, err)
+
+		res, err := svc.Authenticate(ctx, AuthRequest{Email: "appuser@example.com", Password: password})
+		assert.Error(t, err)
+		assert.Nil(t, res)
+		assert.Equal(t, "invalid credentials", err.Error())
+	})
 }
 
 func TestService_Update(t *testing.T) {
@@ -120,7 +166,6 @@ func TestService_Update(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Create an app first as it's required for user
 	app, err := client.App.Create().SetName("Update App").Save(ctx)
 	assert.NoError(t, err)
 
@@ -133,7 +178,6 @@ func TestService_Update(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	// Create another app for update
 	newApp, err := client.App.Create().SetName("New App").Save(ctx)
 	assert.NoError(t, err)
 
@@ -145,13 +189,39 @@ func TestService_Update(t *testing.T) {
 		AppID:     &newApp.ID,
 	}
 
-	updated, err := svc.Update(ctx, u.ID, req)
+	updated, err := svc.Update(ctx, app.ID, u.ID, req)
 	assert.NoError(t, err)
 	assert.Equal(t, newName, updated.Firstname)
 	assert.Equal(t, newStatus, updated.Status)
 	assert.Equal(t, newApp.ID, updated.AppID)
-	assert.Equal(t, "New App", updated.AppName)
-	assert.Equal(t, u.Email, updated.Email) // Should remain unchanged
+	assert.Equal(t, u.Email, updated.Email)
+}
+
+func TestService_Update_CrossTenant(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:ent_update_cross?mode=memory&cache=shared&_fk=1")
+	defer func() {
+		err := client.Close()
+		assert.NoError(t, err)
+	}()
+
+	repo := NewUserRepository(client)
+	jwtManager := auth.NewJWTManager("secret", time.Hour)
+	svc := NewUserService(repo, jwtManager)
+
+	ctx := context.Background()
+
+	app1, _ := client.App.Create().SetName("App 1").Save(ctx)
+	app2, _ := client.App.Create().SetName("App 2").Save(ctx)
+
+	u, err := svc.Create(ctx, CreateUserRequest{
+		AppID: app1.ID, Firstname: "User", Lastname: "One",
+		Email: "user1@example.com", Password: "password123",
+	})
+	assert.NoError(t, err)
+
+	newName := "Hacked"
+	_, err = svc.Update(ctx, app2.ID, u.ID, UpdateUserRequest{Firstname: &newName})
+	assert.Error(t, err, "cross-tenant update must fail")
 }
 
 func TestService_Delete(t *testing.T) {
@@ -167,7 +237,6 @@ func TestService_Delete(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Create an app first as it's required for user
 	app, err := client.App.Create().SetName("Delete App").Save(ctx)
 	assert.NoError(t, err)
 
@@ -180,12 +249,37 @@ func TestService_Delete(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	err = svc.Delete(ctx, u.ID)
+	err = svc.Delete(ctx, app.ID, u.ID)
 	assert.NoError(t, err)
 
-	// Verify it's gone
-	_, err = svc.GetByID(ctx, u.ID)
+	_, err = svc.GetByID(ctx, app.ID, u.ID)
 	assert.Error(t, err)
+}
+
+func TestService_Delete_CrossTenant(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:ent_delete_cross?mode=memory&cache=shared&_fk=1")
+	defer func() {
+		err := client.Close()
+		assert.NoError(t, err)
+	}()
+
+	repo := NewUserRepository(client)
+	jwtManager := auth.NewJWTManager("secret", time.Hour)
+	svc := NewUserService(repo, jwtManager)
+
+	ctx := context.Background()
+
+	app1, _ := client.App.Create().SetName("App 1").Save(ctx)
+	app2, _ := client.App.Create().SetName("App 2").Save(ctx)
+
+	u, err := svc.Create(ctx, CreateUserRequest{
+		AppID: app1.ID, Firstname: "User", Lastname: "One",
+		Email: "victim@example.com", Password: "password123",
+	})
+	assert.NoError(t, err)
+
+	err = svc.Delete(ctx, app2.ID, u.ID)
+	assert.Error(t, err, "cross-tenant delete must fail")
 }
 
 func BenchmarkService_Create(b *testing.B) {

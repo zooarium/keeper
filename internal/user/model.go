@@ -9,10 +9,11 @@ type User struct {
 	ID        int       `json:"id"`
 	AppID     int       `json:"app_id"`
 	AppName   string    `json:"app_name"`
+	AppStatus int8      `json:"-"`
 	Firstname string    `json:"firstname"`
 	Lastname  string    `json:"lastname"`
 	Email     string    `json:"email"`
-	Password  string    `json:"password,omitempty"`
+	Password  string    `json:"-"`
 	Status    int8      `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
