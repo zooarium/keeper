@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/predicate"
 	"keeper/ent/user"
 	"time"
@@ -39,6 +40,20 @@ func (_u *UserUpdate) SetAppID(v int) *UserUpdate {
 func (_u *UserUpdate) SetNillableAppID(v *int) *UserUpdate {
 	if v != nil {
 		_u.SetAppID(*v)
+	}
+	return _u
+}
+
+// SetDivisionID sets the "division_id" field.
+func (_u *UserUpdate) SetDivisionID(v int) *UserUpdate {
+	_u.mutation.SetDivisionID(v)
+	return _u
+}
+
+// SetNillableDivisionID sets the "division_id" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableDivisionID(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetDivisionID(*v)
 	}
 	return _u
 }
@@ -145,6 +160,11 @@ func (_u *UserUpdate) SetApp(v *App) *UserUpdate {
 	return _u.SetAppID(v.ID)
 }
 
+// SetDivision sets the "division" edge to the Division entity.
+func (_u *UserUpdate) SetDivision(v *Division) *UserUpdate {
+	return _u.SetDivisionID(v.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -153,6 +173,12 @@ func (_u *UserUpdate) Mutation() *UserMutation {
 // ClearApp clears the "app" edge to the App entity.
 func (_u *UserUpdate) ClearApp() *UserUpdate {
 	_u.mutation.ClearApp()
+	return _u
+}
+
+// ClearDivision clears the "division" edge to the Division entity.
+func (_u *UserUpdate) ClearDivision() *UserUpdate {
+	_u.mutation.ClearDivision()
 	return _u
 }
 
@@ -196,6 +222,9 @@ func (_u *UserUpdate) defaults() {
 func (_u *UserUpdate) check() error {
 	if _u.mutation.AppCleared() && len(_u.mutation.AppIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "User.app"`)
+	}
+	if _u.mutation.DivisionCleared() && len(_u.mutation.DivisionIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "User.division"`)
 	}
 	return nil
 }
@@ -265,6 +294,35 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.DivisionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.DivisionTable,
+			Columns: []string{user.DivisionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DivisionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.DivisionTable,
+			Columns: []string{user.DivisionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -295,6 +353,20 @@ func (_u *UserUpdateOne) SetAppID(v int) *UserUpdateOne {
 func (_u *UserUpdateOne) SetNillableAppID(v *int) *UserUpdateOne {
 	if v != nil {
 		_u.SetAppID(*v)
+	}
+	return _u
+}
+
+// SetDivisionID sets the "division_id" field.
+func (_u *UserUpdateOne) SetDivisionID(v int) *UserUpdateOne {
+	_u.mutation.SetDivisionID(v)
+	return _u
+}
+
+// SetNillableDivisionID sets the "division_id" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableDivisionID(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetDivisionID(*v)
 	}
 	return _u
 }
@@ -401,6 +473,11 @@ func (_u *UserUpdateOne) SetApp(v *App) *UserUpdateOne {
 	return _u.SetAppID(v.ID)
 }
 
+// SetDivision sets the "division" edge to the Division entity.
+func (_u *UserUpdateOne) SetDivision(v *Division) *UserUpdateOne {
+	return _u.SetDivisionID(v.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -409,6 +486,12 @@ func (_u *UserUpdateOne) Mutation() *UserMutation {
 // ClearApp clears the "app" edge to the App entity.
 func (_u *UserUpdateOne) ClearApp() *UserUpdateOne {
 	_u.mutation.ClearApp()
+	return _u
+}
+
+// ClearDivision clears the "division" edge to the Division entity.
+func (_u *UserUpdateOne) ClearDivision() *UserUpdateOne {
+	_u.mutation.ClearDivision()
 	return _u
 }
 
@@ -465,6 +548,9 @@ func (_u *UserUpdateOne) defaults() {
 func (_u *UserUpdateOne) check() error {
 	if _u.mutation.AppCleared() && len(_u.mutation.AppIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "User.app"`)
+	}
+	if _u.mutation.DivisionCleared() && len(_u.mutation.DivisionIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "User.division"`)
 	}
 	return nil
 }
@@ -544,6 +630,35 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DivisionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.DivisionTable,
+			Columns: []string{user.DivisionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DivisionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.DivisionTable,
+			Columns: []string{user.DivisionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

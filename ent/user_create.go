@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/user"
 	"time"
 
@@ -24,6 +25,12 @@ type UserCreate struct {
 // SetAppID sets the "app_id" field.
 func (_c *UserCreate) SetAppID(v int) *UserCreate {
 	_c.mutation.SetAppID(v)
+	return _c
+}
+
+// SetDivisionID sets the "division_id" field.
+func (_c *UserCreate) SetDivisionID(v int) *UserCreate {
+	_c.mutation.SetDivisionID(v)
 	return _c
 }
 
@@ -98,6 +105,11 @@ func (_c *UserCreate) SetApp(v *App) *UserCreate {
 	return _c.SetAppID(v.ID)
 }
 
+// SetDivision sets the "division" edge to the Division entity.
+func (_c *UserCreate) SetDivision(v *Division) *UserCreate {
+	return _c.SetDivisionID(v.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -152,6 +164,9 @@ func (_c *UserCreate) check() error {
 	if _, ok := _c.mutation.AppID(); !ok {
 		return &ValidationError{Name: "app_id", err: errors.New(`ent: missing required field "User.app_id"`)}
 	}
+	if _, ok := _c.mutation.DivisionID(); !ok {
+		return &ValidationError{Name: "division_id", err: errors.New(`ent: missing required field "User.division_id"`)}
+	}
 	if _, ok := _c.mutation.Firstname(); !ok {
 		return &ValidationError{Name: "firstname", err: errors.New(`ent: missing required field "User.firstname"`)}
 	}
@@ -175,6 +190,9 @@ func (_c *UserCreate) check() error {
 	}
 	if len(_c.mutation.AppIDs()) == 0 {
 		return &ValidationError{Name: "app", err: errors.New(`ent: missing required edge "User.app"`)}
+	}
+	if len(_c.mutation.DivisionIDs()) == 0 {
+		return &ValidationError{Name: "division", err: errors.New(`ent: missing required edge "User.division"`)}
 	}
 	return nil
 }
@@ -245,6 +263,23 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.AppID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.DivisionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   user.DivisionTable,
+			Columns: []string{user.DivisionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.DivisionID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

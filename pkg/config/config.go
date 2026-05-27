@@ -68,7 +68,9 @@ func Load() (*Config, error) {
 	// Environment variables
 	v.SetEnvPrefix("KEEPER")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	v.BindEnv("DB.PATH", "DB_PATH")
+	if err := v.BindEnv("DB.PATH", "DB_PATH"); err != nil {
+		return nil, fmt.Errorf("failed to bind env DB_PATH: %w", err)
+	}
 	v.AutomaticEnv()
 
 	// Config file

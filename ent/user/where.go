@@ -60,6 +60,11 @@ func AppID(v int) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldAppID, v))
 }
 
+// DivisionID applies equality check predicate on the "division_id" field. It's identical to DivisionIDEQ.
+func DivisionID(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldDivisionID, v))
+}
+
 // Firstname applies equality check predicate on the "firstname" field. It's identical to FirstnameEQ.
 func Firstname(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldFirstname, v))
@@ -113,6 +118,26 @@ func AppIDIn(vs ...int) predicate.User {
 // AppIDNotIn applies the NotIn predicate on the "app_id" field.
 func AppIDNotIn(vs ...int) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldAppID, vs...))
+}
+
+// DivisionIDEQ applies the EQ predicate on the "division_id" field.
+func DivisionIDEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldDivisionID, v))
+}
+
+// DivisionIDNEQ applies the NEQ predicate on the "division_id" field.
+func DivisionIDNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldDivisionID, v))
+}
+
+// DivisionIDIn applies the In predicate on the "division_id" field.
+func DivisionIDIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldDivisionID, vs...))
+}
+
+// DivisionIDNotIn applies the NotIn predicate on the "division_id" field.
+func DivisionIDNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldDivisionID, vs...))
 }
 
 // FirstnameEQ applies the EQ predicate on the "firstname" field.
@@ -510,6 +535,29 @@ func HasApp() predicate.User {
 func HasAppWith(preds ...predicate.App) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newAppStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasDivision applies the HasEdge predicate on the "division" edge.
+func HasDivision() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, DivisionTable, DivisionColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDivisionWith applies the HasEdge predicate on the "division" edge with a given conditions (other predicates).
+func HasDivisionWith(preds ...predicate.Division) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newDivisionStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

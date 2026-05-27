@@ -16,6 +16,8 @@ const (
 	FieldID = "id"
 	// FieldAppID holds the string denoting the app_id field in the database.
 	FieldAppID = "app_id"
+	// FieldDivisionID holds the string denoting the division_id field in the database.
+	FieldDivisionID = "division_id"
 	// FieldFirstname holds the string denoting the firstname field in the database.
 	FieldFirstname = "firstname"
 	// FieldLastname holds the string denoting the lastname field in the database.
@@ -32,6 +34,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeApp holds the string denoting the app edge name in mutations.
 	EdgeApp = "app"
+	// EdgeDivision holds the string denoting the division edge name in mutations.
+	EdgeDivision = "division"
 	// Table holds the table name of the user in the database.
 	Table = "kpr_user"
 	// AppTable is the table that holds the app relation/edge.
@@ -41,12 +45,20 @@ const (
 	AppInverseTable = "kpr_app"
 	// AppColumn is the table column denoting the app relation/edge.
 	AppColumn = "app_id"
+	// DivisionTable is the table that holds the division relation/edge.
+	DivisionTable = "kpr_user"
+	// DivisionInverseTable is the table name for the Division entity.
+	// It exists in this package in order to avoid circular dependency with the "division" package.
+	DivisionInverseTable = "kpr_division"
+	// DivisionColumn is the table column denoting the division relation/edge.
+	DivisionColumn = "division_id"
 )
 
 // Columns holds all SQL columns for user fields.
 var Columns = []string{
 	FieldID,
 	FieldAppID,
+	FieldDivisionID,
 	FieldFirstname,
 	FieldLastname,
 	FieldEmail,
@@ -90,6 +102,11 @@ func ByAppID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAppID, opts...).ToFunc()
 }
 
+// ByDivisionID orders the results by the division_id field.
+func ByDivisionID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDivisionID, opts...).ToFunc()
+}
+
 // ByFirstname orders the results by the firstname field.
 func ByFirstname(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFirstname, opts...).ToFunc()
@@ -131,10 +148,24 @@ func ByAppField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAppStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByDivisionField orders the results by division field.
+func ByDivisionField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDivisionStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newAppStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AppInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, AppTable, AppColumn),
+	)
+}
+func newDivisionStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DivisionInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, DivisionTable, DivisionColumn),
 	)
 }

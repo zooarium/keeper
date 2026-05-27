@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/predicate"
 	"keeper/ent/user"
 	"time"
@@ -99,6 +100,21 @@ func (_u *AppUpdate) AddUsers(v ...*User) *AppUpdate {
 	return _u.AddUserIDs(ids...)
 }
 
+// AddDivisionIDs adds the "divisions" edge to the Division entity by IDs.
+func (_u *AppUpdate) AddDivisionIDs(ids ...int) *AppUpdate {
+	_u.mutation.AddDivisionIDs(ids...)
+	return _u
+}
+
+// AddDivisions adds the "divisions" edges to the Division entity.
+func (_u *AppUpdate) AddDivisions(v ...*Division) *AppUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDivisionIDs(ids...)
+}
+
 // Mutation returns the AppMutation object of the builder.
 func (_u *AppUpdate) Mutation() *AppMutation {
 	return _u.mutation
@@ -123,6 +139,27 @@ func (_u *AppUpdate) RemoveUsers(v ...*User) *AppUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUserIDs(ids...)
+}
+
+// ClearDivisions clears all "divisions" edges to the Division entity.
+func (_u *AppUpdate) ClearDivisions() *AppUpdate {
+	_u.mutation.ClearDivisions()
+	return _u
+}
+
+// RemoveDivisionIDs removes the "divisions" edge to Division entities by IDs.
+func (_u *AppUpdate) RemoveDivisionIDs(ids ...int) *AppUpdate {
+	_u.mutation.RemoveDivisionIDs(ids...)
+	return _u
+}
+
+// RemoveDivisions removes "divisions" edges to Division entities.
+func (_u *AppUpdate) RemoveDivisions(v ...*Division) *AppUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDivisionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -230,6 +267,51 @@ func (_u *AppUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.DivisionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   app.DivisionsTable,
+			Columns: []string{app.DivisionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDivisionsIDs(); len(nodes) > 0 && !_u.mutation.DivisionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   app.DivisionsTable,
+			Columns: []string{app.DivisionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DivisionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   app.DivisionsTable,
+			Columns: []string{app.DivisionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{app.Label}
@@ -320,6 +402,21 @@ func (_u *AppUpdateOne) AddUsers(v ...*User) *AppUpdateOne {
 	return _u.AddUserIDs(ids...)
 }
 
+// AddDivisionIDs adds the "divisions" edge to the Division entity by IDs.
+func (_u *AppUpdateOne) AddDivisionIDs(ids ...int) *AppUpdateOne {
+	_u.mutation.AddDivisionIDs(ids...)
+	return _u
+}
+
+// AddDivisions adds the "divisions" edges to the Division entity.
+func (_u *AppUpdateOne) AddDivisions(v ...*Division) *AppUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddDivisionIDs(ids...)
+}
+
 // Mutation returns the AppMutation object of the builder.
 func (_u *AppUpdateOne) Mutation() *AppMutation {
 	return _u.mutation
@@ -344,6 +441,27 @@ func (_u *AppUpdateOne) RemoveUsers(v ...*User) *AppUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveUserIDs(ids...)
+}
+
+// ClearDivisions clears all "divisions" edges to the Division entity.
+func (_u *AppUpdateOne) ClearDivisions() *AppUpdateOne {
+	_u.mutation.ClearDivisions()
+	return _u
+}
+
+// RemoveDivisionIDs removes the "divisions" edge to Division entities by IDs.
+func (_u *AppUpdateOne) RemoveDivisionIDs(ids ...int) *AppUpdateOne {
+	_u.mutation.RemoveDivisionIDs(ids...)
+	return _u
+}
+
+// RemoveDivisions removes "divisions" edges to Division entities.
+func (_u *AppUpdateOne) RemoveDivisions(v ...*Division) *AppUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveDivisionIDs(ids...)
 }
 
 // Where appends a list predicates to the AppUpdate builder.
@@ -474,6 +592,51 @@ func (_u *AppUpdateOne) sqlSave(ctx context.Context) (_node *App, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.DivisionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   app.DivisionsTable,
+			Columns: []string{app.DivisionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedDivisionsIDs(); len(nodes) > 0 && !_u.mutation.DivisionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   app.DivisionsTable,
+			Columns: []string{app.DivisionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.DivisionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   app.DivisionsTable,
+			Columns: []string{app.DivisionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

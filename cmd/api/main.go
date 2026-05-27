@@ -15,6 +15,7 @@ import (
 	"keeper/docs"
 	"keeper/internal/app"
 	"keeper/internal/db"
+	"keeper/internal/division"
 	platformhttp "keeper/internal/platform/http"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
@@ -85,7 +86,11 @@ func main() {
 	appSvc := app.NewAppService(appRepo)
 	appHandler := app.NewAppHandler(appSvc)
 
-	router := platformhttp.NewRouter(userHandler, appHandler, jwtManager, cfg)
+	divisionRepo := division.NewDivisionRepository(client)
+	divisionSvc := division.NewDivisionService(divisionRepo)
+	divisionHandler := division.NewDivisionHandler(divisionSvc)
+
+	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, jwtManager, cfg)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.Addr,

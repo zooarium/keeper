@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"keeper/ent"
+	entdivision "keeper/ent/division"
 	"keeper/ent/user"
 )
 
@@ -19,9 +20,23 @@ func NewUserRepository(client *ent.Client) *userRepository {
 }
 
 func (r *userRepository) Create(ctx context.Context, u User) (*User, error) {
+	// Validate division belongs to the same app
+	count, err := r.client.Division.Query().
+		Where(entdivision.IDEQ(u.DivisionID), entdivision.AppIDEQ(u.AppID)).
+		Count(ctx)
+	if err != nil {
+		slog.Error("database error: failed to validate division for user", "division_id", u.DivisionID, "error", err)
+		return nil, err
+	}
+	if count == 0 {
+		slog.Warn("create user rejected: division not found for app", "division_id", u.DivisionID, "app_id", u.AppID)
+		return nil, fmt.Errorf("division not found for app")
+	}
+
 	created, err := r.client.User.
 		Create().
 		SetAppID(u.AppID).
+		SetDivisionID(u.DivisionID).
 		SetFirstname(u.Firstname).
 		SetLastname(u.Lastname).
 		SetEmail(u.Email).
@@ -39,6 +54,7 @@ func (r *userRepository) GetByID(ctx context.Context, appID, id int) (*User, err
 	u, err := r.client.User.Query().
 		Where(user.IDEQ(id), user.AppIDEQ(appID)).
 		WithApp().
+		WithDivision().
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -55,6 +71,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, e
 	u, err := r.client.User.Query().
 		Where(user.EmailEQ(email)).
 		WithApp().
+		WithDivision().
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -71,6 +88,7 @@ func (r *userRepository) List(ctx context.Context, appID int) ([]*User, error) {
 	users, err := r.client.User.Query().
 		Where(user.AppIDEQ(appID)).
 		WithApp().
+		WithDivision().
 		All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list users", "error", err)
@@ -87,6 +105,7 @@ func (r *userRepository) Update(ctx context.Context, appID, id int, u *User) (*U
 	count, err := r.client.User.Update().
 		Where(user.IDEQ(id), user.AppIDEQ(appID)).
 		SetAppID(u.AppID).
+		SetDivisionID(u.DivisionID).
 		SetFirstname(u.Firstname).
 		SetLastname(u.Lastname).
 		SetEmail(u.Email).
@@ -121,19 +140,23 @@ func (r *userRepository) Delete(ctx context.Context, appID, id int) error {
 
 func (r *userRepository) mapToModel(u *ent.User) *User {
 	result := &User{
-		ID:        u.ID,
-		AppID:     u.AppID,
-		Firstname: u.Firstname,
-		Lastname:  u.Lastname,
-		Email:     u.Email,
-		Password:  u.Password,
-		Status:    u.Status,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
+		ID:         u.ID,
+		AppID:      u.AppID,
+		DivisionID: u.DivisionID,
+		Firstname:  u.Firstname,
+		Lastname:   u.Lastname,
+		Email:      u.Email,
+		Password:   u.Password,
+		Status:     u.Status,
+		CreatedAt:  u.CreatedAt,
+		UpdatedAt:  u.UpdatedAt,
 	}
 	if u.Edges.App != nil {
 		result.AppName = u.Edges.App.Name
 		result.AppStatus = u.Edges.App.Status
+	}
+	if u.Edges.Division != nil {
+		result.DivisionName = u.Edges.Division.Name
 	}
 	return result
 }

@@ -29,6 +29,56 @@ definitions:
       status:
         type: integer
     type: object
+  internal_division.CreateDivisionRequest:
+    properties:
+      app_id:
+        type: integer
+      name:
+        maxLength: 100
+        type: string
+      parent_id:
+        type: integer
+    required:
+    - app_id
+    - name
+    type: object
+  internal_division.Division:
+    properties:
+      app_id:
+        type: integer
+      created_at:
+        type: string
+      depth:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      path:
+        type: string
+      status:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  internal_division.MoveDivisionRequest:
+    properties:
+      parent_id:
+        type: integer
+    type: object
+  internal_division.UpdateDivisionRequest:
+    properties:
+      name:
+        maxLength: 100
+        type: string
+      status:
+        enum:
+        - 0
+        - 1
+        type: integer
+    type: object
   internal_user.AuthRequest:
     properties:
       email:
@@ -50,6 +100,8 @@ definitions:
     properties:
       app_id:
         type: integer
+      division_id:
+        type: integer
       email:
         type: string
       firstname:
@@ -61,6 +113,7 @@ definitions:
         type: string
     required:
     - app_id
+    - division_id
     - email
     - firstname
     - lastname
@@ -69,6 +122,8 @@ definitions:
   internal_user.UpdateUserRequest:
     properties:
       app_id:
+        type: integer
+      division_id:
         type: integer
       email:
         type: string
@@ -90,6 +145,10 @@ definitions:
         type: string
       created_at:
         type: string
+      division_id:
+        type: integer
+      division_name:
+        type: string
       email:
         type: string
       firstname:
@@ -97,8 +156,6 @@ definitions:
       id:
         type: integer
       lastname:
-        type: string
-      password:
         type: string
       status:
         type: integer
@@ -303,6 +360,286 @@ paths:
       summary: Update app
       tags:
       - apps
+  /divisions:
+    get:
+      description: List divisions for the caller's app. Filter by parent_id via query
+        param.
+      parameters:
+      - description: Filter by parent ID
+        in: query
+        name: parent_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_division.Division'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: List divisions
+      tags:
+      - divisions
+    post:
+      consumes:
+      - application/json
+      description: Create a new division with optional parent for hierarchical grouping
+      parameters:
+      - description: Division details
+        in: body
+        name: division
+        required: true
+        schema:
+          $ref: '#/definitions/internal_division.CreateDivisionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_division.Division'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Create a new division
+      tags:
+      - divisions
+  /divisions/{id}:
+    delete:
+      description: Delete a division. Blocked if it has children or assigned users.
+      parameters:
+      - description: Division ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Delete a division
+      tags:
+      - divisions
+    get:
+      description: Get a single division by its ID (must belong to caller's app)
+      parameters:
+      - description: Division ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_division.Division'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Get division by ID
+      tags:
+      - divisions
+    put:
+      consumes:
+      - application/json
+      description: Update name or status of an existing division
+      parameters:
+      - description: Division ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated division details
+        in: body
+        name: division
+        required: true
+        schema:
+          $ref: '#/definitions/internal_division.UpdateDivisionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_division.Division'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Update a division
+      tags:
+      - divisions
+  /divisions/{id}/descendants:
+    get:
+      description: Returns all divisions in the subtree rooted at the given division
+      parameters:
+      - description: Division ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_division.Division'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Get all descendants of a division
+      tags:
+      - divisions
+  /divisions/{id}/move:
+    put:
+      consumes:
+      - application/json
+      description: Move a division (and its subtree) to a different parent. Set parent_id
+        to null to promote to root.
+      parameters:
+      - description: Division ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New parent
+        in: body
+        name: move
+        required: true
+        schema:
+          $ref: '#/definitions/internal_division.MoveDivisionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_division.Division'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Move a division to a new parent
+      tags:
+      - divisions
   /health:
     get:
       description: Get the health status of the service
@@ -318,7 +655,7 @@ paths:
       - health
   /users:
     get:
-      description: Get a list of all registered users
+      description: Get a list of all users belonging to the caller's app
       produces:
       - application/json
       responses:
@@ -388,7 +725,7 @@ paths:
       - users
   /users/{id}:
     delete:
-      description: Remove a user from the system by ID
+      description: Remove a user from the system by ID (must belong to caller's app)
       parameters:
       - description: User ID
         in: path
@@ -408,6 +745,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
         "500":
           description: Internal Server Error
           schema:
@@ -418,7 +759,7 @@ paths:
       tags:
       - users
     get:
-      description: Get a single user by their unique ID
+      description: Get a single user by their unique ID (must belong to caller's app)
       parameters:
       - description: User ID
         in: path
@@ -445,6 +786,10 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
         "404":
           description: Not Found
           schema:
@@ -457,7 +802,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update an existing user's details
+      description: Update an existing user's details (must belong to caller's app)
       parameters:
       - description: User ID
         in: path
@@ -488,6 +833,10 @@ paths:
             $ref: '#/definitions/keeper_pkg_render.Response'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/keeper_pkg_render.Response'
         "500":

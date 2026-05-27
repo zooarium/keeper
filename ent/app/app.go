@@ -24,6 +24,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeUsers holds the string denoting the users edge name in mutations.
 	EdgeUsers = "users"
+	// EdgeDivisions holds the string denoting the divisions edge name in mutations.
+	EdgeDivisions = "divisions"
 	// Table holds the table name of the app in the database.
 	Table = "kpr_app"
 	// UsersTable is the table that holds the users relation/edge.
@@ -33,6 +35,13 @@ const (
 	UsersInverseTable = "kpr_user"
 	// UsersColumn is the table column denoting the users relation/edge.
 	UsersColumn = "app_id"
+	// DivisionsTable is the table that holds the divisions relation/edge.
+	DivisionsTable = "kpr_division"
+	// DivisionsInverseTable is the table name for the Division entity.
+	// It exists in this package in order to avoid circular dependency with the "division" package.
+	DivisionsInverseTable = "kpr_division"
+	// DivisionsColumn is the table column denoting the divisions relation/edge.
+	DivisionsColumn = "app_id"
 )
 
 // Columns holds all SQL columns for app fields.
@@ -106,10 +115,31 @@ func ByUsers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newUsersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByDivisionsCount orders the results by divisions count.
+func ByDivisionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newDivisionsStep(), opts...)
+	}
+}
+
+// ByDivisions orders the results by divisions terms.
+func ByDivisions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newDivisionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newUsersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UsersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, UsersTable, UsersColumn),
+	)
+}
+func newDivisionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(DivisionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, DivisionsTable, DivisionsColumn),
 	)
 }

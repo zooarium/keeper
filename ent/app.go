@@ -35,9 +35,11 @@ type App struct {
 type AppEdges struct {
 	// Users holds the value of the users edge.
 	Users []*User `json:"users,omitempty"`
+	// Divisions holds the value of the divisions edge.
+	Divisions []*Division `json:"divisions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -47,6 +49,15 @@ func (e AppEdges) UsersOrErr() ([]*User, error) {
 		return e.Users, nil
 	}
 	return nil, &NotLoadedError{edge: "users"}
+}
+
+// DivisionsOrErr returns the Divisions value or an error if the edge
+// was not loaded in eager-loading.
+func (e AppEdges) DivisionsOrErr() ([]*Division, error) {
+	if e.loadedTypes[1] {
+		return e.Divisions, nil
+	}
+	return nil, &NotLoadedError{edge: "divisions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -121,6 +132,11 @@ func (_m *App) Value(name string) (ent.Value, error) {
 // QueryUsers queries the "users" edge of the App entity.
 func (_m *App) QueryUsers() *UserQuery {
 	return NewAppClient(_m.config).QueryUsers(_m)
+}
+
+// QueryDivisions queries the "divisions" edge of the App entity.
+func (_m *App) QueryDivisions() *DivisionQuery {
+	return NewAppClient(_m.config).QueryDivisions(_m)
 }
 
 // Update returns a builder for updating this App.

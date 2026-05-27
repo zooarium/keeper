@@ -5,6 +5,7 @@ package ent
 import (
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/user"
 	"strings"
 	"time"
@@ -20,6 +21,8 @@ type User struct {
 	ID int `json:"id,omitempty"`
 	// AppID holds the value of the "app_id" field.
 	AppID int `json:"app_id,omitempty"`
+	// DivisionID holds the value of the "division_id" field.
+	DivisionID int `json:"division_id,omitempty"`
 	// Firstname holds the value of the "firstname" field.
 	Firstname string `json:"firstname,omitempty"`
 	// Lastname holds the value of the "lastname" field.
@@ -44,9 +47,11 @@ type User struct {
 type UserEdges struct {
 	// App holds the value of the app edge.
 	App *App `json:"app,omitempty"`
+	// Division holds the value of the division edge.
+	Division *Division `json:"division,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // AppOrErr returns the App value or an error if the edge
@@ -60,12 +65,23 @@ func (e UserEdges) AppOrErr() (*App, error) {
 	return nil, &NotLoadedError{edge: "app"}
 }
 
+// DivisionOrErr returns the Division value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) DivisionOrErr() (*Division, error) {
+	if e.Division != nil {
+		return e.Division, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: division.Label}
+	}
+	return nil, &NotLoadedError{edge: "division"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID, user.FieldAppID, user.FieldStatus:
+		case user.FieldID, user.FieldAppID, user.FieldDivisionID, user.FieldStatus:
 			values[i] = new(sql.NullInt64)
 		case user.FieldFirstname, user.FieldLastname, user.FieldEmail, user.FieldPassword:
 			values[i] = new(sql.NullString)
@@ -97,6 +113,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field app_id", values[i])
 			} else if value.Valid {
 				_m.AppID = int(value.Int64)
+			}
+		case user.FieldDivisionID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field division_id", values[i])
+			} else if value.Valid {
+				_m.DivisionID = int(value.Int64)
 			}
 		case user.FieldFirstname:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -158,6 +180,11 @@ func (_m *User) QueryApp() *AppQuery {
 	return NewUserClient(_m.config).QueryApp(_m)
 }
 
+// QueryDivision queries the "division" edge of the User entity.
+func (_m *User) QueryDivision() *DivisionQuery {
+	return NewUserClient(_m.config).QueryDivision(_m)
+}
+
 // Update returns a builder for updating this User.
 // Note that you need to call User.Unwrap() before calling this method if this User
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -183,6 +210,9 @@ func (_m *User) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("app_id=")
 	builder.WriteString(fmt.Sprintf("%v", _m.AppID))
+	builder.WriteString(", ")
+	builder.WriteString("division_id=")
+	builder.WriteString(fmt.Sprintf("%v", _m.DivisionID))
 	builder.WriteString(", ")
 	builder.WriteString("firstname=")
 	builder.WriteString(_m.Firstname)

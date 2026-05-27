@@ -5,6 +5,7 @@ import (
 
 	_ "keeper/docs" // Import generated docs
 	"keeper/internal/app"
+	"keeper/internal/division"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
@@ -17,7 +18,7 @@ import (
 )
 
 // NewRouter creates a new chi router with default middleware and application routes.
-func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, jwtManager *auth.JWTManager, cfg *config.Config) *chi.Mux {
+func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisionHandler *division.DivisionHandler, jwtManager *auth.JWTManager, cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
@@ -44,6 +45,7 @@ func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, jwtMan
 
 	r.Mount("/users", userHandler.Routes(jwtManager))
 	r.Mount("/apps", appHandler.Routes(jwtManager))
+	r.Mount("/divisions", divisionHandler.Routes(jwtManager))
 
 	return r
 }

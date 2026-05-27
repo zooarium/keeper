@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/user"
 	"reflect"
 	"sync"
@@ -74,8 +75,9 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			app.Table:  app.ValidColumn,
-			user.Table: user.ValidColumn,
+			app.Table:      app.ValidColumn,
+			division.Table: division.ValidColumn,
+			user.Table:     user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

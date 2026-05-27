@@ -283,6 +283,29 @@ func HasUsersWith(preds ...predicate.User) predicate.App {
 	})
 }
 
+// HasDivisions applies the HasEdge predicate on the "divisions" edge.
+func HasDivisions() predicate.App {
+	return predicate.App(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, DivisionsTable, DivisionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasDivisionsWith applies the HasEdge predicate on the "divisions" edge with a given conditions (other predicates).
+func HasDivisionsWith(preds ...predicate.Division) predicate.App {
+	return predicate.App(func(s *sql.Selector) {
+		step := newDivisionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.App) predicate.App {
 	return predicate.App(sql.AndPredicates(predicates...))

@@ -31,6 +31,13 @@ Keeper is a microservice for user management, providing RESTful APIs for authent
 │   │   ├── model.go        # Domain & Request/Response models
 │   │   ├── service_test.go # Unit tests for service
 │   │   └── handler_test.go # Unit tests for handler
+│   ├── division/           # Division domain logic (hierarchical categorisation)
+│   │   ├── handler.go      # HTTP handlers
+│   │   ├── service.go      # Business logic + materialized path maintenance
+│   │   ├── repository.go   # Data access logic
+│   │   ├── model.go        # Domain & Request/Response models
+│   │   ├── service_test.go # Unit tests for service
+│   │   └── handler_test.go # Unit tests for handler
 │   ├── user/               # User domain logic
 │   │   ├── handler.go      # HTTP handlers
 │   │   ├── service.go      # Business logic
@@ -47,6 +54,7 @@ Keeper is a microservice for user management, providing RESTful APIs for authent
 ├── ent/                    # Ent ORM generated code & schema
 │   └── schema/
 │       ├── app.go          # App database schema definition
+│       ├── division.go     # Division database schema definition
 │       └── user.go         # User database schema definition
 ├── pkg/                    # Shared packages (logger, config)
 ├── data/                   # SQLite database file (persisted via volume)
@@ -127,22 +135,6 @@ To ensure codebase health and consistency, the following steps **must** be compl
 3.  **Generate Migration**: `make migrate-gen name=change_description`.
 4.  **Apply**: `make migrate-apply` (or restart the app for auto-migration).
 
-### Database Schema (kpr_user table)
-
-| Field      | Type      | Description                          |
-|------------|-----------|--------------------------------------|
-| ID         | int       | Primary Key (Auto-increment)         |
-| AppID      | int       | Foreign Key to kpr_app               |
-| Firstname  | string    | User's first name                    |
-| Lastname   | string    | User's last name                     |
-| Email      | string    | Unique email address                 |
-| Password   | string    | Hashed password (sensitive)          |
-| Status     | smallint  | 0 (Inactive), 1 (Active)             |
-| CreatedAt  | datetime  | Creation timestamp                   |
-| UpdatedAt  | datetime  | Last update timestamp                |
-
-
-
 ### Database Schema (kpr_app table)
 
 | Field      | Type      | Description                          |
@@ -152,6 +144,43 @@ To ensure codebase health and consistency, the following steps **must** be compl
 | Status     | smallint  | 0 (Inactive), 1 (Active)             |
 | CreatedAt  | datetime  | Creation timestamp                   |
 | UpdatedAt  | datetime  | Last update timestamp                |
+
+### Database Schema (kpr_division table)
+
+Hierarchical grouping using **Materialized Path**. Enables company → department → team structure scoped per app. Other microservices store `division_id` alongside `app_id` for granular data filtering.
+
+| Field      | Type      | Description                                              |
+|------------|-----------|----------------------------------------------------------|
+| ID         | int       | Primary Key (Auto-increment)                             |
+| AppID      | int       | Foreign Key to kpr_app (CASCADE DELETE)                  |
+| ParentID   | int       | Nullable FK to kpr_division (self-ref; NULL = root)      |
+| Name       | string    | Division display name                                    |
+| Path       | string    | Materialized path e.g. `/1/3/7/` (indexed)              |
+| Depth      | smallint  | 0 = root; auto-computed from path on create/move         |
+| Status     | smallint  | 0 (Inactive), 1 (Active)                                |
+| CreatedAt  | datetime  | Creation timestamp                                       |
+| UpdatedAt  | datetime  | Last update timestamp                                    |
+
+**Path rules:**
+- Root division: `path = "/{id}/"`
+- Child: `path = parent.path + "{id}/"`
+- Subtree query: `WHERE path LIKE '/1/3/%'`
+- Move cascade: updates path + depth for node and all descendants
+
+### Database Schema (kpr_user table)
+
+| Field        | Type      | Description                          |
+|--------------|-----------|--------------------------------------|
+| ID           | int       | Primary Key (Auto-increment)         |
+| AppID        | int       | Foreign Key to kpr_app               |
+| DivisionID   | int       | Foreign Key to kpr_division (required) |
+| Firstname    | string    | User's first name                    |
+| Lastname     | string    | User's last name                     |
+| Email        | string    | Unique email address                 |
+| Password     | string    | Hashed password (sensitive)          |
+| Status       | smallint  | 0 (Inactive), 1 (Active)             |
+| CreatedAt    | datetime  | Creation timestamp                   |
+| UpdatedAt    | datetime  | Last update timestamp                |
 
 
 
@@ -168,6 +197,13 @@ To ensure codebase health and consistency, the following steps **must** be compl
 - `GET /apps/{id}`: Get app by ID.
 - `PUT /apps/{id}`: Update app by ID.
 - `DELETE /apps/{id}`: Delete app by ID.
+- `POST /divisions`: Create a new division.
+- `GET /divisions`: List divisions (query: `parent_id`).
+- `GET /divisions/{id}`: Get division by ID.
+- `GET /divisions/{id}/descendants`: Get full subtree of division.
+- `PUT /divisions/{id}`: Update division name/status.
+- `PUT /divisions/{id}/move`: Move division to new parent (cascades path update).
+- `DELETE /divisions/{id}`: Delete division (blocked if has children or users).
 - `GET /swagger/*`: Swagger UI.
 
 ## Logging & Monitoring

@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/predicate"
 	"keeper/ent/user"
 	"math"
@@ -19,11 +20,12 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx        *QueryContext
-	order      []user.OrderOption
-	inters     []Interceptor
-	predicates []predicate.User
-	withApp    *AppQuery
+	ctx          *QueryContext
+	order        []user.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.User
+	withApp      *AppQuery
+	withDivision *DivisionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,6 +77,28 @@ func (_q *UserQuery) QueryApp() *AppQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(app.Table, app.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, user.AppTable, user.AppColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDivision chains the current query on the "division" edge.
+func (_q *UserQuery) QueryDivision() *DivisionQuery {
+	query := (&DivisionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(division.Table, division.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, user.DivisionTable, user.DivisionColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -269,12 +293,13 @@ func (_q *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]user.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.User{}, _q.predicates...),
-		withApp:    _q.withApp.Clone(),
+		config:       _q.config,
+		ctx:          _q.ctx.Clone(),
+		order:        append([]user.OrderOption{}, _q.order...),
+		inters:       append([]Interceptor{}, _q.inters...),
+		predicates:   append([]predicate.User{}, _q.predicates...),
+		withApp:      _q.withApp.Clone(),
+		withDivision: _q.withDivision.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -289,6 +314,17 @@ func (_q *UserQuery) WithApp(opts ...func(*AppQuery)) *UserQuery {
 		opt(query)
 	}
 	_q.withApp = query
+	return _q
+}
+
+// WithDivision tells the query-builder to eager-load the nodes that are connected to
+// the "division" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithDivision(opts ...func(*DivisionQuery)) *UserQuery {
+	query := (&DivisionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withDivision = query
 	return _q
 }
 
@@ -370,8 +406,9 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withApp != nil,
+			_q.withDivision != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -395,6 +432,12 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if query := _q.withApp; query != nil {
 		if err := _q.loadApp(ctx, query, nodes, nil,
 			func(n *User, e *App) { n.Edges.App = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withDivision; query != nil {
+		if err := _q.loadDivision(ctx, query, nodes, nil,
+			func(n *User, e *Division) { n.Edges.Division = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -430,6 +473,35 @@ func (_q *UserQuery) loadApp(ctx context.Context, query *AppQuery, nodes []*User
 	}
 	return nil
 }
+func (_q *UserQuery) loadDivision(ctx context.Context, query *DivisionQuery, nodes []*User, init func(*User), assign func(*User, *Division)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*User)
+	for i := range nodes {
+		fk := nodes[i].DivisionID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(division.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "division_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (_q *UserQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
@@ -458,6 +530,9 @@ func (_q *UserQuery) querySpec() *sqlgraph.QuerySpec {
 		}
 		if _q.withApp != nil {
 			_spec.Node.AddColumnOnce(user.FieldAppID)
+		}
+		if _q.withDivision != nil {
+			_spec.Node.AddColumnOnce(user.FieldDivisionID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

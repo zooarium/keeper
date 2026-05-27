@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"keeper/internal/app"
+	"keeper/internal/division"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
@@ -36,21 +37,32 @@ func (m *mockAppService) List(ctx context.Context) ([]*app.App, error) {
 	return []*app.App{}, nil
 }
 
+type mockDivisionService struct {
+	division.DivisionService
+}
+
+func (m *mockDivisionService) List(ctx context.Context, appID int, parentID *int) ([]*division.Division, error) {
+	return []*division.Division{}, nil
+}
+
 func TestRouterAuthentication(t *testing.T) {
 	jwtManager := auth.NewJWTManager("secret", 1*time.Hour)
-	// Use a mock service to avoid nil pointer dereference in handlers
+
 	userSvc := &mockUserService{}
 	userHandler := user.NewUserHandler(userSvc)
 
 	appSvc := &mockAppService{}
 	appHandler := app.NewAppHandler(appSvc)
 
+	divSvc := &mockDivisionService{}
+	divHandler := division.NewDivisionHandler(divSvc)
+
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, jwtManager, cfg)
 
 	tests := []struct {
 		name           string
@@ -59,9 +71,11 @@ func TestRouterAuthentication(t *testing.T) {
 		wantStatusCode int
 	}{
 		{"Health public", "GET", "/health", http.StatusOK},
-		{"Users Auth public", "POST", "/users/auth", http.StatusBadRequest}, // 400 because of empty body
+		{"Users Auth public", "POST", "/users/auth", http.StatusBadRequest},
 		{"Users List protected", "GET", "/users", http.StatusUnauthorized},
 		{"Users Create protected", "POST", "/users", http.StatusUnauthorized},
+		{"Divisions List protected", "GET", "/divisions", http.StatusUnauthorized},
+		{"Divisions Create protected", "POST", "/divisions", http.StatusUnauthorized},
 	}
 
 	for _, tt := range tests {
@@ -87,18 +101,22 @@ func TestRouterAuthentication(t *testing.T) {
 
 func TestRouterAuthentication_ValidToken(t *testing.T) {
 	jwtManager := auth.NewJWTManager("secret", 1*time.Hour)
+
 	userSvc := &mockUserService{}
 	userHandler := user.NewUserHandler(userSvc)
 
 	appSvc := &mockAppService{}
 	appHandler := app.NewAppHandler(appSvc)
 
+	divSvc := &mockDivisionService{}
+	divHandler := division.NewDivisionHandler(divSvc)
+
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, jwtManager, cfg)
 
 	token, _ := jwtManager.Generate(1, 1)
 
@@ -108,7 +126,5 @@ func TestRouterAuthentication_ValidToken(t *testing.T) {
 
 	router.ServeHTTP(rr, req)
 
-	// If middleware works, it shouldn't be StatusUnauthorized (401).
-	// It will be 500 because s.List is nil and it panics, and Recoverer catches it.
 	assert.NotEqual(t, http.StatusUnauthorized, rr.Code)
 }

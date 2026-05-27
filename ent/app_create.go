@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/user"
 	"time"
 
@@ -82,6 +83,21 @@ func (_c *AppCreate) AddUsers(v ...*User) *AppCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddUserIDs(ids...)
+}
+
+// AddDivisionIDs adds the "divisions" edge to the Division entity by IDs.
+func (_c *AppCreate) AddDivisionIDs(ids ...int) *AppCreate {
+	_c.mutation.AddDivisionIDs(ids...)
+	return _c
+}
+
+// AddDivisions adds the "divisions" edges to the Division entity.
+func (_c *AppCreate) AddDivisions(v ...*Division) *AppCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddDivisionIDs(ids...)
 }
 
 // Mutation returns the AppMutation object of the builder.
@@ -198,6 +214,22 @@ func (_c *AppCreate) createSpec() (*App, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.DivisionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   app.DivisionsTable,
+			Columns: []string{app.DivisionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

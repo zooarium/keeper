@@ -23,6 +23,50 @@ var (
 		Columns:    KprAppColumns,
 		PrimaryKey: []*schema.Column{KprAppColumns[0]},
 	}
+	// KprDivisionColumns holds the columns for the "kpr_division" table.
+	KprDivisionColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "path", Type: field.TypeString},
+		{Name: "depth", Type: field.TypeInt8, Default: 0},
+		{Name: "status", Type: field.TypeInt8, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "app_id", Type: field.TypeInt},
+		{Name: "parent_id", Type: field.TypeInt, Nullable: true},
+	}
+	// KprDivisionTable holds the schema information for the "kpr_division" table.
+	KprDivisionTable = &schema.Table{
+		Name:       "kpr_division",
+		Columns:    KprDivisionColumns,
+		PrimaryKey: []*schema.Column{KprDivisionColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "kpr_division_kpr_app_divisions",
+				Columns:    []*schema.Column{KprDivisionColumns[7]},
+				RefColumns: []*schema.Column{KprAppColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "kpr_division_kpr_division_children",
+				Columns:    []*schema.Column{KprDivisionColumns[8]},
+				RefColumns: []*schema.Column{KprDivisionColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "division_path",
+				Unique:  false,
+				Columns: []*schema.Column{KprDivisionColumns[2]},
+			},
+			{
+				Name:    "division_app_id_parent_id",
+				Unique:  false,
+				Columns: []*schema.Column{KprDivisionColumns[7], KprDivisionColumns[8]},
+			},
+		},
+	}
 	// KprUserColumns holds the columns for the "kpr_user" table.
 	KprUserColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -34,6 +78,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "app_id", Type: field.TypeInt},
+		{Name: "division_id", Type: field.TypeInt},
 	}
 	// KprUserTable holds the schema information for the "kpr_user" table.
 	KprUserTable = &schema.Table{
@@ -47,11 +92,18 @@ var (
 				RefColumns: []*schema.Column{KprAppColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
+			{
+				Symbol:     "kpr_user_kpr_division_users",
+				Columns:    []*schema.Column{KprUserColumns[9]},
+				RefColumns: []*schema.Column{KprDivisionColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
 		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		KprAppTable,
+		KprDivisionTable,
 		KprUserTable,
 	}
 )
@@ -60,7 +112,13 @@ func init() {
 	KprAppTable.Annotation = &entsql.Annotation{
 		Table: "kpr_app",
 	}
+	KprDivisionTable.ForeignKeys[0].RefTable = KprAppTable
+	KprDivisionTable.ForeignKeys[1].RefTable = KprDivisionTable
+	KprDivisionTable.Annotation = &entsql.Annotation{
+		Table: "kpr_division",
+	}
 	KprUserTable.ForeignKeys[0].RefTable = KprAppTable
+	KprUserTable.ForeignKeys[1].RefTable = KprDivisionTable
 	KprUserTable.Annotation = &entsql.Annotation{
 		Table: "kpr_user",
 	}

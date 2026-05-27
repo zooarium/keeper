@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/predicate"
 	"keeper/ent/user"
 	"math"
@@ -20,11 +21,12 @@ import (
 // AppQuery is the builder for querying App entities.
 type AppQuery struct {
 	config
-	ctx        *QueryContext
-	order      []app.OrderOption
-	inters     []Interceptor
-	predicates []predicate.App
-	withUsers  *UserQuery
+	ctx           *QueryContext
+	order         []app.OrderOption
+	inters        []Interceptor
+	predicates    []predicate.App
+	withUsers     *UserQuery
+	withDivisions *DivisionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (_q *AppQuery) QueryUsers() *UserQuery {
 			sqlgraph.From(app.Table, app.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, app.UsersTable, app.UsersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryDivisions chains the current query on the "divisions" edge.
+func (_q *AppQuery) QueryDivisions() *DivisionQuery {
+	query := (&DivisionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(app.Table, app.FieldID, selector),
+			sqlgraph.To(division.Table, division.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, app.DivisionsTable, app.DivisionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +294,13 @@ func (_q *AppQuery) Clone() *AppQuery {
 		return nil
 	}
 	return &AppQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]app.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.App{}, _q.predicates...),
-		withUsers:  _q.withUsers.Clone(),
+		config:        _q.config,
+		ctx:           _q.ctx.Clone(),
+		order:         append([]app.OrderOption{}, _q.order...),
+		inters:        append([]Interceptor{}, _q.inters...),
+		predicates:    append([]predicate.App{}, _q.predicates...),
+		withUsers:     _q.withUsers.Clone(),
+		withDivisions: _q.withDivisions.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -290,6 +315,17 @@ func (_q *AppQuery) WithUsers(opts ...func(*UserQuery)) *AppQuery {
 		opt(query)
 	}
 	_q.withUsers = query
+	return _q
+}
+
+// WithDivisions tells the query-builder to eager-load the nodes that are connected to
+// the "divisions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *AppQuery) WithDivisions(opts ...func(*DivisionQuery)) *AppQuery {
+	query := (&DivisionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withDivisions = query
 	return _q
 }
 
@@ -371,8 +407,9 @@ func (_q *AppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*App, err
 	var (
 		nodes       = []*App{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withUsers != nil,
+			_q.withDivisions != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -400,6 +437,13 @@ func (_q *AppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*App, err
 			return nil, err
 		}
 	}
+	if query := _q.withDivisions; query != nil {
+		if err := _q.loadDivisions(ctx, query, nodes,
+			func(n *App) { n.Edges.Divisions = []*Division{} },
+			func(n *App, e *Division) { n.Edges.Divisions = append(n.Edges.Divisions, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -418,6 +462,36 @@ func (_q *AppQuery) loadUsers(ctx context.Context, query *UserQuery, nodes []*Ap
 	}
 	query.Where(predicate.User(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(app.UsersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.AppID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "app_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *AppQuery) loadDivisions(ctx context.Context, query *DivisionQuery, nodes []*App, init func(*App), assign func(*App, *Division)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*App)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(division.FieldAppID)
+	}
+	query.Where(predicate.Division(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(app.DivisionsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -36,5 +36,6 @@ func (App) Fields() []ent.Field {
 func (App) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("users", User.Type),
+		edge.To("divisions", Division.Type),
 	}
 }

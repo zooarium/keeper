@@ -50,12 +50,13 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*User,
 	}
 
 	created, err := s.repo.Create(ctx, User{
-		AppID:     req.AppID,
-		Firstname: req.Firstname,
-		Lastname:  req.Lastname,
-		Email:     req.Email,
-		Password:  string(hashedPassword),
-		Status:    1,
+		AppID:      req.AppID,
+		DivisionID: req.DivisionID,
+		Firstname:  req.Firstname,
+		Lastname:   req.Lastname,
+		Email:      req.Email,
+		Password:   string(hashedPassword),
+		Status:     1,
 	})
 	if err != nil {
 		slog.Error("failed to create user in repository", "email", req.Email, "error", err)
@@ -96,6 +97,9 @@ func (s *userService) Update(ctx context.Context, appID, id int, req UpdateUserR
 	}
 	if req.AppID != nil {
 		existing.AppID = *req.AppID
+	}
+	if req.DivisionID != nil {
+		existing.DivisionID = *req.DivisionID
 	}
 	if req.Email != nil {
 		existing.Email = *req.Email

@@ -12,6 +12,7 @@ import (
 	"keeper/ent/migrate"
 
 	"keeper/ent/app"
+	"keeper/ent/division"
 	"keeper/ent/user"
 
 	"entgo.io/ent"
@@ -27,6 +28,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// App is the client for interacting with the App builders.
 	App *AppClient
+	// Division is the client for interacting with the Division builders.
+	Division *DivisionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -41,6 +44,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.App = NewAppClient(c.config)
+	c.Division = NewDivisionClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -132,10 +136,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		App:    NewAppClient(cfg),
-		User:   NewUserClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		App:      NewAppClient(cfg),
+		Division: NewDivisionClient(cfg),
+		User:     NewUserClient(cfg),
 	}, nil
 }
 
@@ -153,10 +158,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		App:    NewAppClient(cfg),
-		User:   NewUserClient(cfg),
+		ctx:      ctx,
+		config:   cfg,
+		App:      NewAppClient(cfg),
+		Division: NewDivisionClient(cfg),
+		User:     NewUserClient(cfg),
 	}, nil
 }
 
@@ -186,6 +192,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.App.Use(hooks...)
+	c.Division.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -193,6 +200,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.App.Intercept(interceptors...)
+	c.Division.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -201,6 +209,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *AppMutation:
 		return c.App.mutate(ctx, m)
+	case *DivisionMutation:
+		return c.Division.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -332,6 +342,22 @@ func (c *AppClient) QueryUsers(_m *App) *UserQuery {
 	return query
 }
 
+// QueryDivisions queries the divisions edge of a App.
+func (c *AppClient) QueryDivisions(_m *App) *DivisionQuery {
+	query := (&DivisionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(app.Table, app.FieldID, id),
+			sqlgraph.To(division.Table, division.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, app.DivisionsTable, app.DivisionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *AppClient) Hooks() []Hook {
 	return c.hooks.App
@@ -354,6 +380,203 @@ func (c *AppClient) mutate(ctx context.Context, m *AppMutation) (Value, error) {
 		return (&AppDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown App mutation op: %q", m.Op())
+	}
+}
+
+// DivisionClient is a client for the Division schema.
+type DivisionClient struct {
+	config
+}
+
+// NewDivisionClient returns a client for the Division from the given config.
+func NewDivisionClient(c config) *DivisionClient {
+	return &DivisionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `division.Hooks(f(g(h())))`.
+func (c *DivisionClient) Use(hooks ...Hook) {
+	c.hooks.Division = append(c.hooks.Division, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `division.Intercept(f(g(h())))`.
+func (c *DivisionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Division = append(c.inters.Division, interceptors...)
+}
+
+// Create returns a builder for creating a Division entity.
+func (c *DivisionClient) Create() *DivisionCreate {
+	mutation := newDivisionMutation(c.config, OpCreate)
+	return &DivisionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Division entities.
+func (c *DivisionClient) CreateBulk(builders ...*DivisionCreate) *DivisionCreateBulk {
+	return &DivisionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DivisionClient) MapCreateBulk(slice any, setFunc func(*DivisionCreate, int)) *DivisionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DivisionCreateBulk{err: fmt.Errorf("calling to DivisionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DivisionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DivisionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Division.
+func (c *DivisionClient) Update() *DivisionUpdate {
+	mutation := newDivisionMutation(c.config, OpUpdate)
+	return &DivisionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DivisionClient) UpdateOne(_m *Division) *DivisionUpdateOne {
+	mutation := newDivisionMutation(c.config, OpUpdateOne, withDivision(_m))
+	return &DivisionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DivisionClient) UpdateOneID(id int) *DivisionUpdateOne {
+	mutation := newDivisionMutation(c.config, OpUpdateOne, withDivisionID(id))
+	return &DivisionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Division.
+func (c *DivisionClient) Delete() *DivisionDelete {
+	mutation := newDivisionMutation(c.config, OpDelete)
+	return &DivisionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DivisionClient) DeleteOne(_m *Division) *DivisionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DivisionClient) DeleteOneID(id int) *DivisionDeleteOne {
+	builder := c.Delete().Where(division.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DivisionDeleteOne{builder}
+}
+
+// Query returns a query builder for Division.
+func (c *DivisionClient) Query() *DivisionQuery {
+	return &DivisionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDivision},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Division entity by its id.
+func (c *DivisionClient) Get(ctx context.Context, id int) (*Division, error) {
+	return c.Query().Where(division.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DivisionClient) GetX(ctx context.Context, id int) *Division {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryChildren queries the children edge of a Division.
+func (c *DivisionClient) QueryChildren(_m *Division) *DivisionQuery {
+	query := (&DivisionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(division.Table, division.FieldID, id),
+			sqlgraph.To(division.Table, division.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, division.ChildrenTable, division.ChildrenColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParent queries the parent edge of a Division.
+func (c *DivisionClient) QueryParent(_m *Division) *DivisionQuery {
+	query := (&DivisionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(division.Table, division.FieldID, id),
+			sqlgraph.To(division.Table, division.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, division.ParentTable, division.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryApp queries the app edge of a Division.
+func (c *DivisionClient) QueryApp(_m *Division) *AppQuery {
+	query := (&AppClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(division.Table, division.FieldID, id),
+			sqlgraph.To(app.Table, app.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, division.AppTable, division.AppColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUsers queries the users edge of a Division.
+func (c *DivisionClient) QueryUsers(_m *Division) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(division.Table, division.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, division.UsersTable, division.UsersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *DivisionClient) Hooks() []Hook {
+	return c.hooks.Division
+}
+
+// Interceptors returns the client interceptors.
+func (c *DivisionClient) Interceptors() []Interceptor {
+	return c.inters.Division
+}
+
+func (c *DivisionClient) mutate(ctx context.Context, m *DivisionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DivisionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DivisionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DivisionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DivisionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Division mutation op: %q", m.Op())
 	}
 }
 
@@ -481,6 +704,22 @@ func (c *UserClient) QueryApp(_m *User) *AppQuery {
 	return query
 }
 
+// QueryDivision queries the division edge of a User.
+func (c *UserClient) QueryDivision(_m *User) *DivisionQuery {
+	query := (&DivisionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(division.Table, division.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, user.DivisionTable, user.DivisionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -509,9 +748,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		App, User []ent.Hook
+		App, Division, User []ent.Hook
 	}
 	inters struct {
-		App, User []ent.Interceptor
+		App, Division, User []ent.Interceptor
 	}
 )

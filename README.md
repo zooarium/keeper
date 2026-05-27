@@ -201,22 +201,37 @@ The database initialization is fully aligned with the Ent migration setup. On ev
 
 ## Database schema
 
-### user
-
-- ID - int - primary key - auto increment
-- AppID - int - foreign key to app
-- Firstname
-- Lastname
-- Email
-- Password
-- Status - smallint - 0 or 1
-- Created at
-- Updated at
-
 ### app
 
 - ID - int - primary key - auto increment
 - Name - string - unique
+- Status - smallint - 0 or 1
+- Created at
+- Updated at
+
+### division
+
+Hierarchical grouping entity using **Materialized Path** for subtree queries. Enables multi-level categorisation (company → department → team) scoped per app. Other microservices store `division_id` alongside `app_id` for granular filtering.
+
+- ID - int - primary key - auto increment
+- AppID - int - foreign key to app (CASCADE DELETE)
+- ParentID - int - nullable self-referential FK (root divisions have NULL)
+- Name - string
+- Path - string - materialized path e.g. `/1/3/7/` (indexed)
+- Depth - smallint - 0 for root, auto-computed from path
+- Status - smallint - 0 or 1
+- Created at
+- Updated at
+
+### user
+
+- ID - int - primary key - auto increment
+- AppID - int - foreign key to app
+- DivisionID - int - foreign key to division (required)
+- Firstname
+- Lastname
+- Email
+- Password
 - Status - smallint - 0 or 1
 - Created at
 - Updated at
@@ -263,6 +278,13 @@ By default, the services are available at:
 - `GET /apps/{id}`: Get app by ID.
 - `PUT /apps/{id}`: Update app by ID.
 - `DELETE /apps/{id}`: Delete app by ID.
+- `POST /divisions`: Create a new division.
+- `GET /divisions`: List divisions (filter: `?parent_id=`).
+- `GET /divisions/{id}`: Get division by ID.
+- `GET /divisions/{id}/descendants`: Get full subtree.
+- `PUT /divisions/{id}`: Update division name/status.
+- `PUT /divisions/{id}/move`: Move division to new parent.
+- `DELETE /divisions/{id}`: Delete division (blocked if has children or users).
 - `GET /swagger/*`: Swagger UI.
 
 ## Rate Limiting

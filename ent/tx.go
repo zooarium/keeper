@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// App is the client for interacting with the App builders.
 	App *AppClient
+	// Division is the client for interacting with the Division builders.
+	Division *DivisionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -148,6 +150,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.App = NewAppClient(tx.config)
+	tx.Division = NewDivisionClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

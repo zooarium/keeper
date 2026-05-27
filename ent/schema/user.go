@@ -26,6 +26,7 @@ func (User) Annotations() []schema.Annotation {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("app_id"),
+		field.Int("division_id"),
 		field.String("firstname"),
 		field.String("lastname"),
 		field.String("email").Unique(),
@@ -46,6 +47,14 @@ func (User) Edges() []ent.Edge {
 			Field("app_id").
 			Annotations(
 				entsql.OnDelete(entsql.Cascade),
+			),
+		edge.From("division", Division.Type).
+			Ref("users").
+			Unique().
+			Required().
+			Field("division_id").
+			Annotations(
+				entsql.OnDelete(entsql.Restrict),
 			),
 	}
 }
