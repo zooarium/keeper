@@ -184,11 +184,23 @@ Hierarchical grouping using **Materialized Path**. Enables company → departmen
 
 
 
+## JWT Claims
+
+`POST /users/auth` returns a token containing:
+
+| Claim        | Type | Description                       |
+|--------------|------|-----------------------------------|
+| `app_id`     | int  | User's app ID                     |
+| `user_id`    | int  | User's ID                         |
+| `division_id`| int  | User's division ID                |
+
+Other microservices (e.g. squirrel) read `division_id` from the JWT claims and store it alongside `app_id` and `user_id` — no separate division management in downstream services.
+
 ## API Endpoints
 - `GET /health`: Check service health.
 - `POST /users`: Create a new user.
 - `GET /users`: List all users.
-- `POST /users/auth`: Authenticate and get JWT.
+- `POST /users/auth`: Authenticate and get JWT (includes division_id in claims).
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.

@@ -21,18 +21,20 @@ func NewJWTManager(secretKey string, tokenDuration time.Duration) *JWTManager {
 // UserClaims is a custom JWT claims that contains user's information.
 type UserClaims struct {
 	jwt.RegisteredClaims
-	AppID  int `json:"app_id"`
-	UserID int `json:"user_id"`
+	AppID      int `json:"app_id"`
+	UserID     int `json:"user_id"`
+	DivisionID int `json:"division_id"`
 }
 
 // Generate generates and signs a new token for a user.
-func (manager *JWTManager) Generate(appID, userID int) (string, error) {
+func (manager *JWTManager) Generate(appID, userID, divisionID int) (string, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(manager.tokenDuration)),
 		},
-		AppID:  appID,
-		UserID: userID,
+		AppID:      appID,
+		UserID:     userID,
+		DivisionID: divisionID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
