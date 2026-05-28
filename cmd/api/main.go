@@ -74,6 +74,11 @@ func main() {
 		}
 	}()
 
+	if err := db.Seed(context.Background(), client, cfg.Seed); err != nil {
+		slog.Error("failed to seed initial data", "error", err)
+		os.Exit(1)
+	}
+
 	// Auth setup
 	jwtManager := auth.NewJWTManager(cfg.Auth.JWTSecret, cfg.Auth.JWTExpiry)
 

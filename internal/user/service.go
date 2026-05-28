@@ -56,6 +56,7 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*User,
 		Lastname:   req.Lastname,
 		Email:      req.Email,
 		Password:   string(hashedPassword),
+		Role:       req.Role,
 		Status:     1,
 	})
 	if err != nil {
@@ -112,6 +113,9 @@ func (s *userService) Update(ctx context.Context, appID, id int, req UpdateUserR
 		}
 		existing.Password = string(hashedPassword)
 	}
+	if req.Role != nil {
+		existing.Role = *req.Role
+	}
 	if req.Status != nil {
 		existing.Status = *req.Status
 	}
@@ -161,7 +165,7 @@ func (s *userService) Authenticate(ctx context.Context, req AuthRequest) (*AuthR
 		return nil, errors.New("invalid credentials")
 	}
 
-	token, err := s.jwt.Generate(u.AppID, u.ID, u.DivisionID)
+	token, err := s.jwt.Generate(u.AppID, u.ID, u.DivisionID, int(u.Role))
 	if err != nil {
 		slog.Error("failed to generate JWT token", "id", u.ID, "error", err)
 		return nil, fmt.Errorf("generate token: %w", err)

@@ -15,6 +15,7 @@ type Config struct {
 	DB          DatabaseConfig `mapstructure:"DB"`
 	Log         LogConfig
 	Auth        AuthConfig
+	Seed        SeedConfig
 	CORS        CORSConfig
 }
 
@@ -48,6 +49,12 @@ type AuthConfig struct {
 	JWTExpiry time.Duration `mapstructure:"JWT_EXPIRY"`
 }
 
+// SeedConfig holds credentials for the bootstrapped sysadmin user.
+type SeedConfig struct {
+	AdminEmail    string `mapstructure:"ADMIN_EMAIL"`
+	AdminPassword string `mapstructure:"ADMIN_PASSWORD"`
+}
+
 // Load loads the configuration from files and environment variables.
 func Load() (*Config, error) {
 	v := viper.New()
@@ -63,6 +70,8 @@ func Load() (*Config, error) {
 	v.SetDefault("LOG.DIR", "log")
 	v.SetDefault("AUTH.JWT_SECRET", "a-very-secure-and-shared-secret-key")
 	v.SetDefault("AUTH.JWT_EXPIRY", 24*time.Hour)
+	v.SetDefault("SEED.ADMIN_EMAIL", "admin@admin.com")
+	v.SetDefault("SEED.ADMIN_PASSWORD", "admin")
 	v.SetDefault("CORS.ALLOWED_ORIGINS", []string{"*"})
 
 	// Environment variables

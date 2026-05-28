@@ -24,10 +24,16 @@ type UserClaims struct {
 	AppID      int `json:"app_id"`
 	UserID     int `json:"user_id"`
 	DivisionID int `json:"division_id"`
+	Role       int `json:"role"`
+}
+
+// IsSysAdmin returns true when the claims carry sysadmin role.
+func (c *UserClaims) IsSysAdmin() bool {
+	return c.Role == 1
 }
 
 // Generate generates and signs a new token for a user.
-func (manager *JWTManager) Generate(appID, userID, divisionID int) (string, error) {
+func (manager *JWTManager) Generate(appID, userID, divisionID, role int) (string, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(manager.tokenDuration)),
@@ -35,6 +41,7 @@ func (manager *JWTManager) Generate(appID, userID, divisionID int) (string, erro
 		AppID:      appID,
 		UserID:     userID,
 		DivisionID: divisionID,
+		Role:       role,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

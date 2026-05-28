@@ -8,6 +8,7 @@ import (
 
 	"keeper/ent"
 	entdivision "keeper/ent/division"
+	"keeper/ent/predicate"
 )
 
 type divisionRepository struct {
@@ -55,11 +56,13 @@ func (r *divisionRepository) Create(ctx context.Context, d Division, parentPath 
 	return r.mapToModel(updated), nil
 }
 
-// GetByID returns a division by ID scoped to an app.
+// GetByID returns a division by ID scoped to an app. appID=0 bypasses the app filter.
 func (r *divisionRepository) GetByID(ctx context.Context, appID, id int) (*Division, error) {
-	d, err := r.client.Division.Query().
-		Where(entdivision.IDEQ(id), entdivision.AppIDEQ(appID)).
-		Only(ctx)
+	q := r.client.Division.Query().Where(entdivision.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(entdivision.AppIDEQ(appID))
+	}
+	d, err := q.Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			slog.Warn("division not found in database", "id", id, "app_id", appID)
@@ -71,9 +74,12 @@ func (r *divisionRepository) GetByID(ctx context.Context, appID, id int) (*Divis
 	return r.mapToModel(d), nil
 }
 
-// List returns divisions scoped to an app. If parentID is nil, returns all divisions.
+// List returns divisions scoped to an app. appID=0 returns all apps. If parentID is nil, returns all divisions.
 func (r *divisionRepository) List(ctx context.Context, appID int, parentID *int) ([]*Division, error) {
-	q := r.client.Division.Query().Where(entdivision.AppIDEQ(appID))
+	q := r.client.Division.Query()
+	if appID != 0 {
+		q = q.Where(entdivision.AppIDEQ(appID))
+	}
 	if parentID != nil {
 		q = q.Where(entdivision.ParentIDEQ(*parentID))
 	}
@@ -89,14 +95,18 @@ func (r *divisionRepository) List(ctx context.Context, appID int, parentID *int)
 	return result, nil
 }
 
-// Descendants returns all descendants of the division identified by path.
+// Descendants returns all descendants of the division identified by path. appID=0 bypasses the app filter.
 func (r *divisionRepository) Descendants(ctx context.Context, appID int, path string) ([]*Division, error) {
+	predicates := []predicate.Division{
+		entdivision.PathHasPrefix(path),
+		entdivision.PathNEQ(path),
+	}
+	if appID != 0 {
+		predicates = append(predicates, entdivision.AppIDEQ(appID))
+	}
+
 	divisions, err := r.client.Division.Query().
-		Where(
-			entdivision.AppIDEQ(appID),
-			entdivision.PathHasPrefix(path),
-			entdivision.PathNEQ(path),
-		).
+		Where(predicates...).
 		All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to get descendants", "path", path, "error", err)
@@ -109,10 +119,13 @@ func (r *divisionRepository) Descendants(ctx context.Context, appID int, path st
 	return result, nil
 }
 
-// Update updates name and status of a division.
+// Update updates name and status of a division. appID=0 bypasses the app filter.
 func (r *divisionRepository) Update(ctx context.Context, appID, id int, d *Division) (*Division, error) {
-	count, err := r.client.Division.Update().
-		Where(entdivision.IDEQ(id), entdivision.AppIDEQ(appID)).
+	q := r.client.Division.Update().Where(entdivision.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(entdivision.AppIDEQ(appID))
+	}
+	count, err := q.
 		SetName(d.Name).
 		SetStatus(d.Status).
 		Save(ctx)
@@ -186,11 +199,13 @@ func (r *divisionRepository) CountUsers(ctx context.Context, id int) (int, error
 	return r.client.Division.QueryUsers(d).Count(ctx)
 }
 
-// Delete removes a division scoped to an app.
+// Delete removes a division scoped to an app. appID=0 bypasses the app filter.
 func (r *divisionRepository) Delete(ctx context.Context, appID, id int) error {
-	count, err := r.client.Division.Delete().
-		Where(entdivision.IDEQ(id), entdivision.AppIDEQ(appID)).
-		Exec(ctx)
+	q := r.client.Division.Delete().Where(entdivision.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(entdivision.AppIDEQ(appID))
+	}
+	count, err := q.Exec(ctx)
 	if err != nil {
 		slog.Error("database error: failed to delete division", "id", id, "error", err)
 		return err

@@ -114,6 +114,27 @@ func (_u *UserUpdate) SetNillablePassword(v *string) *UserUpdate {
 	return _u
 }
 
+// SetRole sets the "role" field.
+func (_u *UserUpdate) SetRole(v int8) *UserUpdate {
+	_u.mutation.ResetRole()
+	_u.mutation.SetRole(v)
+	return _u
+}
+
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableRole(v *int8) *UserUpdate {
+	if v != nil {
+		_u.SetRole(*v)
+	}
+	return _u
+}
+
+// AddRole adds value to the "role" field.
+func (_u *UserUpdate) AddRole(v int8) *UserUpdate {
+	_u.mutation.AddRole(v)
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *UserUpdate) SetStatus(v int8) *UserUpdate {
 	_u.mutation.ResetStatus()
@@ -252,6 +273,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Role(); ok {
+		_spec.SetField(user.FieldRole, field.TypeInt8, value)
+	}
+	if value, ok := _u.mutation.AddedRole(); ok {
+		_spec.AddField(user.FieldRole, field.TypeInt8, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(user.FieldStatus, field.TypeInt8, value)
@@ -427,6 +454,27 @@ func (_u *UserUpdateOne) SetNillablePassword(v *string) *UserUpdateOne {
 	return _u
 }
 
+// SetRole sets the "role" field.
+func (_u *UserUpdateOne) SetRole(v int8) *UserUpdateOne {
+	_u.mutation.ResetRole()
+	_u.mutation.SetRole(v)
+	return _u
+}
+
+// SetNillableRole sets the "role" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableRole(v *int8) *UserUpdateOne {
+	if v != nil {
+		_u.SetRole(*v)
+	}
+	return _u
+}
+
+// AddRole adds value to the "role" field.
+func (_u *UserUpdateOne) AddRole(v int8) *UserUpdateOne {
+	_u.mutation.AddRole(v)
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *UserUpdateOne) SetStatus(v int8) *UserUpdateOne {
 	_u.mutation.ResetStatus()
@@ -595,6 +643,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Role(); ok {
+		_spec.SetField(user.FieldRole, field.TypeInt8, value)
+	}
+	if value, ok := _u.mutation.AddedRole(); ok {
+		_spec.AddField(user.FieldRole, field.TypeInt8, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(user.FieldStatus, field.TypeInt8, value)

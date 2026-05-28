@@ -131,7 +131,7 @@ func (h *AppHandler) GetAppByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if id != claims.AppID {
+	if !claims.IsSysAdmin() && id != claims.AppID {
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -175,7 +175,7 @@ func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if id != claims.AppID {
+	if !claims.IsSysAdmin() && id != claims.AppID {
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -229,7 +229,7 @@ func (h *AppHandler) DeleteApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if id != claims.AppID {
+	if !claims.IsSysAdmin() && id != claims.AppID {
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}

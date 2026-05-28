@@ -91,7 +91,7 @@ func (h *DivisionHandler) CreateDivision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if req.AppID != c.AppID {
+	if !c.IsSysAdmin() && req.AppID != c.AppID {
 		slog.Warn("create division rejected: app_id mismatch", "claims_app_id", c.AppID, "req_app_id", req.AppID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
@@ -135,7 +135,12 @@ func (h *DivisionHandler) ListDivisions(w http.ResponseWriter, r *http.Request) 
 		parentID = &pid
 	}
 
-	divisions, err := h.svc.List(r.Context(), c.AppID, parentID)
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	divisions, err := h.svc.List(r.Context(), appID, parentID)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -170,7 +175,12 @@ func (h *DivisionHandler) GetDivisionByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	d, err := h.svc.GetByID(r.Context(), c.AppID, id)
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	d, err := h.svc.GetByID(r.Context(), appID, id)
 	if err != nil {
 		slog.Warn("division not found", "id", id)
 		render.Error(w, http.StatusNotFound, "division not found")
@@ -206,7 +216,12 @@ func (h *DivisionHandler) GetDescendants(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	descendants, err := h.svc.Descendants(r.Context(), c.AppID, id)
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	descendants, err := h.svc.Descendants(r.Context(), appID, id)
 	if err != nil {
 		slog.Warn("division not found for descendants query", "id", id)
 		render.Error(w, http.StatusNotFound, "division not found")
@@ -257,7 +272,12 @@ func (h *DivisionHandler) UpdateDivision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	d, err := h.svc.Update(r.Context(), c.AppID, id, req)
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	d, err := h.svc.Update(r.Context(), appID, id, req)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -301,7 +321,12 @@ func (h *DivisionHandler) MoveDivision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	d, err := h.svc.Move(r.Context(), c.AppID, id, req)
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	d, err := h.svc.Move(r.Context(), appID, id, req)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, err.Error())
 		return
@@ -336,7 +361,12 @@ func (h *DivisionHandler) DeleteDivision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.svc.Delete(r.Context(), c.AppID, id); err != nil {
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	if err := h.svc.Delete(r.Context(), appID, id); err != nil {
 		render.Error(w, http.StatusInternalServerError, err.Error())
 		return
 	}

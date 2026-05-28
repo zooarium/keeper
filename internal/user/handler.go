@@ -88,8 +88,14 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.AppID != c.AppID {
+	if !c.IsSysAdmin() && req.AppID != c.AppID {
 		slog.Warn("create user rejected: app_id mismatch", "claims_app_id", c.AppID, "req_app_id", req.AppID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
+	if !c.IsSysAdmin() && req.Role == int8(RoleSysAdmin) {
+		slog.Warn("create user rejected: non-sysadmin cannot assign sysadmin role", "user_id", c.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -120,7 +126,12 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.svc.List(r.Context(), c.AppID)
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	users, err := h.svc.List(r.Context(), appID)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -157,7 +168,12 @@ func (h *UserHandler) GetUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.svc.GetByID(r.Context(), c.AppID, id)
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	u, err := h.svc.GetByID(r.Context(), appID, id)
 	if err != nil {
 		slog.Warn("user not found", "id", id)
 		render.Error(w, http.StatusNotFound, "user not found")
@@ -210,7 +226,18 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := h.svc.Update(r.Context(), c.AppID, id, req)
+	if !c.IsSysAdmin() && req.Role != nil && *req.Role == RoleSysAdmin {
+		slog.Warn("update user rejected: non-sysadmin cannot assign sysadmin role", "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	u, err := h.svc.Update(r.Context(), appID, id, req)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -247,7 +274,12 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.svc.Delete(r.Context(), c.AppID, id); err != nil {
+	appID := c.AppID
+	if c.IsSysAdmin() {
+		appID = 0
+	}
+
+	if err := h.svc.Delete(r.Context(), appID, id); err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}

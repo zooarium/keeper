@@ -41,6 +41,7 @@ func (r *userRepository) Create(ctx context.Context, u User) (*User, error) {
 		SetLastname(u.Lastname).
 		SetEmail(u.Email).
 		SetPassword(u.Password).
+		SetRole(u.Role).
 		SetStatus(u.Status).
 		Save(ctx)
 	if err != nil {
@@ -51,11 +52,11 @@ func (r *userRepository) Create(ctx context.Context, u User) (*User, error) {
 }
 
 func (r *userRepository) GetByID(ctx context.Context, appID, id int) (*User, error) {
-	u, err := r.client.User.Query().
-		Where(user.IDEQ(id), user.AppIDEQ(appID)).
-		WithApp().
-		WithDivision().
-		Only(ctx)
+	q := r.client.User.Query().Where(user.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(user.AppIDEQ(appID))
+	}
+	u, err := q.WithApp().WithDivision().Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			slog.Warn("user not found in database", "id", id, "app_id", appID)
@@ -85,11 +86,11 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, e
 }
 
 func (r *userRepository) List(ctx context.Context, appID int) ([]*User, error) {
-	users, err := r.client.User.Query().
-		Where(user.AppIDEQ(appID)).
-		WithApp().
-		WithDivision().
-		All(ctx)
+	q := r.client.User.Query()
+	if appID != 0 {
+		q = q.Where(user.AppIDEQ(appID))
+	}
+	users, err := q.WithApp().WithDivision().All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list users", "error", err)
 		return nil, err
@@ -102,14 +103,18 @@ func (r *userRepository) List(ctx context.Context, appID int) ([]*User, error) {
 }
 
 func (r *userRepository) Update(ctx context.Context, appID, id int, u *User) (*User, error) {
-	count, err := r.client.User.Update().
-		Where(user.IDEQ(id), user.AppIDEQ(appID)).
+	q := r.client.User.Update().Where(user.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(user.AppIDEQ(appID))
+	}
+	count, err := q.
 		SetAppID(u.AppID).
 		SetDivisionID(u.DivisionID).
 		SetFirstname(u.Firstname).
 		SetLastname(u.Lastname).
 		SetEmail(u.Email).
 		SetPassword(u.Password).
+		SetRole(u.Role).
 		SetStatus(u.Status).
 		Save(ctx)
 	if err != nil {
@@ -124,9 +129,11 @@ func (r *userRepository) Update(ctx context.Context, appID, id int, u *User) (*U
 }
 
 func (r *userRepository) Delete(ctx context.Context, appID, id int) error {
-	count, err := r.client.User.Delete().
-		Where(user.IDEQ(id), user.AppIDEQ(appID)).
-		Exec(ctx)
+	q := r.client.User.Delete().Where(user.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(user.AppIDEQ(appID))
+	}
+	count, err := q.Exec(ctx)
 	if err != nil {
 		slog.Error("database error: failed to delete user", "id", id, "error", err)
 		return err
@@ -147,6 +154,7 @@ func (r *userRepository) mapToModel(u *ent.User) *User {
 		Lastname:   u.Lastname,
 		Email:      u.Email,
 		Password:   u.Password,
+		Role:       u.Role,
 		Status:     u.Status,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,
