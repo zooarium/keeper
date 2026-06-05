@@ -30,6 +30,20 @@ const docTemplate = `{
                     "apps"
                 ],
                 "summary": "List all apps",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 50, max 500)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Result offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -339,6 +353,18 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Filter by parent ID",
                         "name": "parent_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 50, max 500)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Result offset (default 0)",
+                        "name": "offset",
                         "in": "query"
                     }
                 ],
@@ -815,6 +841,20 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "List all users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 50, max 500)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Result offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1357,6 +1397,9 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 8
+                },
+                "role": {
+                    "type": "integer"
                 }
             }
         },
@@ -1381,6 +1424,9 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 8
+                },
+                "role": {
+                    "type": "integer"
                 },
                 "status": {
                     "type": "integer"
@@ -1416,6 +1462,9 @@ const docTemplate = `{
                 },
                 "lastname": {
                     "type": "string"
+                },
+                "role": {
+                    "type": "integer"
                 },
                 "status": {
                     "type": "integer"

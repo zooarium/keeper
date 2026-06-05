@@ -56,21 +56,35 @@ func main() {
 		}
 	}()
 
+	var logLevel slog.Level
+	switch cfg.Log.Level {
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "info":
+		logLevel = slog.LevelInfo
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "error":
+		logLevel = slog.LevelError
+	default:
+		logLevel = slog.LevelInfo
+	}
+
 	mw := io.MultiWriter(os.Stdout, logFile)
-	logger := slog.New(slog.NewJSONHandler(mw, nil))
+	logger := slog.New(slog.NewJSONHandler(mw, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
 	// Override Swagger host
 	docs.SwaggerInfo.Host = cfg.Server.Host
 
-	client, err := db.NewSQLiteClient(cfg.DB.Path)
+	client, err := db.NewClient(cfg.DB)
 	if err != nil {
-		slog.Error("failed to open sqlite client", "error", err)
+		slog.Error("failed to open database client", "error", err)
 		os.Exit(1)
 	}
 	defer func() {
 		if err := client.Close(); err != nil {
-			slog.Error("failed to close sqlite client", "error", err)
+			slog.Error("failed to close database client", "error", err)
 		}
 	}()
 

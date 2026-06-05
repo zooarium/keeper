@@ -10,7 +10,7 @@ import (
 type AppRepository interface {
 	Create(ctx context.Context, a App) (*App, error)
 	GetByID(ctx context.Context, id int) (*App, error)
-	List(ctx context.Context) ([]*App, error)
+	List(ctx context.Context, limit, offset int) ([]*App, error)
 	Update(ctx context.Context, id int, a *App) (*App, error)
 	Delete(ctx context.Context, id int) error
 }
@@ -19,7 +19,7 @@ type AppRepository interface {
 type AppService interface {
 	Create(ctx context.Context, req CreateAppRequest) (*App, error)
 	GetByID(ctx context.Context, id int) (*App, error)
-	List(ctx context.Context) ([]*App, error)
+	List(ctx context.Context, limit, offset int) ([]*App, error)
 	Update(ctx context.Context, id int, req UpdateAppRequest) (*App, error)
 	Delete(ctx context.Context, id int) error
 }
@@ -58,9 +58,9 @@ func (s *appService) GetByID(ctx context.Context, id int) (*App, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *appService) List(ctx context.Context) ([]*App, error) {
-	slog.Info("listing apps")
-	return s.repo.List(ctx)
+func (s *appService) List(ctx context.Context, limit, offset int) ([]*App, error) {
+	slog.Info("listing apps", "limit", limit, "offset", offset)
+	return s.repo.List(ctx, limit, offset)
 }
 
 func (s *appService) Update(ctx context.Context, id int, req UpdateAppRequest) (*App, error) {

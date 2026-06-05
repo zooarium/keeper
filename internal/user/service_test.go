@@ -123,7 +123,7 @@ func TestService_Authenticate(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		users, err := svc.List(ctx, a.ID)
+		users, err := svc.List(ctx, a.ID, 50, 0)
 		assert.NoError(t, err)
 		var inactiveID int
 		for _, usr := range users {

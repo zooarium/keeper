@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"keeper/ent"
+	entapp "keeper/ent/app"
 )
 
 type appRepository struct {
@@ -43,8 +44,12 @@ func (r *appRepository) GetByID(ctx context.Context, id int) (*App, error) {
 	return r.mapToModel(a), nil
 }
 
-func (r *appRepository) List(ctx context.Context) ([]*App, error) {
-	apps, err := r.client.App.Query().All(ctx)
+func (r *appRepository) List(ctx context.Context, limit, offset int) ([]*App, error) {
+	apps, err := r.client.App.Query().
+		Order(ent.Asc(entapp.FieldID)).
+		Limit(limit).
+		Offset(offset).
+		All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list apps", "error", err)
 		return nil, err

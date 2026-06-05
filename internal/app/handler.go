@@ -89,13 +89,16 @@ func (h *AppHandler) CreateApp(w http.ResponseWriter, r *http.Request) {
 // @Description Get a list of all registered apps
 // @Tags apps
 // @Produce json
+// @Param limit query int false "Max results (default 50, max 500)"
+// @Param offset query int false "Result offset (default 0)"
 // @Success 200 {object} render.Response{data=[]App}
 // @Failure 401 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /apps [get]
 func (h *AppHandler) ListApps(w http.ResponseWriter, r *http.Request) {
-	apps, err := h.svc.List(r.Context())
+	page := render.ParsePage(r)
+	apps, err := h.svc.List(r.Context(), page.Limit, page.Offset)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, err.Error())
 		return

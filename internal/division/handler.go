@@ -112,6 +112,8 @@ func (h *DivisionHandler) CreateDivision(w http.ResponseWriter, r *http.Request)
 // @Tags divisions
 // @Produce json
 // @Param parent_id query int false "Filter by parent ID"
+// @Param limit query int false "Max results (default 50, max 500)"
+// @Param offset query int false "Result offset (default 0)"
 // @Success 200 {object} render.Response{data=[]Division}
 // @Failure 401 {object} render.Response
 // @Failure 500 {object} render.Response
@@ -140,7 +142,8 @@ func (h *DivisionHandler) ListDivisions(w http.ResponseWriter, r *http.Request) 
 		appID = 0
 	}
 
-	divisions, err := h.svc.List(r.Context(), appID, parentID)
+	page := render.ParsePage(r)
+	divisions, err := h.svc.List(r.Context(), appID, parentID, page.Limit, page.Offset)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return

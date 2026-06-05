@@ -21,7 +21,7 @@ type mockUserService struct {
 	user.UserService
 }
 
-func (m *mockUserService) List(ctx context.Context, appID int) ([]*user.User, error) {
+func (m *mockUserService) List(ctx context.Context, appID, limit, offset int) ([]*user.User, error) {
 	return []*user.User{}, nil
 }
 
@@ -33,7 +33,7 @@ type mockAppService struct {
 	app.AppService
 }
 
-func (m *mockAppService) List(ctx context.Context) ([]*app.App, error) {
+func (m *mockAppService) List(ctx context.Context, limit, offset int) ([]*app.App, error) {
 	return []*app.App{}, nil
 }
 
@@ -41,7 +41,7 @@ type mockDivisionService struct {
 	division.DivisionService
 }
 
-func (m *mockDivisionService) List(ctx context.Context, appID int, parentID *int) ([]*division.Division, error) {
+func (m *mockDivisionService) List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*division.Division, error) {
 	return []*division.Division{}, nil
 }
 

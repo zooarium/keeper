@@ -100,6 +100,13 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "user_app_id",
+				Unique:  false,
+				Columns: []*schema.Column{KprUserColumns[9]},
+			},
+		},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{

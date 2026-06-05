@@ -2,9 +2,12 @@ ENVIRONMENT: production
 SERVER:
   HOST: "localhost:8080"
 DB:
-  PATH: "data/keeper.db"
+  DRIVER: "sqlite3"        # sqlite3 | postgres
+  PATH: "data/keeper.db"   # used when DRIVER is sqlite3
+  DSN: ""                  # used when DRIVER is postgres, e.g. "host=localhost port=5432 user=keeper password=secret dbname=keeper sslmode=disable"
 LOG:
   DIR: "log"
+  LEVEL: "info"            # debug | info | warn | error
 AUTH:
   JWT_SECRET: "a-very-secure-and-shared-secret-key"
 CORS:

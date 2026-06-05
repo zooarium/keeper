@@ -34,8 +34,8 @@ func (m *mockDivisionService) GetByID(ctx context.Context, appID, id int) (*Divi
 	return args.Get(0).(*Division), args.Error(1)
 }
 
-func (m *mockDivisionService) List(ctx context.Context, appID int, parentID *int) ([]*Division, error) {
-	args := m.Called(ctx, appID, parentID)
+func (m *mockDivisionService) List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*Division, error) {
+	args := m.Called(ctx, appID, parentID, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -108,7 +108,7 @@ func TestDivisionHandler_List(t *testing.T) {
 		{ID: 2, AppID: 1, Name: "Root 2", Path: "/2/", Depth: 0},
 	}
 
-	svc.On("List", mock.Anything, 1, (*int)(nil)).Return(expected, nil)
+	svc.On("List", mock.Anything, 1, (*int)(nil), mock.Anything, mock.Anything).Return(expected, nil)
 
 	req, _ := http.NewRequest("GET", "/divisions", nil)
 	rr := httptest.NewRecorder()
@@ -139,7 +139,7 @@ func TestDivisionHandler_List_Response(t *testing.T) {
 		{ID: 1, AppID: 1, Name: "Root", Path: "/1/", Depth: 0, Status: 1},
 	}
 
-	svc.On("List", mock.Anything, mock.Anything, (*int)(nil)).Return(expected, nil)
+	svc.On("List", mock.Anything, mock.Anything, (*int)(nil), mock.Anything, mock.Anything).Return(expected, nil)
 
 	req, _ := http.NewRequest("GET", "/divisions", nil)
 	rr := httptest.NewRecorder()

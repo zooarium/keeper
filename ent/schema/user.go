@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // User holds the schema definition for the User entity.
@@ -57,5 +58,12 @@ func (User) Edges() []ent.Edge {
 			Annotations(
 				entsql.OnDelete(entsql.Restrict),
 			),
+	}
+}
+
+// Indexes of the User.
+func (User) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("app_id"),
 	}
 }

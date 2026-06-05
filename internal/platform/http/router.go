@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
@@ -23,6 +24,7 @@ func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisi
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(MetricsMiddleware)
 
 	// Add CORS middleware
 	corsMiddleware := cors.New(cors.Options{
@@ -42,6 +44,9 @@ func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisi
 	))
 
 	r.Get("/health", HealthHandler)
+
+	// Prometheus metrics endpoint (exempt from JWT auth).
+	r.Handle("/metrics", promhttp.Handler())
 
 	r.Mount("/users", userHandler.Routes(jwtManager))
 	r.Mount("/apps", appHandler.Routes(jwtManager))

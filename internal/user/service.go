@@ -16,7 +16,7 @@ type UserRepository interface {
 	Create(ctx context.Context, u User) (*User, error)
 	GetByID(ctx context.Context, appID, id int) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	List(ctx context.Context, appID int) ([]*User, error)
+	List(ctx context.Context, appID, limit, offset int) ([]*User, error)
 	Update(ctx context.Context, appID, id int, u *User) (*User, error)
 	Delete(ctx context.Context, appID, id int) error
 }
@@ -25,7 +25,7 @@ type UserRepository interface {
 type UserService interface {
 	Create(ctx context.Context, req CreateUserRequest) (*User, error)
 	GetByID(ctx context.Context, appID, id int) (*User, error)
-	List(ctx context.Context, appID int) ([]*User, error)
+	List(ctx context.Context, appID, limit, offset int) ([]*User, error)
 	Update(ctx context.Context, appID, id int, req UpdateUserRequest) (*User, error)
 	Delete(ctx context.Context, appID, id int) error
 	Authenticate(ctx context.Context, req AuthRequest) (*AuthResponse, error)
@@ -73,8 +73,8 @@ func (s *userService) GetByID(ctx context.Context, appID, id int) (*User, error)
 	return s.repo.GetByID(ctx, appID, id)
 }
 
-func (s *userService) List(ctx context.Context, appID int) ([]*User, error) {
-	users, err := s.repo.List(ctx, appID)
+func (s *userService) List(ctx context.Context, appID, limit, offset int) ([]*User, error) {
+	users, err := s.repo.List(ctx, appID, limit, offset)
 	if err != nil {
 		slog.Error("failed to list users", "error", err)
 		return nil, err

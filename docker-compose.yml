@@ -1,6 +1,9 @@
 services:
   api:
-    build: .
+    build:
+      context: .
+      args:
+        GO_VERSION: ${GO_VERSION:-1.26.3}
     ports:
       - "8080:8080"
     volumes:

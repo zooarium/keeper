@@ -99,7 +99,7 @@ func TestService_List(t *testing.T) {
 	_, _ = svc.Create(ctx, CreateAppRequest{Name: "App 1"})
 	_, _ = svc.Create(ctx, CreateAppRequest{Name: "App 2"})
 
-	apps, err := svc.List(ctx)
+	apps, err := svc.List(ctx, 50, 0)
 	assert.NoError(t, err)
 	assert.Len(t, apps, 2)
 }

@@ -116,7 +116,7 @@ func TestDivisionService_List(t *testing.T) {
 	_, _ = svc.Create(ctx, CreateDivisionRequest{AppID: app.ID, Name: "Root 1"})
 	_, _ = svc.Create(ctx, CreateDivisionRequest{AppID: app.ID, Name: "Root 2"})
 
-	divisions, err := svc.List(ctx, app.ID, nil)
+	divisions, err := svc.List(ctx, app.ID, nil, 50, 0)
 	assert.NoError(t, err)
 	assert.Len(t, divisions, 2)
 }

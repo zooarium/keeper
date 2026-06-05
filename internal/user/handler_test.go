@@ -34,8 +34,8 @@ func (m *mockService) GetByID(ctx context.Context, appID, id int) (*User, error)
 	return args.Get(0).(*User), args.Error(1)
 }
 
-func (m *mockService) List(ctx context.Context, appID int) ([]*User, error) {
-	args := m.Called(ctx, appID)
+func (m *mockService) List(ctx context.Context, appID, limit, offset int) ([]*User, error) {
+	args := m.Called(ctx, appID, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

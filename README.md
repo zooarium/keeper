@@ -34,7 +34,7 @@ A microservice providing functionality of authentication and authorisation.
     response.go
     router.go
   db/
-    sqlite.go
+    client.go
 /pkg/
   logger/
   config/
@@ -110,6 +110,7 @@ func (s *service) Create(ctx context.Context, u User) error
 
 The project uses Docker and a Makefile for development.
 
+- `make all`: Run the full pipeline (fmt, vet, lint, test, swag, build, up).
 - `make build`: Build the Docker images.
 - `make up`: Start the containers in the background.
 - `make down`: Stop and remove the containers.
@@ -184,7 +185,7 @@ You can manually apply migrations to the database using:
 make migrate-apply
 ```
 
-Additionally, in the current development setup, the application automatically applies migrations on startup using `client.Schema.Create` in `internal/db/sqlite.go`. You can restart the service to trigger this:
+Additionally, in the current development setup, the application automatically applies migrations on startup using `client.Schema.Create` in `internal/db/client.go`. You can restart the service to trigger this:
 ```bash
 make restart
 ```

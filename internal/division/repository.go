@@ -75,7 +75,7 @@ func (r *divisionRepository) GetByID(ctx context.Context, appID, id int) (*Divis
 }
 
 // List returns divisions scoped to an app. appID=0 returns all apps. If parentID is nil, returns all divisions.
-func (r *divisionRepository) List(ctx context.Context, appID int, parentID *int) ([]*Division, error) {
+func (r *divisionRepository) List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*Division, error) {
 	q := r.client.Division.Query()
 	if appID != 0 {
 		q = q.Where(entdivision.AppIDEQ(appID))
@@ -83,7 +83,11 @@ func (r *divisionRepository) List(ctx context.Context, appID int, parentID *int)
 	if parentID != nil {
 		q = q.Where(entdivision.ParentIDEQ(*parentID))
 	}
-	divisions, err := q.All(ctx)
+	divisions, err := q.
+		Order(ent.Asc(entdivision.FieldID)).
+		Limit(limit).
+		Offset(offset).
+		All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list divisions", "app_id", appID, "error", err)
 		return nil, err
@@ -140,11 +144,36 @@ func (r *divisionRepository) Update(ctx context.Context, appID, id int, d *Divis
 	return r.GetByID(ctx, appID, id)
 }
 
-// CascadeUpdatePath updates path and depth for a division and all its descendants.
-// oldPath is the current path of the moved node; newPath is its new path.
-func (r *divisionRepository) CascadeUpdatePath(ctx context.Context, id int, oldPath, newPath string) error {
-	// Fetch all affected divisions (node + descendants)
-	affected, err := r.client.Division.Query().
+// Move atomically reparents a division and cascades the path/depth update across
+// the moved node and all its descendants. The whole operation runs inside a single
+// transaction and rolls back on any error.
+//
+// oldPath is the current path of the moved node; newPath is its target path.
+func (r *divisionRepository) Move(ctx context.Context, id int, newParentID *int, oldPath, newPath string) error {
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		slog.Error("database error: failed to begin transaction for move", "id", id, "error", err)
+		return fmt.Errorf("begin tx: %w", err)
+	}
+
+	if err := r.moveTx(ctx, tx, id, newParentID, oldPath, newPath); err != nil {
+		if rerr := tx.Rollback(); rerr != nil {
+			slog.Error("database error: failed to rollback move transaction", "id", id, "error", rerr)
+		}
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		slog.Error("database error: failed to commit move transaction", "id", id, "error", err)
+		return fmt.Errorf("commit tx: %w", err)
+	}
+	return nil
+}
+
+// moveTx performs the path cascade and the parent/path update within the given transaction.
+func (r *divisionRepository) moveTx(ctx context.Context, tx *ent.Tx, id int, newParentID *int, oldPath, newPath string) error {
+	// Fetch all affected divisions (node + descendants).
+	affected, err := tx.Division.Query().
 		Where(entdivision.PathHasPrefix(oldPath)).
 		All(ctx)
 	if err != nil {
@@ -155,28 +184,22 @@ func (r *divisionRepository) CascadeUpdatePath(ctx context.Context, id int, oldP
 	for _, d := range affected {
 		updatedPath := newPath + d.Path[len(oldPath):]
 		updatedDepth := int8(strings.Count(updatedPath, "/") - 2)
-		_, err := r.client.Division.UpdateOneID(d.ID).
+		if _, err := tx.Division.UpdateOneID(d.ID).
 			SetPath(updatedPath).
 			SetDepth(updatedDepth).
-			Save(ctx)
-		if err != nil {
+			Save(ctx); err != nil {
 			slog.Error("database error: failed to cascade update path", "id", d.ID, "error", err)
 			return err
 		}
 	}
-	return nil
-}
 
-// Move updates the parent_id of a division.
-func (r *divisionRepository) Move(ctx context.Context, id int, newParentID *int) error {
-	u := r.client.Division.UpdateOneID(id)
+	u := tx.Division.UpdateOneID(id)
 	if newParentID != nil {
 		u = u.SetParentID(*newParentID)
 	} else {
 		u = u.ClearParentID()
 	}
-	_, err := u.Save(ctx)
-	if err != nil {
+	if _, err := u.Save(ctx); err != nil {
 		slog.Error("database error: failed to move division", "id", id, "error", err)
 		return err
 	}

@@ -50,7 +50,7 @@ Keeper is a microservice for user management, providing RESTful APIs for authent
 │   │   ├── http/           # Router & Middleware
 │   │   └── render/         # Standard API responses
 │   └── db/
-│       └── sqlite.go       # SQLite client initialization
+│       └── client.go       # DB client init (sqlite/postgres)
 ├── ent/                    # Ent ORM generated code & schema
 │   └── schema/
 │       ├── app.go          # App database schema definition
@@ -107,6 +107,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 11.  **Custom Scripts**: You **MUST** always run any custom script using the `make run-script` command to ensure a consistent environment and proper dependency handling.
 
 ### Common Commands (Makefile)
+- `make all`: Run the full pipeline (fmt, vet, lint, test, swag, build, up).
 - `make build`: Build Docker images.
 - `make up`: Start services in the background.
 - `make down`: Stop services.
@@ -227,3 +228,15 @@ Other microservices (e.g. squirrel) read `division_id` from the JWT claims and s
 - **Database**: `./data/keeper.db` mapped to `/app/data/keeper.db`.
 - **Logs**: `./log/` mapped to `/app/log/`.
 - **Environment**: `DB_PATH` and `LOG_DIR` control these paths.
+
+## Engineering Constraints (mandatory for all new code)
+
+- **Pagination**: every list endpoint MUST accept `limit` (default 50, max 500) and `offset` (default 0) query params and apply them at the query level (`.Limit()/.Offset()`). Never return unbounded result sets.
+- **Indexes**: do not add indexes unilaterally. When a query pattern would benefit from one (column in WHERE, JOIN, or ORDER BY), propose it to the user — including composite options where queries filter multiple columns — and add it only after explicit confirmation. Define via `Indexes()` in the ent schema.
+- **Transactions**: any operation performing more than one dependent write MUST run inside a single DB transaction (`client.Tx(ctx)`) with rollback on error.
+- **Column selection**: when only a subset of columns is needed, use ent `.Select()` instead of fetching full entities.
+- **DB portability**: DB driver is configurable (`DB.DRIVER`: sqlite3 | postgres). Keep schema and queries portable across SQLite and Postgres; no driver-specific SQL in business code. Plan: migrate to Postgres as row counts grow.
+- **Caching**: frequently-read, rarely-changing responses (e.g. aggregates/stats) should be cached in-memory with a short TTL and explicit invalidation on writes.
+- **Sensitive fields**: never expose secrets or password hashes in JSON (`json:"-"`) or logs.
+- **Observability**: structured JSON logging via slog (level from `LOG.LEVEL` config); the service exposes Prometheus `/metrics`; new endpoints are automatically covered by the metrics middleware.
+- **Outbound HTTP**: any future HTTP client must use a shared client with a timeout sourced from config (never a zero-timeout default client).

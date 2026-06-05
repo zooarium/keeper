@@ -11,11 +11,10 @@ import (
 type DivisionRepository interface {
 	Create(ctx context.Context, d Division, parentPath string) (*Division, error)
 	GetByID(ctx context.Context, appID, id int) (*Division, error)
-	List(ctx context.Context, appID int, parentID *int) ([]*Division, error)
+	List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*Division, error)
 	Descendants(ctx context.Context, appID int, path string) ([]*Division, error)
 	Update(ctx context.Context, appID, id int, d *Division) (*Division, error)
-	CascadeUpdatePath(ctx context.Context, id int, oldPath, newPath string) error
-	Move(ctx context.Context, id int, newParentID *int) error
+	Move(ctx context.Context, id int, newParentID *int, oldPath, newPath string) error
 	CountChildren(ctx context.Context, id int) (int, error)
 	CountUsers(ctx context.Context, id int) (int, error)
 	Delete(ctx context.Context, appID, id int) error
@@ -25,7 +24,7 @@ type DivisionRepository interface {
 type DivisionService interface {
 	Create(ctx context.Context, req CreateDivisionRequest) (*Division, error)
 	GetByID(ctx context.Context, appID, id int) (*Division, error)
-	List(ctx context.Context, appID int, parentID *int) ([]*Division, error)
+	List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*Division, error)
 	Descendants(ctx context.Context, appID, id int) ([]*Division, error)
 	Update(ctx context.Context, appID, id int, req UpdateDivisionRequest) (*Division, error)
 	Move(ctx context.Context, appID, id int, req MoveDivisionRequest) (*Division, error)
@@ -78,9 +77,9 @@ func (s *divisionService) GetByID(ctx context.Context, appID, id int) (*Division
 	return s.repo.GetByID(ctx, appID, id)
 }
 
-func (s *divisionService) List(ctx context.Context, appID int, parentID *int) ([]*Division, error) {
-	slog.Info("listing divisions", "app_id", appID, "parent_id", parentID)
-	return s.repo.List(ctx, appID, parentID)
+func (s *divisionService) List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*Division, error) {
+	slog.Info("listing divisions", "app_id", appID, "parent_id", parentID, "limit", limit, "offset", offset)
+	return s.repo.List(ctx, appID, parentID, limit, offset)
 }
 
 func (s *divisionService) Descendants(ctx context.Context, appID, id int) ([]*Division, error) {
@@ -149,12 +148,7 @@ func (s *divisionService) Move(ctx context.Context, appID, id int, req MoveDivis
 	oldPath := d.Path
 	newPath := fmt.Sprintf("%s%d/", newParentPath, id)
 
-	if err := s.repo.CascadeUpdatePath(ctx, id, oldPath, newPath); err != nil {
-		slog.Error("failed to cascade update paths", "id", id, "error", err)
-		return nil, fmt.Errorf("path update failed: %w", err)
-	}
-
-	if err := s.repo.Move(ctx, id, req.ParentID); err != nil {
+	if err := s.repo.Move(ctx, id, req.ParentID, oldPath, newPath); err != nil {
 		slog.Error("failed to move division", "id", id, "error", err)
 		return nil, fmt.Errorf("move failed: %w", err)
 	}

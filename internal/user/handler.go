@@ -114,6 +114,8 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Description Get a list of all users belonging to the caller's app
 // @Tags users
 // @Produce json
+// @Param limit query int false "Max results (default 50, max 500)"
+// @Param offset query int false "Result offset (default 0)"
 // @Success 200 {object} render.Response{data=[]User}
 // @Failure 401 {object} render.Response
 // @Failure 500 {object} render.Response
@@ -131,7 +133,8 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		appID = 0
 	}
 
-	users, err := h.svc.List(r.Context(), appID)
+	page := render.ParsePage(r)
+	users, err := h.svc.List(r.Context(), appID, page.Limit, page.Offset)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return

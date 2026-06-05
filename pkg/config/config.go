@@ -35,12 +35,15 @@ type ServerConfig struct {
 
 // DatabaseConfig holds the database-specific configuration.
 type DatabaseConfig struct {
-	Path string `mapstructure:"PATH"`
+	Driver string `mapstructure:"DRIVER"`
+	Path   string `mapstructure:"PATH"`
+	DSN    string `mapstructure:"DSN"`
 }
 
 // LogConfig holds the logging-specific configuration.
 type LogConfig struct {
-	Dir string `mapstructure:"DIR"`
+	Dir   string `mapstructure:"DIR"`
+	Level string `mapstructure:"LEVEL"`
 }
 
 // AuthConfig holds the authentication-specific configuration.
@@ -66,8 +69,11 @@ func Load() (*Config, error) {
 	v.SetDefault("SERVER.READ_TIMEOUT", 5*time.Second)
 	v.SetDefault("SERVER.WRITE_TIMEOUT", 10*time.Second)
 	v.SetDefault("SERVER.IDLE_TIMEOUT", 120*time.Second)
+	v.SetDefault("DB.DRIVER", "sqlite3")
 	v.SetDefault("DB.PATH", "keeper.db")
+	v.SetDefault("DB.DSN", "")
 	v.SetDefault("LOG.DIR", "log")
+	v.SetDefault("LOG.LEVEL", "info")
 	v.SetDefault("AUTH.JWT_SECRET", "a-very-secure-and-shared-secret-key")
 	v.SetDefault("AUTH.JWT_EXPIRY", 24*time.Hour)
 	v.SetDefault("SEED.ADMIN_EMAIL", "admin@admin.com")

@@ -34,8 +34,8 @@ func (m *mockAppService) GetByID(ctx context.Context, id int) (*App, error) {
 	return args.Get(0).(*App), args.Error(1)
 }
 
-func (m *mockAppService) List(ctx context.Context) ([]*App, error) {
-	args := m.Called(ctx)
+func (m *mockAppService) List(ctx context.Context, limit, offset int) ([]*App, error) {
+	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -96,7 +96,7 @@ func TestHandler_List(t *testing.T) {
 		{ID: 2, Name: "App 2", Status: 1},
 	}
 
-	svc.On("List", mock.Anything).Return(expectedApps, nil)
+	svc.On("List", mock.Anything, mock.Anything, mock.Anything).Return(expectedApps, nil)
 
 	req, _ := http.NewRequest("GET", "/apps", nil)
 	rr := httptest.NewRecorder()

@@ -21,7 +21,7 @@ The migration from SQLite to MySQL is of **medium complexity**. While the projec
   - `DB_NAME`
 
 ### 3. Database Initialization
-- **Action**: Update `internal/db/sqlite.go` (or rename to `db.go`) to use `ent.Open("mysql", dsn)`.
+- **Action**: Update `internal/db/client.go` to use `ent.Open("mysql", dsn)`.
 - **DSN Format**: The Data Source Name will change to: `user:password@tcp(host:port)/dbname?parseTime=true`.
 
 ### 4. Ent Schema and Migrations
@@ -48,8 +48,7 @@ The migration from SQLite to MySQL is of **medium complexity**. While the projec
 3.  Add `github.com/go-sql-driver/mysql` to `go.mod`.
 
 ### Phase 2: Database Layer
-1.  Rename `internal/db/sqlite.go` to `internal/db/db.go`.
-2.  Update the initialization logic to support MySQL.
+1.  Update `internal/db/client.go` initialization logic to support MySQL.
 3.  Update `ent/migrate/main.go` for MySQL dialect.
 
 ### Phase 3: Migrations & Tooling
