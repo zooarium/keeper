@@ -240,3 +240,4 @@ Other microservices (e.g. squirrel) read `division_id` from the JWT claims and s
 - **Sensitive fields**: never expose secrets or password hashes in JSON (`json:"-"`) or logs.
 - **Observability**: structured JSON logging via slog (level from `LOG.LEVEL` config); the service exposes Prometheus `/metrics`; new endpoints are automatically covered by the metrics middleware.
 - **Outbound HTTP**: any future HTTP client must use a shared client with a timeout sourced from config (never a zero-timeout default client).
+- **Locking / race safety**: every operation touching shared mutable state MUST be race-free without sacrificing performance. Guard in-memory state (caches, counters, maps) with `sync.RWMutex` (read locks for reads); protect check-then-write DB flows with a single transaction plus re-check inside it, or a unique constraint. Prefer fine-grained locks over coarse global ones; never hold a lock across I/O. Verify with `go test -race`.
