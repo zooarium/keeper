@@ -13,6 +13,7 @@ import (
 
 	"keeper/ent/app"
 	"keeper/ent/division"
+	"keeper/ent/guestkey"
 	"keeper/ent/user"
 
 	"entgo.io/ent"
@@ -30,6 +31,8 @@ type Client struct {
 	App *AppClient
 	// Division is the client for interacting with the Division builders.
 	Division *DivisionClient
+	// GuestKey is the client for interacting with the GuestKey builders.
+	GuestKey *GuestKeyClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -45,6 +48,7 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.App = NewAppClient(c.config)
 	c.Division = NewDivisionClient(c.config)
+	c.GuestKey = NewGuestKeyClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -140,6 +144,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		config:   cfg,
 		App:      NewAppClient(cfg),
 		Division: NewDivisionClient(cfg),
+		GuestKey: NewGuestKeyClient(cfg),
 		User:     NewUserClient(cfg),
 	}, nil
 }
@@ -162,6 +167,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		config:   cfg,
 		App:      NewAppClient(cfg),
 		Division: NewDivisionClient(cfg),
+		GuestKey: NewGuestKeyClient(cfg),
 		User:     NewUserClient(cfg),
 	}, nil
 }
@@ -193,6 +199,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	c.App.Use(hooks...)
 	c.Division.Use(hooks...)
+	c.GuestKey.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -201,6 +208,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.App.Intercept(interceptors...)
 	c.Division.Intercept(interceptors...)
+	c.GuestKey.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -211,6 +219,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.App.mutate(ctx, m)
 	case *DivisionMutation:
 		return c.Division.mutate(ctx, m)
+	case *GuestKeyMutation:
+		return c.GuestKey.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -580,6 +590,139 @@ func (c *DivisionClient) mutate(ctx context.Context, m *DivisionMutation) (Value
 	}
 }
 
+// GuestKeyClient is a client for the GuestKey schema.
+type GuestKeyClient struct {
+	config
+}
+
+// NewGuestKeyClient returns a client for the GuestKey from the given config.
+func NewGuestKeyClient(c config) *GuestKeyClient {
+	return &GuestKeyClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `guestkey.Hooks(f(g(h())))`.
+func (c *GuestKeyClient) Use(hooks ...Hook) {
+	c.hooks.GuestKey = append(c.hooks.GuestKey, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `guestkey.Intercept(f(g(h())))`.
+func (c *GuestKeyClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GuestKey = append(c.inters.GuestKey, interceptors...)
+}
+
+// Create returns a builder for creating a GuestKey entity.
+func (c *GuestKeyClient) Create() *GuestKeyCreate {
+	mutation := newGuestKeyMutation(c.config, OpCreate)
+	return &GuestKeyCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GuestKey entities.
+func (c *GuestKeyClient) CreateBulk(builders ...*GuestKeyCreate) *GuestKeyCreateBulk {
+	return &GuestKeyCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GuestKeyClient) MapCreateBulk(slice any, setFunc func(*GuestKeyCreate, int)) *GuestKeyCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GuestKeyCreateBulk{err: fmt.Errorf("calling to GuestKeyClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GuestKeyCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GuestKeyCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GuestKey.
+func (c *GuestKeyClient) Update() *GuestKeyUpdate {
+	mutation := newGuestKeyMutation(c.config, OpUpdate)
+	return &GuestKeyUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GuestKeyClient) UpdateOne(_m *GuestKey) *GuestKeyUpdateOne {
+	mutation := newGuestKeyMutation(c.config, OpUpdateOne, withGuestKey(_m))
+	return &GuestKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GuestKeyClient) UpdateOneID(id int) *GuestKeyUpdateOne {
+	mutation := newGuestKeyMutation(c.config, OpUpdateOne, withGuestKeyID(id))
+	return &GuestKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GuestKey.
+func (c *GuestKeyClient) Delete() *GuestKeyDelete {
+	mutation := newGuestKeyMutation(c.config, OpDelete)
+	return &GuestKeyDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GuestKeyClient) DeleteOne(_m *GuestKey) *GuestKeyDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GuestKeyClient) DeleteOneID(id int) *GuestKeyDeleteOne {
+	builder := c.Delete().Where(guestkey.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GuestKeyDeleteOne{builder}
+}
+
+// Query returns a query builder for GuestKey.
+func (c *GuestKeyClient) Query() *GuestKeyQuery {
+	return &GuestKeyQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGuestKey},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GuestKey entity by its id.
+func (c *GuestKeyClient) Get(ctx context.Context, id int) (*GuestKey, error) {
+	return c.Query().Where(guestkey.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GuestKeyClient) GetX(ctx context.Context, id int) *GuestKey {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GuestKeyClient) Hooks() []Hook {
+	return c.hooks.GuestKey
+}
+
+// Interceptors returns the client interceptors.
+func (c *GuestKeyClient) Interceptors() []Interceptor {
+	return c.inters.GuestKey
+}
+
+func (c *GuestKeyClient) mutate(ctx context.Context, m *GuestKeyMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GuestKeyCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GuestKeyUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GuestKeyUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GuestKeyDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GuestKey mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -748,9 +891,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		App, Division, User []ent.Hook
+		App, Division, GuestKey, User []ent.Hook
 	}
 	inters struct {
-		App, Division, User []ent.Interceptor
+		App, Division, GuestKey, User []ent.Interceptor
 	}
 )

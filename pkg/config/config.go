@@ -17,6 +17,28 @@ type Config struct {
 	Auth        AuthConfig
 	Seed        SeedConfig
 	CORS        CORSConfig
+	Secondary   []SecondaryConfig `mapstructure:"SECONDARY"`
+}
+
+// SecondaryConfig drives one optional secondary listener: an additional HTTP
+// server in the same process exposing only the allow-listed routes, with
+// rate limiting configured independently of the primary server. Any number
+// of listeners can be declared under SECONDARY. Identity always comes from
+// JWT; JWT_SECRET (optional) makes the listener verify with a different
+// signing key (e.g. the guest secret) instead of the primary AUTH.JWT_SECRET.
+type SecondaryConfig struct {
+	Name      string          `mapstructure:"NAME"`
+	Enabled   bool            `mapstructure:"ENABLED"`
+	Addr      string          `mapstructure:"ADDR"`
+	JWTSecret string          `mapstructure:"JWT_SECRET"`
+	RateLimit RateLimitConfig `mapstructure:"RATE_LIMIT"`
+	Routes    []string        `mapstructure:"ROUTES"`
+}
+
+// RateLimitConfig holds rate limiter settings for a secondary listener.
+type RateLimitConfig struct {
+	Requests int           `mapstructure:"REQUESTS"`
+	Window   time.Duration `mapstructure:"WINDOW"`
 }
 
 // CORSConfig holds the CORS-specific configuration.
@@ -50,6 +72,10 @@ type LogConfig struct {
 type AuthConfig struct {
 	JWTSecret string        `mapstructure:"JWT_SECRET"`
 	JWTExpiry time.Duration `mapstructure:"JWT_EXPIRY"`
+	// Guest tokens are signed with a separate secret so they are
+	// cryptographically useless on surfaces that verify with JWT_SECRET.
+	GuestJWTSecret string        `mapstructure:"GUEST_JWT_SECRET"`
+	GuestJWTExpiry time.Duration `mapstructure:"GUEST_JWT_EXPIRY"`
 }
 
 // SeedConfig holds credentials for the bootstrapped sysadmin user.
@@ -76,6 +102,8 @@ func Load() (*Config, error) {
 	v.SetDefault("LOG.LEVEL", "info")
 	v.SetDefault("AUTH.JWT_SECRET", "a-very-secure-and-shared-secret-key")
 	v.SetDefault("AUTH.JWT_EXPIRY", 24*time.Hour)
+	v.SetDefault("AUTH.GUEST_JWT_SECRET", "a-separate-guest-token-secret-key")
+	v.SetDefault("AUTH.GUEST_JWT_EXPIRY", 30*time.Minute)
 	v.SetDefault("SEED.ADMIN_EMAIL", "admin@admin.com")
 	v.SetDefault("SEED.ADMIN_PASSWORD", "admin")
 	v.SetDefault("CORS.ALLOWED_ORIGINS", []string{"*"})
@@ -117,5 +145,38 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	if err := normalizeSecondary(&cfg); err != nil {
+		return nil, err
+	}
+
 	return &cfg, nil
+}
+
+// normalizeSecondary validates the secondary listener entries and applies
+// per-entry defaults (viper defaults cannot reach into list elements).
+func normalizeSecondary(cfg *Config) error {
+	seen := map[string]bool{cfg.Server.Addr: true}
+	for i := range cfg.Secondary {
+		s := &cfg.Secondary[i]
+		if !s.Enabled {
+			continue
+		}
+		if s.Name == "" {
+			s.Name = fmt.Sprintf("secondary-%d", i)
+		}
+		if s.Addr == "" {
+			return fmt.Errorf("SECONDARY[%d] (%s): ADDR is required", i, s.Name)
+		}
+		if seen[s.Addr] {
+			return fmt.Errorf("SECONDARY[%d] (%s): ADDR %q already in use by another listener", i, s.Name, s.Addr)
+		}
+		seen[s.Addr] = true
+		if s.RateLimit.Requests <= 0 {
+			s.RateLimit.Requests = 100
+		}
+		if s.RateLimit.Window <= 0 {
+			s.RateLimit.Window = 1 * time.Minute
+		}
+	}
+	return nil
 }

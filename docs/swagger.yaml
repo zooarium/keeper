@@ -79,6 +79,66 @@ definitions:
         - 1
         type: integer
     type: object
+  internal_guestkey.CreateGuestKeyRequest:
+    properties:
+      app_id:
+        type: integer
+      division_id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: integer
+      user_id:
+        type: integer
+    required:
+    - app_id
+    - division_id
+    - name
+    - user_id
+    type: object
+  internal_guestkey.GuestAuthRequest:
+    properties:
+      site_key:
+        type: string
+    required:
+    - site_key
+    type: object
+  internal_guestkey.GuestAuthResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+    type: object
+  internal_guestkey.GuestKey:
+    properties:
+      app_id:
+        type: integer
+      created_at:
+        type: string
+      division_id:
+        type: integer
+      id:
+        type: integer
+      name:
+        type: string
+      site_key:
+        type: string
+      status:
+        type: integer
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  internal_guestkey.UpdateGuestKeyRequest:
+    properties:
+      name:
+        type: string
+      status:
+        type: integer
+    type: object
   internal_user.AuthRequest:
     properties:
       email:
@@ -663,6 +723,260 @@ paths:
       summary: Move a division to a new parent
       tags:
       - divisions
+  /guest-keys:
+    get:
+      description: List guest keys. Non-sysadmins only see keys for their own app.
+      parameters:
+      - description: Max results (default 50, max 500)
+        in: query
+        name: limit
+        type: integer
+      - description: Result offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/internal_guestkey.GuestKey'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: List guest keys
+      tags:
+      - guest-keys
+    post:
+      consumes:
+      - application/json
+      description: Create a publishable site key bound to an app/division and a designated
+        guest user. Non-sysadmins can only create keys for their own app.
+      parameters:
+      - description: Guest key details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_guestkey.CreateGuestKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_guestkey.GuestKey'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Create a new guest key
+      tags:
+      - guest-keys
+  /guest-keys/{id}:
+    delete:
+      description: Delete (revoke) a guest key. Non-sysadmins can only delete keys
+        of their own app.
+      parameters:
+      - description: Guest key ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Delete guest key
+      tags:
+      - guest-keys
+    get:
+      description: Get a single guest key by its unique ID. Non-sysadmins can only
+        access keys of their own app.
+      parameters:
+      - description: Guest key ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_guestkey.GuestKey'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Get guest key by ID
+      tags:
+      - guest-keys
+    put:
+      consumes:
+      - application/json
+      description: Update a guest key's name or status. Tenant binding and the site
+        key are immutable. Non-sysadmins can only update keys of their own app.
+      parameters:
+      - description: Guest key ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_guestkey.UpdateGuestKeyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_guestkey.GuestKey'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      security:
+      - Bearer: []
+      summary: Update guest key
+      tags:
+      - guest-keys
+  /guest-keys/auth:
+    post:
+      consumes:
+      - application/json
+      description: Exchange a publishable site key for a short-lived tenant-scoped
+        guest JWT (role=guest, signed with the guest secret)
+      parameters:
+      - description: Site key
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_guestkey.GuestAuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_guestkey.GuestAuthResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      summary: Exchange a site key for a guest token
+      tags:
+      - guest-keys
   /health:
     get:
       description: Get the health status of the service

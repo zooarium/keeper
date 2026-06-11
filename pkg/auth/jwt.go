@@ -27,9 +27,23 @@ type UserClaims struct {
 	Role       int `json:"role"`
 }
 
+// Role values carried in JWT claims. Mirrors keeper's user roles
+// (RoleUser=0, RoleSysAdmin=1); RoleGuest marks short-lived tenant-scoped
+// guest tokens minted from a publishable site key.
+const (
+	RoleUser     = 0
+	RoleSysAdmin = 1
+	RoleGuest    = 2
+)
+
 // IsSysAdmin returns true when the claims carry sysadmin role.
 func (c *UserClaims) IsSysAdmin() bool {
-	return c.Role == 1
+	return c.Role == RoleSysAdmin
+}
+
+// IsGuest returns true when the claims belong to a guest (site-key) token.
+func (c *UserClaims) IsGuest() bool {
+	return c.Role == RoleGuest
 }
 
 // Generate generates and signs a new token for a user.

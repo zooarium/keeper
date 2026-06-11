@@ -12,5 +12,8 @@ type App func(*sql.Selector)
 // Division is the predicate function for division builders.
 type Division func(*sql.Selector)
 
+// GuestKey is the predicate function for guestkey builders.
+type GuestKey func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

@@ -67,6 +67,31 @@ var (
 			},
 		},
 	}
+	// KprGuestKeyColumns holds the columns for the "kpr_guest_key" table.
+	KprGuestKeyColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "app_id", Type: field.TypeInt},
+		{Name: "division_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "name", Type: field.TypeString},
+		{Name: "site_key", Type: field.TypeString, Unique: true},
+		{Name: "status", Type: field.TypeInt8, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// KprGuestKeyTable holds the schema information for the "kpr_guest_key" table.
+	KprGuestKeyTable = &schema.Table{
+		Name:       "kpr_guest_key",
+		Columns:    KprGuestKeyColumns,
+		PrimaryKey: []*schema.Column{KprGuestKeyColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "guestkey_app_id",
+				Unique:  false,
+				Columns: []*schema.Column{KprGuestKeyColumns[1]},
+			},
+		},
+	}
 	// KprUserColumns holds the columns for the "kpr_user" table.
 	KprUserColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -112,6 +137,7 @@ var (
 	Tables = []*schema.Table{
 		KprAppTable,
 		KprDivisionTable,
+		KprGuestKeyTable,
 		KprUserTable,
 	}
 )
@@ -124,6 +150,9 @@ func init() {
 	KprDivisionTable.ForeignKeys[1].RefTable = KprDivisionTable
 	KprDivisionTable.Annotation = &entsql.Annotation{
 		Table: "kpr_division",
+	}
+	KprGuestKeyTable.Annotation = &entsql.Annotation{
+		Table: "kpr_guest_key",
 	}
 	KprUserTable.ForeignKeys[0].RefTable = KprAppTable
 	KprUserTable.ForeignKeys[1].RefTable = KprDivisionTable

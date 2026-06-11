@@ -134,6 +134,7 @@ The project uses Docker and a Makefile for development.
 - `make shell`: Open an interactive shell inside the API container.
 - `make migrate-gen name=migration_name`: Generate a new versioned migration file.
 - `make migrate-apply`: Apply all pending migrations to the database.
+- `make config-check`: Validate `config/config.yaml` (server, secondary listeners, route patterns) without starting servers.
 - `make clean`: Deep clean of containers, images, and volumes.
 
 ## Upgrading Go Version
@@ -255,6 +256,123 @@ The application can be configured using environment variables or YAML files (`co
 - To change the port the server listens on: set `SERVER_ADDR=:9090`.
 - To change the address used in Swagger documentation: set `SERVER_HOST=api.example.com`.
 
+## Secondary listeners
+
+Besides the primary server, any number of **secondary listeners** can be
+declared in config: extra ports served by the same process, each exposing
+only an allow-listed subset of the API, with rate limiting configured per
+listener. Example use case: a dedicated, tightly rate-limited token-issuing
+port exposing only `POST /users/auth`.
+
+```yaml
+SECONDARY:
+  - NAME: "auth-only"            # used in logs; defaults to secondary-<index>
+    ENABLED: true                # must be true to start the listener
+    ADDR: ":8090"                # required, must be unique across listeners
+    RATE_LIMIT:
+      REQUESTS: 30               # default 100
+      WINDOW: 1m                 # default 1m
+    ROUTES:                      # chi-syntax "METHOD /path" allow-list;
+      - "POST /users/auth"       # anything not listed returns 404
+```
+
+Behavior:
+
+- Listeners reuse the same handlers, services and DB client as the primary
+  server — no extra process, no duplicate state.
+- `/health` and `/metrics` are always exposed on every listener. Swagger is
+  only served on the primary port; it documents all routes since the
+  handlers are shared.
+- Keeper bakes JWT auth into its entity routes (`POST /users/auth` and
+  `POST /guest-keys/auth` are public by design), so listeners always
+  inherit that protection. A per-listener `JWT_SECRET` swaps the key the
+  entity routes verify with (e.g. the guest secret).
+- Config is validated at startup: missing/duplicate `ADDR` or malformed
+  `ROUTES` patterns abort boot. Run `make config-check` to vet config
+  without starting servers.
+- Caveat: environment variables cannot override list entries (viper
+  limitation) — secondary listeners are configured via YAML only.
+- Docker: publish each secondary port in `docker-compose.yml` (e.g. add
+  `- "8090:8090"` under `ports:`).
+
+### Service-to-service (internal) use
+
+A secondary listener doubles as an internal API port for other zooarium
+services — a dedicated allow-listed surface instead of sharing the public
+port. For keeper, the natural internal surface is token issuing and user
+lookups for downstream services.
+
+```yaml
+SECONDARY:
+  - NAME: "internal-s2s"
+    ENABLED: true
+    ADDR: ":8091"              # do NOT publish in docker-compose ports:
+    RATE_LIMIT:
+      REQUESTS: 1000           # generous — internal traffic comes from few IPs
+      WINDOW: 1m
+    ROUTES:
+      - "POST /users/auth"
+      - "GET /users/{id}"
+```
+
+Rules of thumb:
+
+- **Isolation is the guard**: keep the port out of `docker-compose.yml`
+  `ports:` — it stays reachable only on the compose network via service DNS
+  (`http://keeper:8091/users/auth`). On bare metal, bind to a private
+  interface (`ADDR: "127.0.0.1:8091"`).
+- **Auth**: entity routes carry their own JWT protection (`POST /users/auth`
+  and `POST /guest-keys/auth` are public by design), so an internal keeper
+  listener is never weaker than the public one.
+- **Rate limit**: internal traffic comes from few caller IPs — raise
+  `RATE_LIMIT` well above the public default so legitimate bursts don't
+  throttle.
+- **Caller side**: per the zooarium constraint, the calling service must use
+  a shared HTTP client with a timeout sourced from config (never the
+  zero-timeout default client). Note: downstream services validate JWTs
+  locally with the shared secret — they don't need to call keeper per
+  request.
+
+## Guest keys & guest tokens
+
+Keeper is the constellation's token issuer for **public (unauthenticated)
+surfaces**: a guest key is a publishable site key (Stripe-publishable-key
+style) bound to an app, a division and a designated guest user. Public UIs
+embed the site key and exchange it for a short-lived, tenant-scoped guest
+JWT — no anonymous access anywhere; identity always travels as JWT claims.
+
+```
+browser (shop UI, knows its site key)
+  1. POST keeper /guest-keys/auth { "site_key": "gk_..." }
+       <- { token, expires_at }     claims: app_id, division_id, user_id, role=guest
+  2. call the consuming service's intake listener with Bearer <token>
+  3. on 401/expiry -> silently re-fetch
+```
+
+Properties:
+
+- **Separate signing secret**: guest tokens are signed with
+  `AUTH.GUEST_JWT_SECRET` (not `AUTH.JWT_SECRET`). Only listeners that
+  explicitly configure that secret (e.g. ant's `order-intake`) accept them —
+  on every other surface they fail verification. Containment is
+  cryptographic, not convention.
+- **Short expiry**: `AUTH.GUEST_JWT_EXPIRY` (default 30m); clients re-fetch
+  silently.
+- **Publishable by design**: "stealing" a site key only grants guest scope
+  for that tenant — the same thing visiting the shop grants. Revoke by
+  setting the key inactive or deleting it.
+- **Hard rate limit**: `POST /guest-keys/auth` is limited to 10 req/min per
+  IP (it is the public spam surface), independent of the global limiter.
+- **Validation**: the designated guest user must exist and belong to the
+  key's app + division (enforced on create).
+- Management endpoints are JWT-protected: sysadmins manage all keys,
+  app users only their own app's keys.
+
+| Config | Description | Default |
+|--------|-------------|---------|
+| `AUTH.GUEST_JWT_SECRET` | Signing key for guest tokens (must match the consuming listener's `JWT_SECRET`) | placeholder — set via env in prod |
+| `AUTH.GUEST_JWT_EXPIRY` | Guest token lifetime | `30m` |
+
 ## Service URLs
 
 By default, the services are available at:
@@ -286,11 +404,17 @@ By default, the services are available at:
 - `PUT /divisions/{id}`: Update division name/status.
 - `PUT /divisions/{id}/move`: Move division to new parent.
 - `DELETE /divisions/{id}`: Delete division (blocked if has children or users).
+- `POST /guest-keys/auth`: Exchange a publishable site key for a guest JWT (public, 10 req/min per IP).
+- `POST /guest-keys`: Create a guest key (site key generated server-side).
+- `GET /guest-keys`: List guest keys (non-sysadmins: own app only).
+- `GET /guest-keys/{id}`: Get guest key by ID.
+- `PUT /guest-keys/{id}`: Update guest key name/status (tenant binding and site key immutable).
+- `DELETE /guest-keys/{id}`: Delete (revoke) a guest key.
 - `GET /swagger/*`: Swagger UI.
 
 ## Rate Limiting
 
-The API implements rate limiting using `httprate` middleware. By default, it is limited to **100 requests per minute per IP address**. This is configured in `internal/platform/http/router.go`.
+The API implements rate limiting using `httprate` middleware. By default, it is limited to **100 requests per minute per IP address**. This is configured in `internal/platform/http/router.go`. Each secondary listener has its own independent limit from its `RATE_LIMIT` config (default 100 req/min).
 
 ## Logging
 

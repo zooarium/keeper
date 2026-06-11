@@ -1,6 +1,6 @@
 export GO_VERSION ?= 1.26.3
 
-.PHONY: all build up down restart refresh logs ps test lint swag clean shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script
+.PHONY: all build up down restart refresh logs ps test lint swag clean shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check
 
 # Docker Compose commands
 build:
@@ -153,6 +153,14 @@ sql:
 	@if [ -z "$(query)" ]; then echo "Usage: make sql query=\"SQL_QUERY\""; exit 1; fi
 	sqlite3 data/keeper.db "$(query)"
 
+# Validate config/config.yaml (server, secondary listeners, route patterns) without starting servers
+config-check:
+	docker run --rm -v $(shell pwd):/app -w /app \
+		-e CGO_ENABLED=1 \
+		-e CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
+		golang:$(GO_VERSION)-alpine \
+		sh -c "apk add --no-cache build-base && go run ./cmd/api -check-config"
+
 # Clean up containers, images, and volumes
 clean:
 	docker-compose down --rmi all --volumes --remove-orphans
@@ -189,6 +197,7 @@ help:
 	@echo "  migrate-apply Apply migrations"
 	@echo "  run-script    Run script from scripts/ (use name=... args=...)"
 	@echo "  sql           Run SQL query (use query=...)"
+	@echo "  config-check  Validate config incl. secondary listeners"
 	@echo "  clean         Deep clean containers/images"
 	@echo "  help          Show this help message"
 

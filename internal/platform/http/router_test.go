@@ -10,6 +10,7 @@ import (
 
 	"keeper/internal/app"
 	"keeper/internal/division"
+	"keeper/internal/guestkey"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
@@ -41,6 +42,10 @@ type mockDivisionService struct {
 	division.DivisionService
 }
 
+type mockGuestKeyService struct {
+	guestkey.GuestKeyService
+}
+
 func (m *mockDivisionService) List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*division.Division, error) {
 	return []*division.Division{}, nil
 }
@@ -57,12 +62,15 @@ func TestRouterAuthentication(t *testing.T) {
 	divSvc := &mockDivisionService{}
 	divHandler := division.NewDivisionHandler(divSvc)
 
+	gkSvc := &mockGuestKeyService{}
+	gkHandler := guestkey.NewGuestKeyHandler(gkSvc)
+
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, divHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, jwtManager, cfg)
 
 	tests := []struct {
 		name           string
@@ -111,12 +119,15 @@ func TestRouterAuthentication_ValidToken(t *testing.T) {
 	divSvc := &mockDivisionService{}
 	divHandler := division.NewDivisionHandler(divSvc)
 
+	gkSvc := &mockGuestKeyService{}
+	gkHandler := guestkey.NewGuestKeyHandler(gkSvc)
+
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, divHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, jwtManager, cfg)
 
 	token, _ := jwtManager.Generate(1, 1, 1, 0)
 

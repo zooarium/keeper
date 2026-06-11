@@ -10,6 +10,27 @@ LOG:
   LEVEL: "info"            # debug | info | warn | error
 AUTH:
   JWT_SECRET: "a-very-secure-and-shared-secret-key"
+  # Guest tokens (publishable site keys -> short-lived tenant JWTs) are
+  # signed with a separate secret so they're useless on normal surfaces.
+  GUEST_JWT_SECRET: "a-separate-guest-token-secret-key"
+  GUEST_JWT_EXPIRY: 30m
 CORS:
   ALLOWED_ORIGINS:
     - "*"
+# Optional secondary listeners: extra ports in the same process, each
+# exposing only its allow-listed routes. Declare as many entries as needed.
+# Identity always comes from JWT; JWT_SECRET (optional) makes the listener
+# verify with a different signing key (e.g. the guest secret).
+# Per-entry defaults: RATE_LIMIT 100 req / 1m, NAME secondary-<i>.
+SECONDARY: []
+# SECONDARY:
+#   - NAME: "auth-only"
+#     ENABLED: true
+#     ADDR: ":8090"
+#     RATE_LIMIT:
+#       REQUESTS: 30
+#       WINDOW: 1m
+#     # chi-syntax "METHOD /path" patterns; anything not listed returns 404.
+#     ROUTES:
+#       - "POST /users/auth"
+#       - "POST /guest-keys/auth"

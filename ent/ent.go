@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"keeper/ent/app"
 	"keeper/ent/division"
+	"keeper/ent/guestkey"
 	"keeper/ent/user"
 	"reflect"
 	"sync"
@@ -77,6 +78,7 @@ func checkColumn(t, c string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			app.Table:      app.ValidColumn,
 			division.Table: division.ValidColumn,
+			guestkey.Table: guestkey.ValidColumn,
 			user.Table:     user.ValidColumn,
 		})
 	})

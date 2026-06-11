@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"log/slog"
@@ -16,10 +17,13 @@ import (
 	"keeper/internal/app"
 	"keeper/internal/db"
 	"keeper/internal/division"
+	"keeper/internal/guestkey"
 	platformhttp "keeper/internal/platform/http"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // @title Keeper API
@@ -34,10 +38,30 @@ import (
 // @description Type "Bearer" followed by a space and JWT token.
 
 func main() {
+	checkConfig := flag.Bool("check-config", false, "validate configuration (including secondary listeners) and exit")
+	flag.Parse()
+
 	cfg, err := config.Load()
 	if err != nil {
 		fmt.Printf("failed to load config: %v\n", err)
 		os.Exit(1)
+	}
+
+	if *checkConfig {
+		enabled := 0
+		for i := range cfg.Secondary {
+			sec := &cfg.Secondary[i]
+			if !sec.Enabled {
+				continue
+			}
+			enabled++
+			if err := platformhttp.ValidateRoutes(sec.Routes); err != nil {
+				fmt.Printf("config invalid: %s: %v\n", sec.Name, err)
+				os.Exit(1)
+			}
+		}
+		fmt.Printf("config OK: primary %s, %d secondary listener(s) enabled\n", cfg.Server.Addr, enabled)
+		os.Exit(0)
 	}
 
 	if err := os.MkdirAll(cfg.Log.Dir, 0755); err != nil {
@@ -109,7 +133,14 @@ func main() {
 	divisionSvc := division.NewDivisionService(divisionRepo)
 	divisionHandler := division.NewDivisionHandler(divisionSvc)
 
-	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, jwtManager, cfg)
+	// Guest tokens are signed with a dedicated secret so they only work on
+	// surfaces that explicitly verify with it (e.g. ant's order-intake).
+	guestJWTManager := auth.NewJWTManager(cfg.Auth.GuestJWTSecret, cfg.Auth.GuestJWTExpiry)
+	guestKeyRepo := guestkey.NewGuestKeyRepository(client)
+	guestKeySvc := guestkey.NewGuestKeyService(guestKeyRepo, guestJWTManager, cfg.Auth.GuestJWTExpiry)
+	guestKeyHandler := guestkey.NewGuestKeyHandler(guestKeySvc)
+
+	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, guestKeyHandler, jwtManager, cfg)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.Addr,
@@ -127,6 +158,47 @@ func main() {
 		}
 	}()
 
+	// Secondary listeners reuse the same handlers via the mount hook; the
+	// entity routers carry their own JWT protection, verified with the
+	// listener's manager (primary secret, or per-listener JWT_SECRET).
+	mount := func(r chi.Router, jm *auth.JWTManager) {
+		r.Mount("/users", userHandler.Routes(jm))
+		r.Mount("/apps", appHandler.Routes(jm))
+		r.Mount("/divisions", divisionHandler.Routes(jm))
+		r.Mount("/guest-keys", guestKeyHandler.Routes(jm))
+	}
+
+	var secondarySrvs []*http.Server
+	for i := range cfg.Secondary {
+		sec := &cfg.Secondary[i]
+		if !sec.Enabled {
+			continue
+		}
+
+		secondaryRouter, err := platformhttp.NewSecondaryRouter(cfg, sec, jwtManager, mount)
+		if err != nil {
+			slog.Error("failed to build secondary router", "name", sec.Name, "error", err)
+			os.Exit(1)
+		}
+
+		secondarySrv := &http.Server{
+			Addr:         sec.Addr,
+			Handler:      secondaryRouter,
+			ReadTimeout:  cfg.Server.ReadTimeout,
+			WriteTimeout: cfg.Server.WriteTimeout,
+			IdleTimeout:  cfg.Server.IdleTimeout,
+		}
+		secondarySrvs = append(secondarySrvs, secondarySrv)
+
+		go func() {
+			slog.Info("starting secondary server", "name", sec.Name, "addr", secondarySrv.Addr, "routes", sec.Routes)
+			if err := secondarySrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				slog.Error("failed to listen and serve on secondary", "name", sec.Name, "error", err)
+				os.Exit(1)
+			}
+		}()
+	}
+
 	// Wait for interrupt signal to gracefully shutdown the server with a timeout of 10 seconds.
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -139,6 +211,13 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		slog.Error("server forced to shutdown", "error", err)
 		os.Exit(1)
+	}
+
+	for _, secondarySrv := range secondarySrvs {
+		if err := secondarySrv.Shutdown(ctx); err != nil {
+			slog.Error("secondary server forced to shutdown", "addr", secondarySrv.Addr, "error", err)
+			os.Exit(1)
+		}
 	}
 
 	slog.Info("server exited gracefully")

@@ -14,7 +14,7 @@ Keeper is a microservice for user management, providing RESTful APIs for authent
 - **Authentication**: JWT (JSON Web Tokens)
 - **Documentation**: Swagger (via `swag`)
 - **Logging**: Structured logging with `log/slog`
-- **Rate Limiting**: `httprate` (100 req/min per IP)
+- **Rate Limiting**: `httprate` (primary: 100 req/min per IP; secondary listeners: per-listener config)
 - **Migrations**: Atlas (integrated with Ent)
 
 ## Directory Structure
@@ -64,6 +64,26 @@ Keeper is a microservice for user management, providing RESTful APIs for authent
 ├── docker-compose.yml      # Service orchestration
 └── Makefile                # Development automation
 ```
+
+## Secondary Listeners
+Config-driven extra HTTP servers in the same process (`SECONDARY:` list in config — see README.md for the full reference). Each entry: `NAME`, `ENABLED`, `ADDR` (unique, required), `JWT_SECRET` (optional — entity routes on that listener verify with this key instead of `AUTH.JWT_SECRET`), `RATE_LIMIT` (default 100/1m), `ROUTES` (chi-syntax `"METHOD /path"` allow-list; non-listed = 404).
+
+Key facts:
+- Built by `internal/platform/http/secondary.go` (`NewSecondaryRouter`); reuses the same handlers via the `mount(r, jm)` hook in `cmd/api/main.go` — when mounting a new entity in the primary router, mount it in the hook too. Never duplicate handler wiring.
+- Keeper bakes JWT auth into entity routers (`Routes(jwtManager)`, with `POST /users/auth` and `POST /guest-keys/auth` public), so listeners always inherit that protection. Identity always comes from JWT — no anonymous mode anywhere.
+- `/health` + `/metrics` always exposed per listener; swagger only on primary (covers all routes — shared handlers).
+- Validation at startup via `pkg/config` `normalizeSecondary()` + `allowRoutes()` pattern checks; `make config-check` (or binary `-check-config` flag) vets config without starting servers.
+- Env vars cannot override list entries (viper limitation) — YAML only.
+- New secondary port → publish it in docker-compose.yml `ports:` (skip for internal s2s listeners — network isolation is the guard).
+
+## Guest Keys & Guest Tokens
+Keeper mints short-lived tenant-scoped guest JWTs for public surfaces (e.g. ant's `order-intake`). `internal/guestkey`: kpr_guest_key {app_id, division_id, user_id (designated guest identity), name, site_key (unique, server-generated `gk_`+48hex), status}. Flow: public UI embeds the publishable site key → `POST /guest-keys/auth {site_key}` (public, httprate 10/1m per IP) → JWT with claims {app_id, division_id, user_id, role=guest}, signed with `AUTH.GUEST_JWT_SECRET` (NOT the primary secret — containment is cryptographic; only listeners configured with the guest secret accept these tokens), expiry `AUTH.GUEST_JWT_EXPIRY` (default 30m).
+
+Rules:
+- `pkg/auth`: `RoleUser=0, RoleSysAdmin=1, RoleGuest=2`, `claims.IsGuest()`. Changing `pkg/auth` requires re-vendoring ant + squirrel (`make vendor`).
+- Guest key create validates the designated user exists in the given app+division (`UserBelongsTo`). Tenant binding + site key immutable — rotate by delete + create.
+- CRUD scoping: sysadmin = all; others = own app only.
+- Both secrets are placeholders in config.yaml — production must inject via env (`KEEPER_AUTH_JWT_SECRET`, `KEEPER_AUTH_GUEST_JWT_SECRET`).
 
 ## Architecture & Design Patterns
 - **Directional Dependencies**: HTTP (Handler) → Service → Repository.
@@ -129,6 +149,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 - `make migrate-apply`: Apply pending migrations.
 - `make run-script name=NAME args="ARGS"`: Run a script from the `scripts/` directory in a fresh Go container.
 - `make sql query=QUERY`: Run a SQL query against the SQLite database.
+- `make config-check`: Validate config (incl. secondary listeners) without starting servers.
 
 ### Database Migrations
 1.  **Modify Schema**: Edit files in `ent/schema/` (e.g., `user.go`, `app.go`).

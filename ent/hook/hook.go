@@ -32,6 +32,18 @@ func (f DivisionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DivisionMutation", m)
 }
 
+// The GuestKeyFunc type is an adapter to allow the use of ordinary
+// function as GuestKey mutator.
+type GuestKeyFunc func(context.Context, *ent.GuestKeyMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GuestKeyFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GuestKeyMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GuestKeyMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)
