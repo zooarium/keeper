@@ -342,7 +342,9 @@ embed the site key and exchange it for a short-lived, tenant-scoped guest
 JWT — no anonymous access anywhere; identity always travels as JWT claims.
 
 ```
-browser (shop UI, knows its site key)
+browser (shop UI)
+  0. GET keeper /guest-keys/lookup?url=https://shop.acme.com   (optional bootstrap)
+       <- { site_key: "gk_..." }    resolves the site key for the URL it is served from
   1. POST keeper /guest-keys/auth { "site_key": "gk_..." }
        <- { token, expires_at }     claims: app_id, division_id, user_id, role=guest
   2. call the consuming service's intake listener with Bearer <token>
@@ -361,10 +363,19 @@ Properties:
 - **Publishable by design**: "stealing" a site key only grants guest scope
   for that tenant — the same thing visiting the shop grants. Revoke by
   setting the key inactive or deleting it.
-- **Hard rate limit**: `POST /guest-keys/auth` is limited to 10 req/min per
-  IP (it is the public spam surface), independent of the global limiter.
+- **Hard rate limit**: `POST /guest-keys/auth` and `GET /guest-keys/lookup`
+  are limited to 10 req/min per IP (they are the public spam surfaces),
+  independent of the global limiter.
+- **URL → site key lookup**: a key is bound to a unique `domain` — the
+  normalized URL the UI is served from (scheme/port stripped, host lowercased,
+  `host[+path]`, trailing slash trimmed). Public `GET /guest-keys/lookup?url=...`
+  normalizes the URL the same way, matches it exactly, and returns only the
+  site key (tenant binding stays private). Lets a UI bootstrap its site key
+  from its own URL instead of hard-coding it. One active key per domain.
 - **Validation**: the designated guest user must exist and belong to the
-  key's app + division (enforced on create).
+  key's app + division, and a non-empty `domain` is required (enforced on
+  create). Tenant binding, site key and domain are immutable — rotate by
+  delete + create.
 - Management endpoints are JWT-protected: sysadmins manage all keys,
   app users only their own app's keys.
 
@@ -405,6 +416,7 @@ By default, the services are available at:
 - `PUT /divisions/{id}/move`: Move division to new parent.
 - `DELETE /divisions/{id}`: Delete division (blocked if has children or users).
 - `POST /guest-keys/auth`: Exchange a publishable site key for a guest JWT (public, 10 req/min per IP).
+- `GET /guest-keys/lookup?url=...`: Resolve the publishable site key for a UI's URL (public, 10 req/min per IP; returns site key only).
 - `POST /guest-keys`: Create a guest key (site key generated server-side).
 - `GET /guest-keys`: List guest keys (non-sysadmins: own app only).
 - `GET /guest-keys/{id}`: Get guest key by ID.

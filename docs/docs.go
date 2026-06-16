@@ -1009,6 +1009,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/guest-keys/lookup": {
+            "get": {
+                "description": "Resolve the publishable site key registered for the URL a UI is served from. Public (no auth) and hard rate-limited; returns only the site key, not tenant binding. The url is normalized (scheme/port stripped, host lowercased, host[+path]) and matched exactly.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "guest-keys"
+                ],
+                "summary": "Look up a publishable site key by URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "URL the UI is served from (e.g. https://shop.acme.com or acme.com/store)",
+                        "name": "url",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_guestkey.SiteKeyLookupResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/guest-keys/{id}": {
             "get": {
                 "security": [
@@ -1756,6 +1815,7 @@ const docTemplate = `{
             "required": [
                 "app_id",
                 "division_id",
+                "domain",
                 "name",
                 "user_id"
             ],
@@ -1765,6 +1825,10 @@ const docTemplate = `{
                 },
                 "division_id": {
                     "type": "integer"
+                },
+                "domain": {
+                    "description": "Domain is the URL the publishable UI is served from. It is normalized\nserver-side (scheme/port stripped, host lowercased, host[+path]) and\nmust be unique — a public URL lookup resolves to exactly one site key.",
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -1811,6 +1875,9 @@ const docTemplate = `{
                 "division_id": {
                     "type": "integer"
                 },
+                "domain": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -1828,6 +1895,14 @@ const docTemplate = `{
                 },
                 "user_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "internal_guestkey.SiteKeyLookupResponse": {
+            "type": "object",
+            "properties": {
+                "site_key": {
+                    "type": "string"
                 }
             }
         },

@@ -1810,6 +1810,7 @@ type GuestKeyMutation struct {
 	adduser_id     *int
 	name           *string
 	site_key       *string
+	domain         *string
 	status         *int8
 	addstatus      *int8
 	created_at     *time.Time
@@ -2158,6 +2159,42 @@ func (m *GuestKeyMutation) ResetSiteKey() {
 	m.site_key = nil
 }
 
+// SetDomain sets the "domain" field.
+func (m *GuestKeyMutation) SetDomain(s string) {
+	m.domain = &s
+}
+
+// Domain returns the value of the "domain" field in the mutation.
+func (m *GuestKeyMutation) Domain() (r string, exists bool) {
+	v := m.domain
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDomain returns the old "domain" field's value of the GuestKey entity.
+// If the GuestKey object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuestKeyMutation) OldDomain(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDomain is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDomain requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDomain: %w", err)
+	}
+	return oldValue.Domain, nil
+}
+
+// ResetDomain resets all changes to the "domain" field.
+func (m *GuestKeyMutation) ResetDomain() {
+	m.domain = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *GuestKeyMutation) SetStatus(i int8) {
 	m.status = &i
@@ -2320,7 +2357,7 @@ func (m *GuestKeyMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuestKeyMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.app_id != nil {
 		fields = append(fields, guestkey.FieldAppID)
 	}
@@ -2335,6 +2372,9 @@ func (m *GuestKeyMutation) Fields() []string {
 	}
 	if m.site_key != nil {
 		fields = append(fields, guestkey.FieldSiteKey)
+	}
+	if m.domain != nil {
+		fields = append(fields, guestkey.FieldDomain)
 	}
 	if m.status != nil {
 		fields = append(fields, guestkey.FieldStatus)
@@ -2363,6 +2403,8 @@ func (m *GuestKeyMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case guestkey.FieldSiteKey:
 		return m.SiteKey()
+	case guestkey.FieldDomain:
+		return m.Domain()
 	case guestkey.FieldStatus:
 		return m.Status()
 	case guestkey.FieldCreatedAt:
@@ -2388,6 +2430,8 @@ func (m *GuestKeyMutation) OldField(ctx context.Context, name string) (ent.Value
 		return m.OldName(ctx)
 	case guestkey.FieldSiteKey:
 		return m.OldSiteKey(ctx)
+	case guestkey.FieldDomain:
+		return m.OldDomain(ctx)
 	case guestkey.FieldStatus:
 		return m.OldStatus(ctx)
 	case guestkey.FieldCreatedAt:
@@ -2437,6 +2481,13 @@ func (m *GuestKeyMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSiteKey(v)
+		return nil
+	case guestkey.FieldDomain:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDomain(v)
 		return nil
 	case guestkey.FieldStatus:
 		v, ok := value.(int8)
@@ -2573,6 +2624,9 @@ func (m *GuestKeyMutation) ResetField(name string) error {
 		return nil
 	case guestkey.FieldSiteKey:
 		m.ResetSiteKey()
+		return nil
+	case guestkey.FieldDomain:
+		m.ResetDomain()
 		return nil
 	case guestkey.FieldStatus:
 		m.ResetStatus()

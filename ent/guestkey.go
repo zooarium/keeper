@@ -27,6 +27,8 @@ type GuestKey struct {
 	Name string `json:"name,omitempty"`
 	// SiteKey holds the value of the "site_key" field.
 	SiteKey string `json:"site_key,omitempty"`
+	// Domain holds the value of the "domain" field.
+	Domain string `json:"domain,omitempty"`
 	// Status holds the value of the "status" field.
 	Status int8 `json:"status,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -43,7 +45,7 @@ func (*GuestKey) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case guestkey.FieldID, guestkey.FieldAppID, guestkey.FieldDivisionID, guestkey.FieldUserID, guestkey.FieldStatus:
 			values[i] = new(sql.NullInt64)
-		case guestkey.FieldName, guestkey.FieldSiteKey:
+		case guestkey.FieldName, guestkey.FieldSiteKey, guestkey.FieldDomain:
 			values[i] = new(sql.NullString)
 		case guestkey.FieldCreatedAt, guestkey.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -97,6 +99,12 @@ func (_m *GuestKey) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field site_key", values[i])
 			} else if value.Valid {
 				_m.SiteKey = value.String
+			}
+		case guestkey.FieldDomain:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field domain", values[i])
+			} else if value.Valid {
+				_m.Domain = value.String
 			}
 		case guestkey.FieldStatus:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -166,6 +174,9 @@ func (_m *GuestKey) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("site_key=")
 	builder.WriteString(_m.SiteKey)
+	builder.WriteString(", ")
+	builder.WriteString("domain=")
+	builder.WriteString(_m.Domain)
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

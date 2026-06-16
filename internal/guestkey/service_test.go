@@ -13,7 +13,8 @@ import (
 )
 
 type mockRepo struct {
-	keys        map[string]*GuestKey
+	keys        map[string]*GuestKey // keyed by site key
+	domains     map[string]*GuestKey // keyed by normalized domain
 	created     *GuestKey
 	userBelongs bool
 }
@@ -35,6 +36,13 @@ func (m *mockRepo) GetByID(ctx context.Context, id int) (*GuestKey, error) {
 
 func (m *mockRepo) GetActiveBySiteKey(ctx context.Context, siteKey string) (*GuestKey, error) {
 	if k, ok := m.keys[siteKey]; ok && k.Status == 1 {
+		return k, nil
+	}
+	return nil, errors.New("guest key not found")
+}
+
+func (m *mockRepo) GetActiveByDomain(ctx context.Context, domain string) (*GuestKey, error) {
+	if k, ok := m.domains[domain]; ok && k.Status == 1 {
 		return k, nil
 	}
 	return nil, errors.New("guest key not found")
@@ -67,12 +75,26 @@ func TestCreateGeneratesSiteKey(t *testing.T) {
 
 	k, err := svc.Create(context.Background(), CreateGuestKeyRequest{
 		AppID: 1, DivisionID: 2, UserID: 3, Name: "storefront",
+		Domain: "https://shop.acme.com/",
 	})
 
 	assert.NoError(t, err)
 	assert.True(t, strings.HasPrefix(k.SiteKey, "gk_"))
 	assert.Len(t, k.SiteKey, 3+48)
 	assert.Equal(t, int8(1), k.Status)
+	// Domain is normalized before storage.
+	assert.Equal(t, "shop.acme.com", k.Domain)
+}
+
+func TestCreateRejectsInvalidDomain(t *testing.T) {
+	repo := &mockRepo{userBelongs: true}
+	svc := newService(repo)
+
+	_, err := svc.Create(context.Background(), CreateGuestKeyRequest{
+		AppID: 1, DivisionID: 2, UserID: 3, Name: "storefront", Domain: "   ",
+	})
+
+	assert.ErrorIs(t, err, ErrInvalidDomain)
 }
 
 func TestCreateRejectsMismatchedGuestUser(t *testing.T) {
@@ -81,6 +103,7 @@ func TestCreateRejectsMismatchedGuestUser(t *testing.T) {
 
 	_, err := svc.Create(context.Background(), CreateGuestKeyRequest{
 		AppID: 1, DivisionID: 2, UserID: 3, Name: "storefront",
+		Domain: "shop.acme.com",
 	})
 
 	assert.ErrorIs(t, err, ErrGuestUserMismatch)
@@ -121,4 +144,54 @@ func TestAuthenticateRejectsUnknownOrInactiveKey(t *testing.T) {
 
 	_, err = svc.Authenticate(context.Background(), GuestAuthRequest{SiteKey: "gk_inactive"})
 	assert.ErrorIs(t, err, ErrInvalidSiteKey)
+}
+
+func TestNormalizeDomain(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"https://shop.acme.com/", "shop.acme.com"},
+		{"http://shop.acme.com", "shop.acme.com"},
+		{"shop.acme.com", "shop.acme.com"},
+		{"HTTPS://Shop.Acme.COM/", "shop.acme.com"},
+		{"http://acme.com:8080/store", "acme.com/store"},
+		{"https://acme.com/shop/", "acme.com/shop"},
+		{"acme.com/shop?ref=1#top", "acme.com/shop"},
+	}
+	for _, c := range cases {
+		got, err := normalizeDomain(c.in)
+		assert.NoError(t, err, c.in)
+		assert.Equal(t, c.want, got, c.in)
+	}
+
+	for _, bad := range []string{"", "   ", "http://"} {
+		_, err := normalizeDomain(bad)
+		assert.ErrorIs(t, err, ErrInvalidDomain, bad)
+	}
+}
+
+func TestLookupSiteKeyResolvesActiveDomain(t *testing.T) {
+	repo := &mockRepo{domains: map[string]*GuestKey{
+		"shop.acme.com": {ID: 9, SiteKey: "gk_shop", Domain: "shop.acme.com", Status: 1},
+	}}
+	svc := newService(repo)
+
+	// Different protocol + trailing slash still resolve via normalization.
+	resp, err := svc.LookupSiteKey(context.Background(), "https://shop.acme.com/")
+	assert.NoError(t, err)
+	assert.Equal(t, "gk_shop", resp.SiteKey)
+}
+
+func TestLookupSiteKeyNotFoundAndInvalid(t *testing.T) {
+	repo := &mockRepo{domains: map[string]*GuestKey{
+		"shop.acme.com": {ID: 9, SiteKey: "gk_shop", Domain: "shop.acme.com", Status: 1},
+	}}
+	svc := newService(repo)
+
+	_, err := svc.LookupSiteKey(context.Background(), "https://unknown.com")
+	assert.ErrorIs(t, err, ErrSiteKeyNotFound)
+
+	_, err = svc.LookupSiteKey(context.Background(), "   ")
+	assert.ErrorIs(t, err, ErrInvalidDomain)
 }

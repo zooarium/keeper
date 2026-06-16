@@ -119,6 +119,20 @@ func (_u *GuestKeyUpdate) SetNillableSiteKey(v *string) *GuestKeyUpdate {
 	return _u
 }
 
+// SetDomain sets the "domain" field.
+func (_u *GuestKeyUpdate) SetDomain(v string) *GuestKeyUpdate {
+	_u.mutation.SetDomain(v)
+	return _u
+}
+
+// SetNillableDomain sets the "domain" field if the given value is not nil.
+func (_u *GuestKeyUpdate) SetNillableDomain(v *string) *GuestKeyUpdate {
+	if v != nil {
+		_u.SetDomain(*v)
+	}
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *GuestKeyUpdate) SetStatus(v int8) *GuestKeyUpdate {
 	_u.mutation.ResetStatus()
@@ -233,6 +247,9 @@ func (_u *GuestKeyUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.SiteKey(); ok {
 		_spec.SetField(guestkey.FieldSiteKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Domain(); ok {
+		_spec.SetField(guestkey.FieldDomain, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(guestkey.FieldStatus, field.TypeInt8, value)
@@ -353,6 +370,20 @@ func (_u *GuestKeyUpdateOne) SetSiteKey(v string) *GuestKeyUpdateOne {
 func (_u *GuestKeyUpdateOne) SetNillableSiteKey(v *string) *GuestKeyUpdateOne {
 	if v != nil {
 		_u.SetSiteKey(*v)
+	}
+	return _u
+}
+
+// SetDomain sets the "domain" field.
+func (_u *GuestKeyUpdateOne) SetDomain(v string) *GuestKeyUpdateOne {
+	_u.mutation.SetDomain(v)
+	return _u
+}
+
+// SetNillableDomain sets the "domain" field if the given value is not nil.
+func (_u *GuestKeyUpdateOne) SetNillableDomain(v *string) *GuestKeyUpdateOne {
+	if v != nil {
+		_u.SetDomain(*v)
 	}
 	return _u
 }
@@ -501,6 +532,9 @@ func (_u *GuestKeyUpdateOne) sqlSave(ctx context.Context) (_node *GuestKey, err 
 	}
 	if value, ok := _u.mutation.SiteKey(); ok {
 		_spec.SetField(guestkey.FieldSiteKey, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Domain(); ok {
+		_spec.SetField(guestkey.FieldDomain, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(guestkey.FieldStatus, field.TypeInt8, value)

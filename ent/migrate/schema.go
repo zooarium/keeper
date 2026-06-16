@@ -75,6 +75,7 @@ var (
 		{Name: "user_id", Type: field.TypeInt},
 		{Name: "name", Type: field.TypeString},
 		{Name: "site_key", Type: field.TypeString, Unique: true},
+		{Name: "domain", Type: field.TypeString, Unique: true},
 		{Name: "status", Type: field.TypeInt8, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},

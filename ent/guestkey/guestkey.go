@@ -23,6 +23,8 @@ const (
 	FieldName = "name"
 	// FieldSiteKey holds the string denoting the site_key field in the database.
 	FieldSiteKey = "site_key"
+	// FieldDomain holds the string denoting the domain field in the database.
+	FieldDomain = "domain"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -41,6 +43,7 @@ var Columns = []string{
 	FieldUserID,
 	FieldName,
 	FieldSiteKey,
+	FieldDomain,
 	FieldStatus,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -98,6 +101,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // BySiteKey orders the results by the site_key field.
 func BySiteKey(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSiteKey, opts...).ToFunc()
+}
+
+// ByDomain orders the results by the domain field.
+func ByDomain(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDomain, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.

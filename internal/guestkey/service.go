@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
+	"strings"
 	"time"
 
 	"keeper/pkg/auth"
@@ -19,11 +21,20 @@ var ErrInvalidSiteKey = errors.New("invalid site key")
 // exist or does not belong to the requested app/division.
 var ErrGuestUserMismatch = errors.New("guest user does not belong to the given app and division")
 
+// ErrInvalidDomain is returned when a supplied URL/domain cannot be normalized
+// (empty or no resolvable host).
+var ErrInvalidDomain = errors.New("invalid url: no resolvable host")
+
+// ErrSiteKeyNotFound is returned when no active guest key is registered for a
+// looked-up domain.
+var ErrSiteKeyNotFound = errors.New("no site key found for the given url")
+
 // GuestKeyRepository defines the data access contract for guest keys.
 type GuestKeyRepository interface {
 	Create(ctx context.Context, k GuestKey) (*GuestKey, error)
 	GetByID(ctx context.Context, id int) (*GuestKey, error)
 	GetActiveBySiteKey(ctx context.Context, siteKey string) (*GuestKey, error)
+	GetActiveByDomain(ctx context.Context, domain string) (*GuestKey, error)
 	List(ctx context.Context, appID, limit, offset int) ([]*GuestKey, error)
 	Update(ctx context.Context, id int, k *GuestKey) (*GuestKey, error)
 	Delete(ctx context.Context, id int) error
@@ -38,6 +49,7 @@ type GuestKeyService interface {
 	Update(ctx context.Context, id int, req UpdateGuestKeyRequest) (*GuestKey, error)
 	Delete(ctx context.Context, id int) error
 	Authenticate(ctx context.Context, req GuestAuthRequest) (*GuestAuthResponse, error)
+	LookupSiteKey(ctx context.Context, rawURL string) (*SiteKeyLookupResponse, error)
 }
 
 type guestKeyService struct {
@@ -55,6 +67,11 @@ func NewGuestKeyService(repo GuestKeyRepository, guestJWT *auth.JWTManager, gues
 
 func (s *guestKeyService) Create(ctx context.Context, req CreateGuestKeyRequest) (*GuestKey, error) {
 	slog.Info("creating guest key", "name", req.Name, "app_id", req.AppID)
+
+	domain, err := normalizeDomain(req.Domain)
+	if err != nil {
+		return nil, err
+	}
 
 	ok, err := s.repo.UserBelongsTo(ctx, req.UserID, req.AppID, req.DivisionID)
 	if err != nil {
@@ -80,6 +97,7 @@ func (s *guestKeyService) Create(ctx context.Context, req CreateGuestKeyRequest)
 		UserID:     req.UserID,
 		Name:       req.Name,
 		SiteKey:    siteKey,
+		Domain:     domain,
 		Status:     status,
 	})
 	if err != nil {
@@ -152,6 +170,58 @@ func (s *guestKeyService) Authenticate(ctx context.Context, req GuestAuthRequest
 		Token:     token,
 		ExpiresAt: time.Now().Add(s.guestExpiry),
 	}, nil
+}
+
+// LookupSiteKey resolves the publishable site key for the URL a UI is served
+// from. The raw URL is normalized (scheme/port stripped, host lowercased,
+// host[+path], trailing slash trimmed) and matched exactly against the
+// registered domain. Only the site key is returned — tenant binding stays
+// private since this surface is public.
+func (s *guestKeyService) LookupSiteKey(ctx context.Context, rawURL string) (*SiteKeyLookupResponse, error) {
+	domain, err := normalizeDomain(rawURL)
+	if err != nil {
+		return nil, err
+	}
+
+	k, err := s.repo.GetActiveByDomain(ctx, domain)
+	if err != nil {
+		return nil, ErrSiteKeyNotFound
+	}
+
+	slog.Info("site key resolved for domain", "domain", domain, "guest_key_id", k.ID)
+	return &SiteKeyLookupResponse{SiteKey: k.SiteKey}, nil
+}
+
+// normalizeDomain canonicalizes a URL into the stored domain form: scheme is
+// optional (assumed http when absent) and discarded, host is lowercased and
+// port-stripped, path is preserved, query/fragment dropped, trailing slash
+// trimmed. Both create and lookup run through this so they always agree.
+//
+// Examples:
+//
+//	https://shop.acme.com/        -> shop.acme.com
+//	http://acme.com:8080/store    -> acme.com/store
+//	acme.com/shop                 -> acme.com/shop
+func normalizeDomain(raw string) (string, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return "", ErrInvalidDomain
+	}
+	if !strings.Contains(raw, "://") {
+		raw = "http://" + raw
+	}
+
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "", ErrInvalidDomain
+	}
+
+	host := strings.ToLower(u.Hostname())
+	if host == "" {
+		return "", ErrInvalidDomain
+	}
+
+	return host + strings.TrimRight(u.Path, "/"), nil
 }
 
 // generateSiteKey returns a publishable site key: "gk_" + 48 hex chars of

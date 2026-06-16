@@ -34,6 +34,10 @@ func (GuestKey) Fields() []ent.Field {
 		field.Int("user_id"),
 		field.String("name"),
 		field.String("site_key").Unique(),
+		// domain is the normalized URL (host[+path], scheme/port stripped,
+		// lowercased host) the publishable UI is served from. Unique so a
+		// public lookup by URL resolves to exactly one site key.
+		field.String("domain").Unique(),
 		field.Int8("status").Default(1),
 		field.Time("created_at").Default(time.Now),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),

@@ -50,6 +50,12 @@ func (_c *GuestKeyCreate) SetSiteKey(v string) *GuestKeyCreate {
 	return _c
 }
 
+// SetDomain sets the "domain" field.
+func (_c *GuestKeyCreate) SetDomain(v string) *GuestKeyCreate {
+	_c.mutation.SetDomain(v)
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *GuestKeyCreate) SetStatus(v int8) *GuestKeyCreate {
 	_c.mutation.SetStatus(v)
@@ -158,6 +164,9 @@ func (_c *GuestKeyCreate) check() error {
 	if _, ok := _c.mutation.SiteKey(); !ok {
 		return &ValidationError{Name: "site_key", err: errors.New(`ent: missing required field "GuestKey.site_key"`)}
 	}
+	if _, ok := _c.mutation.Domain(); !ok {
+		return &ValidationError{Name: "domain", err: errors.New(`ent: missing required field "GuestKey.domain"`)}
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "GuestKey.status"`)}
 	}
@@ -212,6 +221,10 @@ func (_c *GuestKeyCreate) createSpec() (*GuestKey, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SiteKey(); ok {
 		_spec.SetField(guestkey.FieldSiteKey, field.TypeString, value)
 		_node.SiteKey = value
+	}
+	if value, ok := _c.mutation.Domain(); ok {
+		_spec.SetField(guestkey.FieldDomain, field.TypeString, value)
+		_node.Domain = value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(guestkey.FieldStatus, field.TypeInt8, value)

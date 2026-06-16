@@ -54,15 +54,15 @@ func init() {
 	guestkeyFields := schema.GuestKey{}.Fields()
 	_ = guestkeyFields
 	// guestkeyDescStatus is the schema descriptor for status field.
-	guestkeyDescStatus := guestkeyFields[5].Descriptor()
+	guestkeyDescStatus := guestkeyFields[6].Descriptor()
 	// guestkey.DefaultStatus holds the default value on creation for the status field.
 	guestkey.DefaultStatus = guestkeyDescStatus.Default.(int8)
 	// guestkeyDescCreatedAt is the schema descriptor for created_at field.
-	guestkeyDescCreatedAt := guestkeyFields[6].Descriptor()
+	guestkeyDescCreatedAt := guestkeyFields[7].Descriptor()
 	// guestkey.DefaultCreatedAt holds the default value on creation for the created_at field.
 	guestkey.DefaultCreatedAt = guestkeyDescCreatedAt.Default.(func() time.Time)
 	// guestkeyDescUpdatedAt is the schema descriptor for updated_at field.
-	guestkeyDescUpdatedAt := guestkeyFields[7].Descriptor()
+	guestkeyDescUpdatedAt := guestkeyFields[8].Descriptor()
 	// guestkey.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	guestkey.DefaultUpdatedAt = guestkeyDescUpdatedAt.Default.(func() time.Time)
 	// guestkey.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

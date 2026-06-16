@@ -27,6 +27,7 @@ func (r *guestKeyRepository) Create(ctx context.Context, k GuestKey) (*GuestKey,
 		SetUserID(k.UserID).
 		SetName(k.Name).
 		SetSiteKey(k.SiteKey).
+		SetDomain(k.Domain).
 		SetStatus(k.Status).
 		Save(ctx)
 	if err != nil {
@@ -61,6 +62,24 @@ func (r *guestKeyRepository) GetActiveBySiteKey(ctx context.Context, siteKey str
 			return nil, fmt.Errorf("guest key not found: %w", err)
 		}
 		slog.Error("database error: failed to get guest key by site key", "error", err)
+		return nil, err
+	}
+	return r.mapToModel(k), nil
+}
+
+// GetActiveByDomain returns the active guest key registered for the given
+// normalized domain. Used by the public site-key lookup. domain is unique, so
+// at most one row matches.
+func (r *guestKeyRepository) GetActiveByDomain(ctx context.Context, domain string) (*GuestKey, error) {
+	k, err := r.client.GuestKey.Query().
+		Where(entguestkey.Domain(domain), entguestkey.Status(1)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			slog.Warn("active guest key not found for domain", "domain", domain)
+			return nil, fmt.Errorf("guest key not found: %w", err)
+		}
+		slog.Error("database error: failed to get guest key by domain", "domain", domain, "error", err)
 		return nil, err
 	}
 	return r.mapToModel(k), nil
@@ -134,6 +153,7 @@ func (r *guestKeyRepository) mapToModel(k *ent.GuestKey) *GuestKey {
 		UserID:     k.UserID,
 		Name:       k.Name,
 		SiteKey:    k.SiteKey,
+		Domain:     k.Domain,
 		Status:     k.Status,
 		CreatedAt:  k.CreatedAt,
 		UpdatedAt:  k.UpdatedAt,

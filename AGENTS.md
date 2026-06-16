@@ -77,11 +77,11 @@ Key facts:
 - New secondary port → publish it in docker-compose.yml `ports:` (skip for internal s2s listeners — network isolation is the guard).
 
 ## Guest Keys & Guest Tokens
-Keeper mints short-lived tenant-scoped guest JWTs for public surfaces (e.g. ant's `order-intake`). `internal/guestkey`: kpr_guest_key {app_id, division_id, user_id (designated guest identity), name, site_key (unique, server-generated `gk_`+48hex), status}. Flow: public UI embeds the publishable site key → `POST /guest-keys/auth {site_key}` (public, httprate 10/1m per IP) → JWT with claims {app_id, division_id, user_id, role=guest}, signed with `AUTH.GUEST_JWT_SECRET` (NOT the primary secret — containment is cryptographic; only listeners configured with the guest secret accept these tokens), expiry `AUTH.GUEST_JWT_EXPIRY` (default 30m).
+Keeper mints short-lived tenant-scoped guest JWTs for public surfaces (e.g. ant's `order-intake`). `internal/guestkey`: kpr_guest_key {app_id, division_id, user_id (designated guest identity), name, site_key (unique, server-generated `gk_`+48hex), domain (unique, normalized URL the UI is served from), status}. Flow: public UI optionally bootstraps its site key via `GET /guest-keys/lookup?url=...` (public, httprate 10/1m per IP — normalizes the URL the same way `domain` is stored, exact-matches it, returns site key only) → embeds the publishable site key → `POST /guest-keys/auth {site_key}` (public, httprate 10/1m per IP) → JWT with claims {app_id, division_id, user_id, role=guest}, signed with `AUTH.GUEST_JWT_SECRET` (NOT the primary secret — containment is cryptographic; only listeners configured with the guest secret accept these tokens), expiry `AUTH.GUEST_JWT_EXPIRY` (default 30m).
 
 Rules:
 - `pkg/auth`: `RoleUser=0, RoleSysAdmin=1, RoleGuest=2`, `claims.IsGuest()`. Changing `pkg/auth` requires re-vendoring ant + squirrel (`make vendor`).
-- Guest key create validates the designated user exists in the given app+division (`UserBelongsTo`). Tenant binding + site key immutable — rotate by delete + create.
+- Guest key create validates the designated user exists in the given app+division (`UserBelongsTo`) and requires a non-empty `domain`. `domain` is normalized in `normalizeDomain()` (scheme/port stripped, host lowercased, `host[+path]`, trailing slash trimmed) on both create and lookup so they always agree. Tenant binding + site key + domain immutable — rotate by delete + create.
 - CRUD scoping: sysadmin = all; others = own app only.
 - Both secrets are placeholders in config.yaml — production must inject via env (`KEEPER_AUTH_JWT_SECRET`, `KEEPER_AUTH_GUEST_JWT_SECRET`).
 

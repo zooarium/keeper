@@ -39,6 +39,7 @@ func (h *GuestKeyHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 	r.Group(func(r chi.Router) {
 		r.Use(httprate.LimitByIP(10, 1*time.Minute))
 		r.Post("/auth", h.GuestAuth)
+		r.Get("/lookup", h.LookupSiteKey)
 	})
 
 	// Protected management routes
@@ -92,6 +93,42 @@ func (h *GuestKeyHandler) GuestAuth(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		render.Error(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	render.JSON(w, http.StatusOK, resp)
+}
+
+// LookupSiteKey godoc
+// @Summary Look up a publishable site key by URL
+// @Description Resolve the publishable site key registered for the URL a UI is served from. Public (no auth) and hard rate-limited; returns only the site key, not tenant binding. The url is normalized (scheme/port stripped, host lowercased, host[+path]) and matched exactly.
+// @Tags guest-keys
+// @Produce json
+// @Param url query string true "URL the UI is served from (e.g. https://shop.acme.com or acme.com/store)"
+// @Success 200 {object} render.Response{data=SiteKeyLookupResponse}
+// @Failure 400 {object} render.Response
+// @Failure 404 {object} render.Response
+// @Failure 429 {object} render.Response
+// @Router /guest-keys/lookup [get]
+func (h *GuestKeyHandler) LookupSiteKey(w http.ResponseWriter, r *http.Request) {
+	rawURL := r.URL.Query().Get("url")
+	if rawURL == "" {
+		render.Error(w, http.StatusBadRequest, "url query param is required")
+		return
+	}
+
+	resp, err := h.svc.LookupSiteKey(r.Context(), rawURL)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrInvalidDomain):
+			slog.Warn("site key lookup with invalid url", "remote_addr", r.RemoteAddr)
+			render.Error(w, http.StatusBadRequest, err.Error())
+		case errors.Is(err, ErrSiteKeyNotFound):
+			slog.Warn("site key lookup found no match", "remote_addr", r.RemoteAddr)
+			render.Error(w, http.StatusNotFound, err.Error())
+		default:
+			render.Error(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 
