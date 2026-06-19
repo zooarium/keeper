@@ -28,6 +28,208 @@ func (_c *AppCreate) SetName(v string) *AppCreate {
 	return _c
 }
 
+// SetTagline sets the "tagline" field.
+func (_c *AppCreate) SetTagline(v string) *AppCreate {
+	_c.mutation.SetTagline(v)
+	return _c
+}
+
+// SetNillableTagline sets the "tagline" field if the given value is not nil.
+func (_c *AppCreate) SetNillableTagline(v *string) *AppCreate {
+	if v != nil {
+		_c.SetTagline(*v)
+	}
+	return _c
+}
+
+// SetLogoURL sets the "logo_url" field.
+func (_c *AppCreate) SetLogoURL(v string) *AppCreate {
+	_c.mutation.SetLogoURL(v)
+	return _c
+}
+
+// SetNillableLogoURL sets the "logo_url" field if the given value is not nil.
+func (_c *AppCreate) SetNillableLogoURL(v *string) *AppCreate {
+	if v != nil {
+		_c.SetLogoURL(*v)
+	}
+	return _c
+}
+
+// SetAboutHeading sets the "about_heading" field.
+func (_c *AppCreate) SetAboutHeading(v string) *AppCreate {
+	_c.mutation.SetAboutHeading(v)
+	return _c
+}
+
+// SetNillableAboutHeading sets the "about_heading" field if the given value is not nil.
+func (_c *AppCreate) SetNillableAboutHeading(v *string) *AppCreate {
+	if v != nil {
+		_c.SetAboutHeading(*v)
+	}
+	return _c
+}
+
+// SetAboutBody sets the "about_body" field.
+func (_c *AppCreate) SetAboutBody(v string) *AppCreate {
+	_c.mutation.SetAboutBody(v)
+	return _c
+}
+
+// SetNillableAboutBody sets the "about_body" field if the given value is not nil.
+func (_c *AppCreate) SetNillableAboutBody(v *string) *AppCreate {
+	if v != nil {
+		_c.SetAboutBody(*v)
+	}
+	return _c
+}
+
+// SetContactAddressLine1 sets the "contact_address_line1" field.
+func (_c *AppCreate) SetContactAddressLine1(v string) *AppCreate {
+	_c.mutation.SetContactAddressLine1(v)
+	return _c
+}
+
+// SetNillableContactAddressLine1 sets the "contact_address_line1" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactAddressLine1(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactAddressLine1(*v)
+	}
+	return _c
+}
+
+// SetContactAddressLine2 sets the "contact_address_line2" field.
+func (_c *AppCreate) SetContactAddressLine2(v string) *AppCreate {
+	_c.mutation.SetContactAddressLine2(v)
+	return _c
+}
+
+// SetNillableContactAddressLine2 sets the "contact_address_line2" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactAddressLine2(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactAddressLine2(*v)
+	}
+	return _c
+}
+
+// SetContactCity sets the "contact_city" field.
+func (_c *AppCreate) SetContactCity(v string) *AppCreate {
+	_c.mutation.SetContactCity(v)
+	return _c
+}
+
+// SetNillableContactCity sets the "contact_city" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactCity(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactCity(*v)
+	}
+	return _c
+}
+
+// SetContactState sets the "contact_state" field.
+func (_c *AppCreate) SetContactState(v string) *AppCreate {
+	_c.mutation.SetContactState(v)
+	return _c
+}
+
+// SetNillableContactState sets the "contact_state" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactState(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactState(*v)
+	}
+	return _c
+}
+
+// SetContactCountry sets the "contact_country" field.
+func (_c *AppCreate) SetContactCountry(v string) *AppCreate {
+	_c.mutation.SetContactCountry(v)
+	return _c
+}
+
+// SetNillableContactCountry sets the "contact_country" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactCountry(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactCountry(*v)
+	}
+	return _c
+}
+
+// SetContactPostalCode sets the "contact_postal_code" field.
+func (_c *AppCreate) SetContactPostalCode(v string) *AppCreate {
+	_c.mutation.SetContactPostalCode(v)
+	return _c
+}
+
+// SetNillableContactPostalCode sets the "contact_postal_code" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactPostalCode(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactPostalCode(*v)
+	}
+	return _c
+}
+
+// SetContactPhone1 sets the "contact_phone1" field.
+func (_c *AppCreate) SetContactPhone1(v string) *AppCreate {
+	_c.mutation.SetContactPhone1(v)
+	return _c
+}
+
+// SetNillableContactPhone1 sets the "contact_phone1" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactPhone1(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactPhone1(*v)
+	}
+	return _c
+}
+
+// SetContactPhone2 sets the "contact_phone2" field.
+func (_c *AppCreate) SetContactPhone2(v string) *AppCreate {
+	_c.mutation.SetContactPhone2(v)
+	return _c
+}
+
+// SetNillableContactPhone2 sets the "contact_phone2" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactPhone2(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactPhone2(*v)
+	}
+	return _c
+}
+
+// SetContactEmail sets the "contact_email" field.
+func (_c *AppCreate) SetContactEmail(v string) *AppCreate {
+	_c.mutation.SetContactEmail(v)
+	return _c
+}
+
+// SetNillableContactEmail sets the "contact_email" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactEmail(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactEmail(*v)
+	}
+	return _c
+}
+
+// SetContactHours sets the "contact_hours" field.
+func (_c *AppCreate) SetContactHours(v string) *AppCreate {
+	_c.mutation.SetContactHours(v)
+	return _c
+}
+
+// SetNillableContactHours sets the "contact_hours" field if the given value is not nil.
+func (_c *AppCreate) SetNillableContactHours(v *string) *AppCreate {
+	if v != nil {
+		_c.SetContactHours(*v)
+	}
+	return _c
+}
+
+// SetContactSocial sets the "contact_social" field.
+func (_c *AppCreate) SetContactSocial(v map[string]string) *AppCreate {
+	_c.mutation.SetContactSocial(v)
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *AppCreate) SetStatus(v int8) *AppCreate {
 	_c.mutation.SetStatus(v)
@@ -192,6 +394,66 @@ func (_c *AppCreate) createSpec() (*App, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(app.FieldName, field.TypeString, value)
 		_node.Name = value
+	}
+	if value, ok := _c.mutation.Tagline(); ok {
+		_spec.SetField(app.FieldTagline, field.TypeString, value)
+		_node.Tagline = value
+	}
+	if value, ok := _c.mutation.LogoURL(); ok {
+		_spec.SetField(app.FieldLogoURL, field.TypeString, value)
+		_node.LogoURL = value
+	}
+	if value, ok := _c.mutation.AboutHeading(); ok {
+		_spec.SetField(app.FieldAboutHeading, field.TypeString, value)
+		_node.AboutHeading = value
+	}
+	if value, ok := _c.mutation.AboutBody(); ok {
+		_spec.SetField(app.FieldAboutBody, field.TypeString, value)
+		_node.AboutBody = value
+	}
+	if value, ok := _c.mutation.ContactAddressLine1(); ok {
+		_spec.SetField(app.FieldContactAddressLine1, field.TypeString, value)
+		_node.ContactAddressLine1 = value
+	}
+	if value, ok := _c.mutation.ContactAddressLine2(); ok {
+		_spec.SetField(app.FieldContactAddressLine2, field.TypeString, value)
+		_node.ContactAddressLine2 = value
+	}
+	if value, ok := _c.mutation.ContactCity(); ok {
+		_spec.SetField(app.FieldContactCity, field.TypeString, value)
+		_node.ContactCity = value
+	}
+	if value, ok := _c.mutation.ContactState(); ok {
+		_spec.SetField(app.FieldContactState, field.TypeString, value)
+		_node.ContactState = value
+	}
+	if value, ok := _c.mutation.ContactCountry(); ok {
+		_spec.SetField(app.FieldContactCountry, field.TypeString, value)
+		_node.ContactCountry = value
+	}
+	if value, ok := _c.mutation.ContactPostalCode(); ok {
+		_spec.SetField(app.FieldContactPostalCode, field.TypeString, value)
+		_node.ContactPostalCode = value
+	}
+	if value, ok := _c.mutation.ContactPhone1(); ok {
+		_spec.SetField(app.FieldContactPhone1, field.TypeString, value)
+		_node.ContactPhone1 = value
+	}
+	if value, ok := _c.mutation.ContactPhone2(); ok {
+		_spec.SetField(app.FieldContactPhone2, field.TypeString, value)
+		_node.ContactPhone2 = value
+	}
+	if value, ok := _c.mutation.ContactEmail(); ok {
+		_spec.SetField(app.FieldContactEmail, field.TypeString, value)
+		_node.ContactEmail = value
+	}
+	if value, ok := _c.mutation.ContactHours(); ok {
+		_spec.SetField(app.FieldContactHours, field.TypeString, value)
+		_node.ContactHours = value
+	}
+	if value, ok := _c.mutation.ContactSocial(); ok {
+		_spec.SetField(app.FieldContactSocial, field.TypeJSON, value)
+		_node.ContactSocial = value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(app.FieldStatus, field.TypeInt8, value)

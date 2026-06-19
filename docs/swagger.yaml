@@ -1,33 +1,137 @@
 basePath: /
 definitions:
+  internal_app.About:
+    properties:
+      body:
+        description: may contain HTML
+        type: string
+      heading:
+        type: string
+    type: object
+  internal_app.AboutInput:
+    properties:
+      body:
+        type: string
+      heading:
+        type: string
+    type: object
+  internal_app.Address:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      line1:
+        type: string
+      line2:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+    type: object
+  internal_app.AddressInput:
+    properties:
+      city:
+        type: string
+      country:
+        type: string
+      line1:
+        type: string
+      line2:
+        type: string
+      postal_code:
+        type: string
+      state:
+        type: string
+    type: object
   internal_app.App:
     properties:
+      about:
+        $ref: '#/definitions/internal_app.About'
+      contact:
+        $ref: '#/definitions/internal_app.Contact'
       created_at:
         type: string
       id:
         type: integer
+      logo_url:
+        type: string
       name:
         type: string
       status:
         type: integer
+      tagline:
+        type: string
       updated_at:
         type: string
     type: object
+  internal_app.Contact:
+    properties:
+      address:
+        $ref: '#/definitions/internal_app.Address'
+      email:
+        type: string
+      hours:
+        description: free text
+        type: string
+      phone1:
+        type: string
+      phone2:
+        type: string
+      social:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  internal_app.ContactInput:
+    properties:
+      address:
+        $ref: '#/definitions/internal_app.AddressInput'
+      email:
+        type: string
+      hours:
+        type: string
+      phone1:
+        type: string
+      phone2:
+        type: string
+      social:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
   internal_app.CreateAppRequest:
     properties:
+      about:
+        $ref: '#/definitions/internal_app.AboutInput'
+      contact:
+        $ref: '#/definitions/internal_app.ContactInput'
+      logo_url:
+        type: string
       name:
         type: string
       status:
         type: integer
+      tagline:
+        type: string
     required:
     - name
     type: object
   internal_app.UpdateAppRequest:
     properties:
+      about:
+        $ref: '#/definitions/internal_app.AboutInput'
+      contact:
+        $ref: '#/definitions/internal_app.ContactInput'
+      logo_url:
+        type: string
       name:
         type: string
       status:
         type: integer
+      tagline:
+        type: string
     type: object
   internal_division.CreateDivisionRequest:
     properties:
@@ -325,6 +429,10 @@ paths:
             $ref: '#/definitions/keeper_pkg_render.Response'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "403":
+          description: Forbidden
           schema:
             $ref: '#/definitions/keeper_pkg_render.Response'
         "500":

@@ -21,9 +21,16 @@ type AppHandler struct {
 
 // NewAppHandler creates a new app handler.
 func NewAppHandler(svc AppService) *AppHandler {
+	v := validator.New()
+	// httpurl accepts an empty value (optional field) or a valid http(s) URL.
+	// Needed because validator's omitempty does not skip a non-nil *string
+	// pointing to "" (e.g. clearing logo_url on update).
+	_ = v.RegisterValidation("httpurl", func(fl validator.FieldLevel) bool {
+		return isHTTPURL(fl.Field().String())
+	})
 	return &AppHandler{
 		svc:      svc,
-		validate: validator.New(),
+		validate: v,
 	}
 }
 
@@ -58,10 +65,22 @@ func (h *AppHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 // @Success 201 {object} render.Response{data=App}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /apps [post]
 func (h *AppHandler) CreateApp(w http.ResponseWriter, r *http.Request) {
+	claims, ok := auth.GetClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if !claims.IsSysAdmin() {
+		slog.Warn("non-sysadmin attempted to create app", "app_id", claims.AppID, "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
 	var req CreateAppRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		slog.Warn("failed to decode create app request", "error", err)
@@ -97,6 +116,23 @@ func (h *AppHandler) CreateApp(w http.ResponseWriter, r *http.Request) {
 // @Security Bearer
 // @Router /apps [get]
 func (h *AppHandler) ListApps(w http.ResponseWriter, r *http.Request) {
+	claims, ok := auth.GetClaimsFromContext(r.Context())
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	// Non-sysadmins may only see their own app.
+	if !claims.IsSysAdmin() {
+		a, err := h.svc.GetByID(r.Context(), claims.AppID)
+		if err != nil {
+			render.JSON(w, http.StatusOK, []*App{})
+			return
+		}
+		render.JSON(w, http.StatusOK, []*App{a})
+		return
+	}
+
 	page := render.ParsePage(r)
 	apps, err := h.svc.List(r.Context(), page.Limit, page.Offset)
 	if err != nil {

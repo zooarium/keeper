@@ -3,6 +3,12 @@
 CUR_DIR := $(notdir $(shell pwd))
 export GO_VERSION ?= 1.26.3
 
+# Service metadata (consumed by `make info` / `make health`).
+SERVICE      := keeper
+SERVICE_DESC := User management & auth — users, apps, divisions, guest keys
+HEALTH_PORT  := 8080
+HEALTH_URL   := http://localhost:$(HEALTH_PORT)/health
+
 # Prebuilt dev/CI image (build deps + pinned Go tools) — see Dockerfile.dev.
 # Built by `make dev-image`; rebuilt only when Dockerfile.dev or GO_VERSION change.
 DEV_IMAGE := $(CUR_DIR)-godev:$(GO_VERSION)
@@ -26,7 +32,7 @@ DOCKER_GO := docker run --rm \
 	-e CGO_ENABLED=1 -e CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
 	$(DEV_IMAGE)
 
-.PHONY: all build up down restart refresh logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade
+.PHONY: all build up down restart refresh logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade health info
 
 # Build the dev/CI toolchain image (cached by Docker layer cache).
 dev-image:
@@ -177,6 +183,23 @@ clean:
 	docker-compose down --rmi all --volumes --remove-orphans
 
 # Show help message
+health:
+	@echo "GET $(HEALTH_URL)"
+	@curl -fsS -m 5 -w '\nHTTP %{http_code}  (%{time_total}s)\n' $(HEALTH_URL) \
+		|| { echo "health: $(SERVICE) unreachable on port $(HEALTH_PORT) — is it up? try 'make up'"; exit 1; }
+
+info:
+	@echo "Service:        $(SERVICE)"
+	@echo "Purpose:        $(SERVICE_DESC)"
+	@echo "Primary port:   $(HEALTH_PORT)"
+	@echo "Health:         $(HEALTH_URL)"
+	@echo "Go (toolchain): $(GO_VERSION)"
+	@echo "Go (go.mod):    $$(awk '$$1=="go"{print $$2; exit}' go.mod)"
+	@echo "DB driver:      $$(awk -F'\"' '/DRIVER:/{print $$2; exit}' config/config.yaml)"
+	@printf 'Secondary:      '; grep -E '^[[:space:]]*- NAME:' config/config.yaml | sed -E 's/.*NAME:[[:space:]]*"?([^"]*)"?.*/\1/' | paste -sd', ' - | grep . || echo 'none'
+	@echo "Containers:"
+	@docker-compose ps 2>/dev/null || true
+
 help:
 	@echo "Usage: make [target]"
 	@echo ""
@@ -212,5 +235,7 @@ help:
 	@echo "  sql           Run SQL query (use query=...)"
 	@echo "  config-check  Validate config incl. secondary listeners"
 	@echo "  clean         Deep clean containers/images"
+	@echo "  health        Check service health endpoint (curl /health)"
+	@echo "  info          Show service metadata (name, port, purpose, Go version)"
 	@echo "  help          Show this help message"
 

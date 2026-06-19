@@ -22,6 +22,21 @@ func (r *appRepository) Create(ctx context.Context, a App) (*App, error) {
 	created, err := r.client.App.
 		Create().
 		SetName(a.Name).
+		SetTagline(a.Tagline).
+		SetLogoURL(a.LogoURL).
+		SetAboutHeading(a.About.Heading).
+		SetAboutBody(a.About.Body).
+		SetContactAddressLine1(a.Contact.Address.Line1).
+		SetContactAddressLine2(a.Contact.Address.Line2).
+		SetContactCity(a.Contact.Address.City).
+		SetContactState(a.Contact.Address.State).
+		SetContactCountry(a.Contact.Address.Country).
+		SetContactPostalCode(a.Contact.Address.PostalCode).
+		SetContactPhone1(a.Contact.Phone1).
+		SetContactPhone2(a.Contact.Phone2).
+		SetContactEmail(a.Contact.Email).
+		SetContactHours(a.Contact.Hours).
+		SetContactSocial(a.Contact.Social).
 		SetStatus(a.Status).
 		Save(ctx)
 	if err != nil {
@@ -64,6 +79,21 @@ func (r *appRepository) List(ctx context.Context, limit, offset int) ([]*App, er
 func (r *appRepository) Update(ctx context.Context, id int, a *App) (*App, error) {
 	updated, err := r.client.App.UpdateOneID(id).
 		SetName(a.Name).
+		SetTagline(a.Tagline).
+		SetLogoURL(a.LogoURL).
+		SetAboutHeading(a.About.Heading).
+		SetAboutBody(a.About.Body).
+		SetContactAddressLine1(a.Contact.Address.Line1).
+		SetContactAddressLine2(a.Contact.Address.Line2).
+		SetContactCity(a.Contact.Address.City).
+		SetContactState(a.Contact.Address.State).
+		SetContactCountry(a.Contact.Address.Country).
+		SetContactPostalCode(a.Contact.Address.PostalCode).
+		SetContactPhone1(a.Contact.Phone1).
+		SetContactPhone2(a.Contact.Phone2).
+		SetContactEmail(a.Contact.Email).
+		SetContactHours(a.Contact.Hours).
+		SetContactSocial(a.Contact.Social).
 		SetStatus(a.Status).
 		Save(ctx)
 	if err != nil {
@@ -88,8 +118,29 @@ func (r *appRepository) Delete(ctx context.Context, id int) error {
 
 func (r *appRepository) mapToModel(a *ent.App) *App {
 	return &App{
-		ID:        a.ID,
-		Name:      a.Name,
+		ID:      a.ID,
+		Name:    a.Name,
+		Tagline: a.Tagline,
+		LogoURL: a.LogoURL,
+		About: About{
+			Heading: a.AboutHeading,
+			Body:    a.AboutBody,
+		},
+		Contact: Contact{
+			Address: Address{
+				Line1:      a.ContactAddressLine1,
+				Line2:      a.ContactAddressLine2,
+				City:       a.ContactCity,
+				State:      a.ContactState,
+				Country:    a.ContactCountry,
+				PostalCode: a.ContactPostalCode,
+			},
+			Phone1: a.ContactPhone1,
+			Phone2: a.ContactPhone2,
+			Email:  a.ContactEmail,
+			Hours:  a.ContactHours,
+			Social: a.ContactSocial,
+		},
 		Status:    a.Status,
 		CreatedAt: a.CreatedAt,
 		UpdatedAt: a.UpdatedAt,

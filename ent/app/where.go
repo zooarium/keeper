@@ -60,6 +60,76 @@ func Name(v string) predicate.App {
 	return predicate.App(sql.FieldEQ(FieldName, v))
 }
 
+// Tagline applies equality check predicate on the "tagline" field. It's identical to TaglineEQ.
+func Tagline(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldTagline, v))
+}
+
+// LogoURL applies equality check predicate on the "logo_url" field. It's identical to LogoURLEQ.
+func LogoURL(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldLogoURL, v))
+}
+
+// AboutHeading applies equality check predicate on the "about_heading" field. It's identical to AboutHeadingEQ.
+func AboutHeading(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldAboutHeading, v))
+}
+
+// AboutBody applies equality check predicate on the "about_body" field. It's identical to AboutBodyEQ.
+func AboutBody(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldAboutBody, v))
+}
+
+// ContactAddressLine1 applies equality check predicate on the "contact_address_line1" field. It's identical to ContactAddressLine1EQ.
+func ContactAddressLine1(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine2 applies equality check predicate on the "contact_address_line2" field. It's identical to ContactAddressLine2EQ.
+func ContactAddressLine2(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactAddressLine2, v))
+}
+
+// ContactCity applies equality check predicate on the "contact_city" field. It's identical to ContactCityEQ.
+func ContactCity(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactCity, v))
+}
+
+// ContactState applies equality check predicate on the "contact_state" field. It's identical to ContactStateEQ.
+func ContactState(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactState, v))
+}
+
+// ContactCountry applies equality check predicate on the "contact_country" field. It's identical to ContactCountryEQ.
+func ContactCountry(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactCountry, v))
+}
+
+// ContactPostalCode applies equality check predicate on the "contact_postal_code" field. It's identical to ContactPostalCodeEQ.
+func ContactPostalCode(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactPostalCode, v))
+}
+
+// ContactPhone1 applies equality check predicate on the "contact_phone1" field. It's identical to ContactPhone1EQ.
+func ContactPhone1(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactPhone1, v))
+}
+
+// ContactPhone2 applies equality check predicate on the "contact_phone2" field. It's identical to ContactPhone2EQ.
+func ContactPhone2(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactPhone2, v))
+}
+
+// ContactEmail applies equality check predicate on the "contact_email" field. It's identical to ContactEmailEQ.
+func ContactEmail(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactEmail, v))
+}
+
+// ContactHours applies equality check predicate on the "contact_hours" field. It's identical to ContactHoursEQ.
+func ContactHours(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactHours, v))
+}
+
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
 func Status(v int8) predicate.App {
 	return predicate.App(sql.FieldEQ(FieldStatus, v))
@@ -138,6 +208,1066 @@ func NameEqualFold(v string) predicate.App {
 // NameContainsFold applies the ContainsFold predicate on the "name" field.
 func NameContainsFold(v string) predicate.App {
 	return predicate.App(sql.FieldContainsFold(FieldName, v))
+}
+
+// TaglineEQ applies the EQ predicate on the "tagline" field.
+func TaglineEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldTagline, v))
+}
+
+// TaglineNEQ applies the NEQ predicate on the "tagline" field.
+func TaglineNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldTagline, v))
+}
+
+// TaglineIn applies the In predicate on the "tagline" field.
+func TaglineIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldTagline, vs...))
+}
+
+// TaglineNotIn applies the NotIn predicate on the "tagline" field.
+func TaglineNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldTagline, vs...))
+}
+
+// TaglineGT applies the GT predicate on the "tagline" field.
+func TaglineGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldTagline, v))
+}
+
+// TaglineGTE applies the GTE predicate on the "tagline" field.
+func TaglineGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldTagline, v))
+}
+
+// TaglineLT applies the LT predicate on the "tagline" field.
+func TaglineLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldTagline, v))
+}
+
+// TaglineLTE applies the LTE predicate on the "tagline" field.
+func TaglineLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldTagline, v))
+}
+
+// TaglineContains applies the Contains predicate on the "tagline" field.
+func TaglineContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldTagline, v))
+}
+
+// TaglineHasPrefix applies the HasPrefix predicate on the "tagline" field.
+func TaglineHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldTagline, v))
+}
+
+// TaglineHasSuffix applies the HasSuffix predicate on the "tagline" field.
+func TaglineHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldTagline, v))
+}
+
+// TaglineIsNil applies the IsNil predicate on the "tagline" field.
+func TaglineIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldTagline))
+}
+
+// TaglineNotNil applies the NotNil predicate on the "tagline" field.
+func TaglineNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldTagline))
+}
+
+// TaglineEqualFold applies the EqualFold predicate on the "tagline" field.
+func TaglineEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldTagline, v))
+}
+
+// TaglineContainsFold applies the ContainsFold predicate on the "tagline" field.
+func TaglineContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldTagline, v))
+}
+
+// LogoURLEQ applies the EQ predicate on the "logo_url" field.
+func LogoURLEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldLogoURL, v))
+}
+
+// LogoURLNEQ applies the NEQ predicate on the "logo_url" field.
+func LogoURLNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldLogoURL, v))
+}
+
+// LogoURLIn applies the In predicate on the "logo_url" field.
+func LogoURLIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldLogoURL, vs...))
+}
+
+// LogoURLNotIn applies the NotIn predicate on the "logo_url" field.
+func LogoURLNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldLogoURL, vs...))
+}
+
+// LogoURLGT applies the GT predicate on the "logo_url" field.
+func LogoURLGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldLogoURL, v))
+}
+
+// LogoURLGTE applies the GTE predicate on the "logo_url" field.
+func LogoURLGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldLogoURL, v))
+}
+
+// LogoURLLT applies the LT predicate on the "logo_url" field.
+func LogoURLLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldLogoURL, v))
+}
+
+// LogoURLLTE applies the LTE predicate on the "logo_url" field.
+func LogoURLLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldLogoURL, v))
+}
+
+// LogoURLContains applies the Contains predicate on the "logo_url" field.
+func LogoURLContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldLogoURL, v))
+}
+
+// LogoURLHasPrefix applies the HasPrefix predicate on the "logo_url" field.
+func LogoURLHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldLogoURL, v))
+}
+
+// LogoURLHasSuffix applies the HasSuffix predicate on the "logo_url" field.
+func LogoURLHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldLogoURL, v))
+}
+
+// LogoURLIsNil applies the IsNil predicate on the "logo_url" field.
+func LogoURLIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldLogoURL))
+}
+
+// LogoURLNotNil applies the NotNil predicate on the "logo_url" field.
+func LogoURLNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldLogoURL))
+}
+
+// LogoURLEqualFold applies the EqualFold predicate on the "logo_url" field.
+func LogoURLEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldLogoURL, v))
+}
+
+// LogoURLContainsFold applies the ContainsFold predicate on the "logo_url" field.
+func LogoURLContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldLogoURL, v))
+}
+
+// AboutHeadingEQ applies the EQ predicate on the "about_heading" field.
+func AboutHeadingEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldAboutHeading, v))
+}
+
+// AboutHeadingNEQ applies the NEQ predicate on the "about_heading" field.
+func AboutHeadingNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldAboutHeading, v))
+}
+
+// AboutHeadingIn applies the In predicate on the "about_heading" field.
+func AboutHeadingIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldAboutHeading, vs...))
+}
+
+// AboutHeadingNotIn applies the NotIn predicate on the "about_heading" field.
+func AboutHeadingNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldAboutHeading, vs...))
+}
+
+// AboutHeadingGT applies the GT predicate on the "about_heading" field.
+func AboutHeadingGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldAboutHeading, v))
+}
+
+// AboutHeadingGTE applies the GTE predicate on the "about_heading" field.
+func AboutHeadingGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldAboutHeading, v))
+}
+
+// AboutHeadingLT applies the LT predicate on the "about_heading" field.
+func AboutHeadingLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldAboutHeading, v))
+}
+
+// AboutHeadingLTE applies the LTE predicate on the "about_heading" field.
+func AboutHeadingLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldAboutHeading, v))
+}
+
+// AboutHeadingContains applies the Contains predicate on the "about_heading" field.
+func AboutHeadingContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldAboutHeading, v))
+}
+
+// AboutHeadingHasPrefix applies the HasPrefix predicate on the "about_heading" field.
+func AboutHeadingHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldAboutHeading, v))
+}
+
+// AboutHeadingHasSuffix applies the HasSuffix predicate on the "about_heading" field.
+func AboutHeadingHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldAboutHeading, v))
+}
+
+// AboutHeadingIsNil applies the IsNil predicate on the "about_heading" field.
+func AboutHeadingIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldAboutHeading))
+}
+
+// AboutHeadingNotNil applies the NotNil predicate on the "about_heading" field.
+func AboutHeadingNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldAboutHeading))
+}
+
+// AboutHeadingEqualFold applies the EqualFold predicate on the "about_heading" field.
+func AboutHeadingEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldAboutHeading, v))
+}
+
+// AboutHeadingContainsFold applies the ContainsFold predicate on the "about_heading" field.
+func AboutHeadingContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldAboutHeading, v))
+}
+
+// AboutBodyEQ applies the EQ predicate on the "about_body" field.
+func AboutBodyEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldAboutBody, v))
+}
+
+// AboutBodyNEQ applies the NEQ predicate on the "about_body" field.
+func AboutBodyNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldAboutBody, v))
+}
+
+// AboutBodyIn applies the In predicate on the "about_body" field.
+func AboutBodyIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldAboutBody, vs...))
+}
+
+// AboutBodyNotIn applies the NotIn predicate on the "about_body" field.
+func AboutBodyNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldAboutBody, vs...))
+}
+
+// AboutBodyGT applies the GT predicate on the "about_body" field.
+func AboutBodyGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldAboutBody, v))
+}
+
+// AboutBodyGTE applies the GTE predicate on the "about_body" field.
+func AboutBodyGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldAboutBody, v))
+}
+
+// AboutBodyLT applies the LT predicate on the "about_body" field.
+func AboutBodyLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldAboutBody, v))
+}
+
+// AboutBodyLTE applies the LTE predicate on the "about_body" field.
+func AboutBodyLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldAboutBody, v))
+}
+
+// AboutBodyContains applies the Contains predicate on the "about_body" field.
+func AboutBodyContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldAboutBody, v))
+}
+
+// AboutBodyHasPrefix applies the HasPrefix predicate on the "about_body" field.
+func AboutBodyHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldAboutBody, v))
+}
+
+// AboutBodyHasSuffix applies the HasSuffix predicate on the "about_body" field.
+func AboutBodyHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldAboutBody, v))
+}
+
+// AboutBodyIsNil applies the IsNil predicate on the "about_body" field.
+func AboutBodyIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldAboutBody))
+}
+
+// AboutBodyNotNil applies the NotNil predicate on the "about_body" field.
+func AboutBodyNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldAboutBody))
+}
+
+// AboutBodyEqualFold applies the EqualFold predicate on the "about_body" field.
+func AboutBodyEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldAboutBody, v))
+}
+
+// AboutBodyContainsFold applies the ContainsFold predicate on the "about_body" field.
+func AboutBodyContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldAboutBody, v))
+}
+
+// ContactAddressLine1EQ applies the EQ predicate on the "contact_address_line1" field.
+func ContactAddressLine1EQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1NEQ applies the NEQ predicate on the "contact_address_line1" field.
+func ContactAddressLine1NEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1In applies the In predicate on the "contact_address_line1" field.
+func ContactAddressLine1In(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactAddressLine1, vs...))
+}
+
+// ContactAddressLine1NotIn applies the NotIn predicate on the "contact_address_line1" field.
+func ContactAddressLine1NotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactAddressLine1, vs...))
+}
+
+// ContactAddressLine1GT applies the GT predicate on the "contact_address_line1" field.
+func ContactAddressLine1GT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1GTE applies the GTE predicate on the "contact_address_line1" field.
+func ContactAddressLine1GTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1LT applies the LT predicate on the "contact_address_line1" field.
+func ContactAddressLine1LT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1LTE applies the LTE predicate on the "contact_address_line1" field.
+func ContactAddressLine1LTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1Contains applies the Contains predicate on the "contact_address_line1" field.
+func ContactAddressLine1Contains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1HasPrefix applies the HasPrefix predicate on the "contact_address_line1" field.
+func ContactAddressLine1HasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1HasSuffix applies the HasSuffix predicate on the "contact_address_line1" field.
+func ContactAddressLine1HasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1IsNil applies the IsNil predicate on the "contact_address_line1" field.
+func ContactAddressLine1IsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactAddressLine1))
+}
+
+// ContactAddressLine1NotNil applies the NotNil predicate on the "contact_address_line1" field.
+func ContactAddressLine1NotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactAddressLine1))
+}
+
+// ContactAddressLine1EqualFold applies the EqualFold predicate on the "contact_address_line1" field.
+func ContactAddressLine1EqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine1ContainsFold applies the ContainsFold predicate on the "contact_address_line1" field.
+func ContactAddressLine1ContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactAddressLine1, v))
+}
+
+// ContactAddressLine2EQ applies the EQ predicate on the "contact_address_line2" field.
+func ContactAddressLine2EQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2NEQ applies the NEQ predicate on the "contact_address_line2" field.
+func ContactAddressLine2NEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2In applies the In predicate on the "contact_address_line2" field.
+func ContactAddressLine2In(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactAddressLine2, vs...))
+}
+
+// ContactAddressLine2NotIn applies the NotIn predicate on the "contact_address_line2" field.
+func ContactAddressLine2NotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactAddressLine2, vs...))
+}
+
+// ContactAddressLine2GT applies the GT predicate on the "contact_address_line2" field.
+func ContactAddressLine2GT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2GTE applies the GTE predicate on the "contact_address_line2" field.
+func ContactAddressLine2GTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2LT applies the LT predicate on the "contact_address_line2" field.
+func ContactAddressLine2LT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2LTE applies the LTE predicate on the "contact_address_line2" field.
+func ContactAddressLine2LTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2Contains applies the Contains predicate on the "contact_address_line2" field.
+func ContactAddressLine2Contains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2HasPrefix applies the HasPrefix predicate on the "contact_address_line2" field.
+func ContactAddressLine2HasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2HasSuffix applies the HasSuffix predicate on the "contact_address_line2" field.
+func ContactAddressLine2HasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2IsNil applies the IsNil predicate on the "contact_address_line2" field.
+func ContactAddressLine2IsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactAddressLine2))
+}
+
+// ContactAddressLine2NotNil applies the NotNil predicate on the "contact_address_line2" field.
+func ContactAddressLine2NotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactAddressLine2))
+}
+
+// ContactAddressLine2EqualFold applies the EqualFold predicate on the "contact_address_line2" field.
+func ContactAddressLine2EqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactAddressLine2, v))
+}
+
+// ContactAddressLine2ContainsFold applies the ContainsFold predicate on the "contact_address_line2" field.
+func ContactAddressLine2ContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactAddressLine2, v))
+}
+
+// ContactCityEQ applies the EQ predicate on the "contact_city" field.
+func ContactCityEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactCity, v))
+}
+
+// ContactCityNEQ applies the NEQ predicate on the "contact_city" field.
+func ContactCityNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactCity, v))
+}
+
+// ContactCityIn applies the In predicate on the "contact_city" field.
+func ContactCityIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactCity, vs...))
+}
+
+// ContactCityNotIn applies the NotIn predicate on the "contact_city" field.
+func ContactCityNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactCity, vs...))
+}
+
+// ContactCityGT applies the GT predicate on the "contact_city" field.
+func ContactCityGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactCity, v))
+}
+
+// ContactCityGTE applies the GTE predicate on the "contact_city" field.
+func ContactCityGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactCity, v))
+}
+
+// ContactCityLT applies the LT predicate on the "contact_city" field.
+func ContactCityLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactCity, v))
+}
+
+// ContactCityLTE applies the LTE predicate on the "contact_city" field.
+func ContactCityLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactCity, v))
+}
+
+// ContactCityContains applies the Contains predicate on the "contact_city" field.
+func ContactCityContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactCity, v))
+}
+
+// ContactCityHasPrefix applies the HasPrefix predicate on the "contact_city" field.
+func ContactCityHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactCity, v))
+}
+
+// ContactCityHasSuffix applies the HasSuffix predicate on the "contact_city" field.
+func ContactCityHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactCity, v))
+}
+
+// ContactCityIsNil applies the IsNil predicate on the "contact_city" field.
+func ContactCityIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactCity))
+}
+
+// ContactCityNotNil applies the NotNil predicate on the "contact_city" field.
+func ContactCityNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactCity))
+}
+
+// ContactCityEqualFold applies the EqualFold predicate on the "contact_city" field.
+func ContactCityEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactCity, v))
+}
+
+// ContactCityContainsFold applies the ContainsFold predicate on the "contact_city" field.
+func ContactCityContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactCity, v))
+}
+
+// ContactStateEQ applies the EQ predicate on the "contact_state" field.
+func ContactStateEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactState, v))
+}
+
+// ContactStateNEQ applies the NEQ predicate on the "contact_state" field.
+func ContactStateNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactState, v))
+}
+
+// ContactStateIn applies the In predicate on the "contact_state" field.
+func ContactStateIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactState, vs...))
+}
+
+// ContactStateNotIn applies the NotIn predicate on the "contact_state" field.
+func ContactStateNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactState, vs...))
+}
+
+// ContactStateGT applies the GT predicate on the "contact_state" field.
+func ContactStateGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactState, v))
+}
+
+// ContactStateGTE applies the GTE predicate on the "contact_state" field.
+func ContactStateGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactState, v))
+}
+
+// ContactStateLT applies the LT predicate on the "contact_state" field.
+func ContactStateLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactState, v))
+}
+
+// ContactStateLTE applies the LTE predicate on the "contact_state" field.
+func ContactStateLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactState, v))
+}
+
+// ContactStateContains applies the Contains predicate on the "contact_state" field.
+func ContactStateContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactState, v))
+}
+
+// ContactStateHasPrefix applies the HasPrefix predicate on the "contact_state" field.
+func ContactStateHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactState, v))
+}
+
+// ContactStateHasSuffix applies the HasSuffix predicate on the "contact_state" field.
+func ContactStateHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactState, v))
+}
+
+// ContactStateIsNil applies the IsNil predicate on the "contact_state" field.
+func ContactStateIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactState))
+}
+
+// ContactStateNotNil applies the NotNil predicate on the "contact_state" field.
+func ContactStateNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactState))
+}
+
+// ContactStateEqualFold applies the EqualFold predicate on the "contact_state" field.
+func ContactStateEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactState, v))
+}
+
+// ContactStateContainsFold applies the ContainsFold predicate on the "contact_state" field.
+func ContactStateContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactState, v))
+}
+
+// ContactCountryEQ applies the EQ predicate on the "contact_country" field.
+func ContactCountryEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactCountry, v))
+}
+
+// ContactCountryNEQ applies the NEQ predicate on the "contact_country" field.
+func ContactCountryNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactCountry, v))
+}
+
+// ContactCountryIn applies the In predicate on the "contact_country" field.
+func ContactCountryIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactCountry, vs...))
+}
+
+// ContactCountryNotIn applies the NotIn predicate on the "contact_country" field.
+func ContactCountryNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactCountry, vs...))
+}
+
+// ContactCountryGT applies the GT predicate on the "contact_country" field.
+func ContactCountryGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactCountry, v))
+}
+
+// ContactCountryGTE applies the GTE predicate on the "contact_country" field.
+func ContactCountryGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactCountry, v))
+}
+
+// ContactCountryLT applies the LT predicate on the "contact_country" field.
+func ContactCountryLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactCountry, v))
+}
+
+// ContactCountryLTE applies the LTE predicate on the "contact_country" field.
+func ContactCountryLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactCountry, v))
+}
+
+// ContactCountryContains applies the Contains predicate on the "contact_country" field.
+func ContactCountryContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactCountry, v))
+}
+
+// ContactCountryHasPrefix applies the HasPrefix predicate on the "contact_country" field.
+func ContactCountryHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactCountry, v))
+}
+
+// ContactCountryHasSuffix applies the HasSuffix predicate on the "contact_country" field.
+func ContactCountryHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactCountry, v))
+}
+
+// ContactCountryIsNil applies the IsNil predicate on the "contact_country" field.
+func ContactCountryIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactCountry))
+}
+
+// ContactCountryNotNil applies the NotNil predicate on the "contact_country" field.
+func ContactCountryNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactCountry))
+}
+
+// ContactCountryEqualFold applies the EqualFold predicate on the "contact_country" field.
+func ContactCountryEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactCountry, v))
+}
+
+// ContactCountryContainsFold applies the ContainsFold predicate on the "contact_country" field.
+func ContactCountryContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactCountry, v))
+}
+
+// ContactPostalCodeEQ applies the EQ predicate on the "contact_postal_code" field.
+func ContactPostalCodeEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeNEQ applies the NEQ predicate on the "contact_postal_code" field.
+func ContactPostalCodeNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeIn applies the In predicate on the "contact_postal_code" field.
+func ContactPostalCodeIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactPostalCode, vs...))
+}
+
+// ContactPostalCodeNotIn applies the NotIn predicate on the "contact_postal_code" field.
+func ContactPostalCodeNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactPostalCode, vs...))
+}
+
+// ContactPostalCodeGT applies the GT predicate on the "contact_postal_code" field.
+func ContactPostalCodeGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeGTE applies the GTE predicate on the "contact_postal_code" field.
+func ContactPostalCodeGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeLT applies the LT predicate on the "contact_postal_code" field.
+func ContactPostalCodeLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeLTE applies the LTE predicate on the "contact_postal_code" field.
+func ContactPostalCodeLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeContains applies the Contains predicate on the "contact_postal_code" field.
+func ContactPostalCodeContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeHasPrefix applies the HasPrefix predicate on the "contact_postal_code" field.
+func ContactPostalCodeHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeHasSuffix applies the HasSuffix predicate on the "contact_postal_code" field.
+func ContactPostalCodeHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeIsNil applies the IsNil predicate on the "contact_postal_code" field.
+func ContactPostalCodeIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactPostalCode))
+}
+
+// ContactPostalCodeNotNil applies the NotNil predicate on the "contact_postal_code" field.
+func ContactPostalCodeNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactPostalCode))
+}
+
+// ContactPostalCodeEqualFold applies the EqualFold predicate on the "contact_postal_code" field.
+func ContactPostalCodeEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactPostalCode, v))
+}
+
+// ContactPostalCodeContainsFold applies the ContainsFold predicate on the "contact_postal_code" field.
+func ContactPostalCodeContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactPostalCode, v))
+}
+
+// ContactPhone1EQ applies the EQ predicate on the "contact_phone1" field.
+func ContactPhone1EQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactPhone1, v))
+}
+
+// ContactPhone1NEQ applies the NEQ predicate on the "contact_phone1" field.
+func ContactPhone1NEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactPhone1, v))
+}
+
+// ContactPhone1In applies the In predicate on the "contact_phone1" field.
+func ContactPhone1In(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactPhone1, vs...))
+}
+
+// ContactPhone1NotIn applies the NotIn predicate on the "contact_phone1" field.
+func ContactPhone1NotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactPhone1, vs...))
+}
+
+// ContactPhone1GT applies the GT predicate on the "contact_phone1" field.
+func ContactPhone1GT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactPhone1, v))
+}
+
+// ContactPhone1GTE applies the GTE predicate on the "contact_phone1" field.
+func ContactPhone1GTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactPhone1, v))
+}
+
+// ContactPhone1LT applies the LT predicate on the "contact_phone1" field.
+func ContactPhone1LT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactPhone1, v))
+}
+
+// ContactPhone1LTE applies the LTE predicate on the "contact_phone1" field.
+func ContactPhone1LTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactPhone1, v))
+}
+
+// ContactPhone1Contains applies the Contains predicate on the "contact_phone1" field.
+func ContactPhone1Contains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactPhone1, v))
+}
+
+// ContactPhone1HasPrefix applies the HasPrefix predicate on the "contact_phone1" field.
+func ContactPhone1HasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactPhone1, v))
+}
+
+// ContactPhone1HasSuffix applies the HasSuffix predicate on the "contact_phone1" field.
+func ContactPhone1HasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactPhone1, v))
+}
+
+// ContactPhone1IsNil applies the IsNil predicate on the "contact_phone1" field.
+func ContactPhone1IsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactPhone1))
+}
+
+// ContactPhone1NotNil applies the NotNil predicate on the "contact_phone1" field.
+func ContactPhone1NotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactPhone1))
+}
+
+// ContactPhone1EqualFold applies the EqualFold predicate on the "contact_phone1" field.
+func ContactPhone1EqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactPhone1, v))
+}
+
+// ContactPhone1ContainsFold applies the ContainsFold predicate on the "contact_phone1" field.
+func ContactPhone1ContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactPhone1, v))
+}
+
+// ContactPhone2EQ applies the EQ predicate on the "contact_phone2" field.
+func ContactPhone2EQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactPhone2, v))
+}
+
+// ContactPhone2NEQ applies the NEQ predicate on the "contact_phone2" field.
+func ContactPhone2NEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactPhone2, v))
+}
+
+// ContactPhone2In applies the In predicate on the "contact_phone2" field.
+func ContactPhone2In(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactPhone2, vs...))
+}
+
+// ContactPhone2NotIn applies the NotIn predicate on the "contact_phone2" field.
+func ContactPhone2NotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactPhone2, vs...))
+}
+
+// ContactPhone2GT applies the GT predicate on the "contact_phone2" field.
+func ContactPhone2GT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactPhone2, v))
+}
+
+// ContactPhone2GTE applies the GTE predicate on the "contact_phone2" field.
+func ContactPhone2GTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactPhone2, v))
+}
+
+// ContactPhone2LT applies the LT predicate on the "contact_phone2" field.
+func ContactPhone2LT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactPhone2, v))
+}
+
+// ContactPhone2LTE applies the LTE predicate on the "contact_phone2" field.
+func ContactPhone2LTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactPhone2, v))
+}
+
+// ContactPhone2Contains applies the Contains predicate on the "contact_phone2" field.
+func ContactPhone2Contains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactPhone2, v))
+}
+
+// ContactPhone2HasPrefix applies the HasPrefix predicate on the "contact_phone2" field.
+func ContactPhone2HasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactPhone2, v))
+}
+
+// ContactPhone2HasSuffix applies the HasSuffix predicate on the "contact_phone2" field.
+func ContactPhone2HasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactPhone2, v))
+}
+
+// ContactPhone2IsNil applies the IsNil predicate on the "contact_phone2" field.
+func ContactPhone2IsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactPhone2))
+}
+
+// ContactPhone2NotNil applies the NotNil predicate on the "contact_phone2" field.
+func ContactPhone2NotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactPhone2))
+}
+
+// ContactPhone2EqualFold applies the EqualFold predicate on the "contact_phone2" field.
+func ContactPhone2EqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactPhone2, v))
+}
+
+// ContactPhone2ContainsFold applies the ContainsFold predicate on the "contact_phone2" field.
+func ContactPhone2ContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactPhone2, v))
+}
+
+// ContactEmailEQ applies the EQ predicate on the "contact_email" field.
+func ContactEmailEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactEmail, v))
+}
+
+// ContactEmailNEQ applies the NEQ predicate on the "contact_email" field.
+func ContactEmailNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactEmail, v))
+}
+
+// ContactEmailIn applies the In predicate on the "contact_email" field.
+func ContactEmailIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactEmail, vs...))
+}
+
+// ContactEmailNotIn applies the NotIn predicate on the "contact_email" field.
+func ContactEmailNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactEmail, vs...))
+}
+
+// ContactEmailGT applies the GT predicate on the "contact_email" field.
+func ContactEmailGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactEmail, v))
+}
+
+// ContactEmailGTE applies the GTE predicate on the "contact_email" field.
+func ContactEmailGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactEmail, v))
+}
+
+// ContactEmailLT applies the LT predicate on the "contact_email" field.
+func ContactEmailLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactEmail, v))
+}
+
+// ContactEmailLTE applies the LTE predicate on the "contact_email" field.
+func ContactEmailLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactEmail, v))
+}
+
+// ContactEmailContains applies the Contains predicate on the "contact_email" field.
+func ContactEmailContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactEmail, v))
+}
+
+// ContactEmailHasPrefix applies the HasPrefix predicate on the "contact_email" field.
+func ContactEmailHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactEmail, v))
+}
+
+// ContactEmailHasSuffix applies the HasSuffix predicate on the "contact_email" field.
+func ContactEmailHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactEmail, v))
+}
+
+// ContactEmailIsNil applies the IsNil predicate on the "contact_email" field.
+func ContactEmailIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactEmail))
+}
+
+// ContactEmailNotNil applies the NotNil predicate on the "contact_email" field.
+func ContactEmailNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactEmail))
+}
+
+// ContactEmailEqualFold applies the EqualFold predicate on the "contact_email" field.
+func ContactEmailEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactEmail, v))
+}
+
+// ContactEmailContainsFold applies the ContainsFold predicate on the "contact_email" field.
+func ContactEmailContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactEmail, v))
+}
+
+// ContactHoursEQ applies the EQ predicate on the "contact_hours" field.
+func ContactHoursEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldContactHours, v))
+}
+
+// ContactHoursNEQ applies the NEQ predicate on the "contact_hours" field.
+func ContactHoursNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldContactHours, v))
+}
+
+// ContactHoursIn applies the In predicate on the "contact_hours" field.
+func ContactHoursIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldContactHours, vs...))
+}
+
+// ContactHoursNotIn applies the NotIn predicate on the "contact_hours" field.
+func ContactHoursNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldContactHours, vs...))
+}
+
+// ContactHoursGT applies the GT predicate on the "contact_hours" field.
+func ContactHoursGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldContactHours, v))
+}
+
+// ContactHoursGTE applies the GTE predicate on the "contact_hours" field.
+func ContactHoursGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldContactHours, v))
+}
+
+// ContactHoursLT applies the LT predicate on the "contact_hours" field.
+func ContactHoursLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldContactHours, v))
+}
+
+// ContactHoursLTE applies the LTE predicate on the "contact_hours" field.
+func ContactHoursLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldContactHours, v))
+}
+
+// ContactHoursContains applies the Contains predicate on the "contact_hours" field.
+func ContactHoursContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldContactHours, v))
+}
+
+// ContactHoursHasPrefix applies the HasPrefix predicate on the "contact_hours" field.
+func ContactHoursHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldContactHours, v))
+}
+
+// ContactHoursHasSuffix applies the HasSuffix predicate on the "contact_hours" field.
+func ContactHoursHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldContactHours, v))
+}
+
+// ContactHoursIsNil applies the IsNil predicate on the "contact_hours" field.
+func ContactHoursIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactHours))
+}
+
+// ContactHoursNotNil applies the NotNil predicate on the "contact_hours" field.
+func ContactHoursNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactHours))
+}
+
+// ContactHoursEqualFold applies the EqualFold predicate on the "contact_hours" field.
+func ContactHoursEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldContactHours, v))
+}
+
+// ContactHoursContainsFold applies the ContainsFold predicate on the "contact_hours" field.
+func ContactHoursContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldContactHours, v))
+}
+
+// ContactSocialIsNil applies the IsNil predicate on the "contact_social" field.
+func ContactSocialIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldContactSocial))
+}
+
+// ContactSocialNotNil applies the NotNil predicate on the "contact_social" field.
+func ContactSocialNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldContactSocial))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

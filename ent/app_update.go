@@ -44,6 +44,298 @@ func (_u *AppUpdate) SetNillableName(v *string) *AppUpdate {
 	return _u
 }
 
+// SetTagline sets the "tagline" field.
+func (_u *AppUpdate) SetTagline(v string) *AppUpdate {
+	_u.mutation.SetTagline(v)
+	return _u
+}
+
+// SetNillableTagline sets the "tagline" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableTagline(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetTagline(*v)
+	}
+	return _u
+}
+
+// ClearTagline clears the value of the "tagline" field.
+func (_u *AppUpdate) ClearTagline() *AppUpdate {
+	_u.mutation.ClearTagline()
+	return _u
+}
+
+// SetLogoURL sets the "logo_url" field.
+func (_u *AppUpdate) SetLogoURL(v string) *AppUpdate {
+	_u.mutation.SetLogoURL(v)
+	return _u
+}
+
+// SetNillableLogoURL sets the "logo_url" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableLogoURL(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetLogoURL(*v)
+	}
+	return _u
+}
+
+// ClearLogoURL clears the value of the "logo_url" field.
+func (_u *AppUpdate) ClearLogoURL() *AppUpdate {
+	_u.mutation.ClearLogoURL()
+	return _u
+}
+
+// SetAboutHeading sets the "about_heading" field.
+func (_u *AppUpdate) SetAboutHeading(v string) *AppUpdate {
+	_u.mutation.SetAboutHeading(v)
+	return _u
+}
+
+// SetNillableAboutHeading sets the "about_heading" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableAboutHeading(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetAboutHeading(*v)
+	}
+	return _u
+}
+
+// ClearAboutHeading clears the value of the "about_heading" field.
+func (_u *AppUpdate) ClearAboutHeading() *AppUpdate {
+	_u.mutation.ClearAboutHeading()
+	return _u
+}
+
+// SetAboutBody sets the "about_body" field.
+func (_u *AppUpdate) SetAboutBody(v string) *AppUpdate {
+	_u.mutation.SetAboutBody(v)
+	return _u
+}
+
+// SetNillableAboutBody sets the "about_body" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableAboutBody(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetAboutBody(*v)
+	}
+	return _u
+}
+
+// ClearAboutBody clears the value of the "about_body" field.
+func (_u *AppUpdate) ClearAboutBody() *AppUpdate {
+	_u.mutation.ClearAboutBody()
+	return _u
+}
+
+// SetContactAddressLine1 sets the "contact_address_line1" field.
+func (_u *AppUpdate) SetContactAddressLine1(v string) *AppUpdate {
+	_u.mutation.SetContactAddressLine1(v)
+	return _u
+}
+
+// SetNillableContactAddressLine1 sets the "contact_address_line1" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactAddressLine1(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactAddressLine1(*v)
+	}
+	return _u
+}
+
+// ClearContactAddressLine1 clears the value of the "contact_address_line1" field.
+func (_u *AppUpdate) ClearContactAddressLine1() *AppUpdate {
+	_u.mutation.ClearContactAddressLine1()
+	return _u
+}
+
+// SetContactAddressLine2 sets the "contact_address_line2" field.
+func (_u *AppUpdate) SetContactAddressLine2(v string) *AppUpdate {
+	_u.mutation.SetContactAddressLine2(v)
+	return _u
+}
+
+// SetNillableContactAddressLine2 sets the "contact_address_line2" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactAddressLine2(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactAddressLine2(*v)
+	}
+	return _u
+}
+
+// ClearContactAddressLine2 clears the value of the "contact_address_line2" field.
+func (_u *AppUpdate) ClearContactAddressLine2() *AppUpdate {
+	_u.mutation.ClearContactAddressLine2()
+	return _u
+}
+
+// SetContactCity sets the "contact_city" field.
+func (_u *AppUpdate) SetContactCity(v string) *AppUpdate {
+	_u.mutation.SetContactCity(v)
+	return _u
+}
+
+// SetNillableContactCity sets the "contact_city" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactCity(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactCity(*v)
+	}
+	return _u
+}
+
+// ClearContactCity clears the value of the "contact_city" field.
+func (_u *AppUpdate) ClearContactCity() *AppUpdate {
+	_u.mutation.ClearContactCity()
+	return _u
+}
+
+// SetContactState sets the "contact_state" field.
+func (_u *AppUpdate) SetContactState(v string) *AppUpdate {
+	_u.mutation.SetContactState(v)
+	return _u
+}
+
+// SetNillableContactState sets the "contact_state" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactState(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactState(*v)
+	}
+	return _u
+}
+
+// ClearContactState clears the value of the "contact_state" field.
+func (_u *AppUpdate) ClearContactState() *AppUpdate {
+	_u.mutation.ClearContactState()
+	return _u
+}
+
+// SetContactCountry sets the "contact_country" field.
+func (_u *AppUpdate) SetContactCountry(v string) *AppUpdate {
+	_u.mutation.SetContactCountry(v)
+	return _u
+}
+
+// SetNillableContactCountry sets the "contact_country" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactCountry(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactCountry(*v)
+	}
+	return _u
+}
+
+// ClearContactCountry clears the value of the "contact_country" field.
+func (_u *AppUpdate) ClearContactCountry() *AppUpdate {
+	_u.mutation.ClearContactCountry()
+	return _u
+}
+
+// SetContactPostalCode sets the "contact_postal_code" field.
+func (_u *AppUpdate) SetContactPostalCode(v string) *AppUpdate {
+	_u.mutation.SetContactPostalCode(v)
+	return _u
+}
+
+// SetNillableContactPostalCode sets the "contact_postal_code" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactPostalCode(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactPostalCode(*v)
+	}
+	return _u
+}
+
+// ClearContactPostalCode clears the value of the "contact_postal_code" field.
+func (_u *AppUpdate) ClearContactPostalCode() *AppUpdate {
+	_u.mutation.ClearContactPostalCode()
+	return _u
+}
+
+// SetContactPhone1 sets the "contact_phone1" field.
+func (_u *AppUpdate) SetContactPhone1(v string) *AppUpdate {
+	_u.mutation.SetContactPhone1(v)
+	return _u
+}
+
+// SetNillableContactPhone1 sets the "contact_phone1" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactPhone1(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactPhone1(*v)
+	}
+	return _u
+}
+
+// ClearContactPhone1 clears the value of the "contact_phone1" field.
+func (_u *AppUpdate) ClearContactPhone1() *AppUpdate {
+	_u.mutation.ClearContactPhone1()
+	return _u
+}
+
+// SetContactPhone2 sets the "contact_phone2" field.
+func (_u *AppUpdate) SetContactPhone2(v string) *AppUpdate {
+	_u.mutation.SetContactPhone2(v)
+	return _u
+}
+
+// SetNillableContactPhone2 sets the "contact_phone2" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactPhone2(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactPhone2(*v)
+	}
+	return _u
+}
+
+// ClearContactPhone2 clears the value of the "contact_phone2" field.
+func (_u *AppUpdate) ClearContactPhone2() *AppUpdate {
+	_u.mutation.ClearContactPhone2()
+	return _u
+}
+
+// SetContactEmail sets the "contact_email" field.
+func (_u *AppUpdate) SetContactEmail(v string) *AppUpdate {
+	_u.mutation.SetContactEmail(v)
+	return _u
+}
+
+// SetNillableContactEmail sets the "contact_email" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactEmail(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactEmail(*v)
+	}
+	return _u
+}
+
+// ClearContactEmail clears the value of the "contact_email" field.
+func (_u *AppUpdate) ClearContactEmail() *AppUpdate {
+	_u.mutation.ClearContactEmail()
+	return _u
+}
+
+// SetContactHours sets the "contact_hours" field.
+func (_u *AppUpdate) SetContactHours(v string) *AppUpdate {
+	_u.mutation.SetContactHours(v)
+	return _u
+}
+
+// SetNillableContactHours sets the "contact_hours" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableContactHours(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetContactHours(*v)
+	}
+	return _u
+}
+
+// ClearContactHours clears the value of the "contact_hours" field.
+func (_u *AppUpdate) ClearContactHours() *AppUpdate {
+	_u.mutation.ClearContactHours()
+	return _u
+}
+
+// SetContactSocial sets the "contact_social" field.
+func (_u *AppUpdate) SetContactSocial(v map[string]string) *AppUpdate {
+	_u.mutation.SetContactSocial(v)
+	return _u
+}
+
+// ClearContactSocial clears the value of the "contact_social" field.
+func (_u *AppUpdate) ClearContactSocial() *AppUpdate {
+	_u.mutation.ClearContactSocial()
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *AppUpdate) SetStatus(v int8) *AppUpdate {
 	_u.mutation.ResetStatus()
@@ -210,6 +502,96 @@ func (_u *AppUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(app.FieldName, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.Tagline(); ok {
+		_spec.SetField(app.FieldTagline, field.TypeString, value)
+	}
+	if _u.mutation.TaglineCleared() {
+		_spec.ClearField(app.FieldTagline, field.TypeString)
+	}
+	if value, ok := _u.mutation.LogoURL(); ok {
+		_spec.SetField(app.FieldLogoURL, field.TypeString, value)
+	}
+	if _u.mutation.LogoURLCleared() {
+		_spec.ClearField(app.FieldLogoURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.AboutHeading(); ok {
+		_spec.SetField(app.FieldAboutHeading, field.TypeString, value)
+	}
+	if _u.mutation.AboutHeadingCleared() {
+		_spec.ClearField(app.FieldAboutHeading, field.TypeString)
+	}
+	if value, ok := _u.mutation.AboutBody(); ok {
+		_spec.SetField(app.FieldAboutBody, field.TypeString, value)
+	}
+	if _u.mutation.AboutBodyCleared() {
+		_spec.ClearField(app.FieldAboutBody, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactAddressLine1(); ok {
+		_spec.SetField(app.FieldContactAddressLine1, field.TypeString, value)
+	}
+	if _u.mutation.ContactAddressLine1Cleared() {
+		_spec.ClearField(app.FieldContactAddressLine1, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactAddressLine2(); ok {
+		_spec.SetField(app.FieldContactAddressLine2, field.TypeString, value)
+	}
+	if _u.mutation.ContactAddressLine2Cleared() {
+		_spec.ClearField(app.FieldContactAddressLine2, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactCity(); ok {
+		_spec.SetField(app.FieldContactCity, field.TypeString, value)
+	}
+	if _u.mutation.ContactCityCleared() {
+		_spec.ClearField(app.FieldContactCity, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactState(); ok {
+		_spec.SetField(app.FieldContactState, field.TypeString, value)
+	}
+	if _u.mutation.ContactStateCleared() {
+		_spec.ClearField(app.FieldContactState, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactCountry(); ok {
+		_spec.SetField(app.FieldContactCountry, field.TypeString, value)
+	}
+	if _u.mutation.ContactCountryCleared() {
+		_spec.ClearField(app.FieldContactCountry, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactPostalCode(); ok {
+		_spec.SetField(app.FieldContactPostalCode, field.TypeString, value)
+	}
+	if _u.mutation.ContactPostalCodeCleared() {
+		_spec.ClearField(app.FieldContactPostalCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactPhone1(); ok {
+		_spec.SetField(app.FieldContactPhone1, field.TypeString, value)
+	}
+	if _u.mutation.ContactPhone1Cleared() {
+		_spec.ClearField(app.FieldContactPhone1, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactPhone2(); ok {
+		_spec.SetField(app.FieldContactPhone2, field.TypeString, value)
+	}
+	if _u.mutation.ContactPhone2Cleared() {
+		_spec.ClearField(app.FieldContactPhone2, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactEmail(); ok {
+		_spec.SetField(app.FieldContactEmail, field.TypeString, value)
+	}
+	if _u.mutation.ContactEmailCleared() {
+		_spec.ClearField(app.FieldContactEmail, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactHours(); ok {
+		_spec.SetField(app.FieldContactHours, field.TypeString, value)
+	}
+	if _u.mutation.ContactHoursCleared() {
+		_spec.ClearField(app.FieldContactHours, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactSocial(); ok {
+		_spec.SetField(app.FieldContactSocial, field.TypeJSON, value)
+	}
+	if _u.mutation.ContactSocialCleared() {
+		_spec.ClearField(app.FieldContactSocial, field.TypeJSON)
+	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(app.FieldStatus, field.TypeInt8, value)
 	}
@@ -343,6 +725,298 @@ func (_u *AppUpdateOne) SetNillableName(v *string) *AppUpdateOne {
 	if v != nil {
 		_u.SetName(*v)
 	}
+	return _u
+}
+
+// SetTagline sets the "tagline" field.
+func (_u *AppUpdateOne) SetTagline(v string) *AppUpdateOne {
+	_u.mutation.SetTagline(v)
+	return _u
+}
+
+// SetNillableTagline sets the "tagline" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableTagline(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetTagline(*v)
+	}
+	return _u
+}
+
+// ClearTagline clears the value of the "tagline" field.
+func (_u *AppUpdateOne) ClearTagline() *AppUpdateOne {
+	_u.mutation.ClearTagline()
+	return _u
+}
+
+// SetLogoURL sets the "logo_url" field.
+func (_u *AppUpdateOne) SetLogoURL(v string) *AppUpdateOne {
+	_u.mutation.SetLogoURL(v)
+	return _u
+}
+
+// SetNillableLogoURL sets the "logo_url" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableLogoURL(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetLogoURL(*v)
+	}
+	return _u
+}
+
+// ClearLogoURL clears the value of the "logo_url" field.
+func (_u *AppUpdateOne) ClearLogoURL() *AppUpdateOne {
+	_u.mutation.ClearLogoURL()
+	return _u
+}
+
+// SetAboutHeading sets the "about_heading" field.
+func (_u *AppUpdateOne) SetAboutHeading(v string) *AppUpdateOne {
+	_u.mutation.SetAboutHeading(v)
+	return _u
+}
+
+// SetNillableAboutHeading sets the "about_heading" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableAboutHeading(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetAboutHeading(*v)
+	}
+	return _u
+}
+
+// ClearAboutHeading clears the value of the "about_heading" field.
+func (_u *AppUpdateOne) ClearAboutHeading() *AppUpdateOne {
+	_u.mutation.ClearAboutHeading()
+	return _u
+}
+
+// SetAboutBody sets the "about_body" field.
+func (_u *AppUpdateOne) SetAboutBody(v string) *AppUpdateOne {
+	_u.mutation.SetAboutBody(v)
+	return _u
+}
+
+// SetNillableAboutBody sets the "about_body" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableAboutBody(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetAboutBody(*v)
+	}
+	return _u
+}
+
+// ClearAboutBody clears the value of the "about_body" field.
+func (_u *AppUpdateOne) ClearAboutBody() *AppUpdateOne {
+	_u.mutation.ClearAboutBody()
+	return _u
+}
+
+// SetContactAddressLine1 sets the "contact_address_line1" field.
+func (_u *AppUpdateOne) SetContactAddressLine1(v string) *AppUpdateOne {
+	_u.mutation.SetContactAddressLine1(v)
+	return _u
+}
+
+// SetNillableContactAddressLine1 sets the "contact_address_line1" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactAddressLine1(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactAddressLine1(*v)
+	}
+	return _u
+}
+
+// ClearContactAddressLine1 clears the value of the "contact_address_line1" field.
+func (_u *AppUpdateOne) ClearContactAddressLine1() *AppUpdateOne {
+	_u.mutation.ClearContactAddressLine1()
+	return _u
+}
+
+// SetContactAddressLine2 sets the "contact_address_line2" field.
+func (_u *AppUpdateOne) SetContactAddressLine2(v string) *AppUpdateOne {
+	_u.mutation.SetContactAddressLine2(v)
+	return _u
+}
+
+// SetNillableContactAddressLine2 sets the "contact_address_line2" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactAddressLine2(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactAddressLine2(*v)
+	}
+	return _u
+}
+
+// ClearContactAddressLine2 clears the value of the "contact_address_line2" field.
+func (_u *AppUpdateOne) ClearContactAddressLine2() *AppUpdateOne {
+	_u.mutation.ClearContactAddressLine2()
+	return _u
+}
+
+// SetContactCity sets the "contact_city" field.
+func (_u *AppUpdateOne) SetContactCity(v string) *AppUpdateOne {
+	_u.mutation.SetContactCity(v)
+	return _u
+}
+
+// SetNillableContactCity sets the "contact_city" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactCity(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactCity(*v)
+	}
+	return _u
+}
+
+// ClearContactCity clears the value of the "contact_city" field.
+func (_u *AppUpdateOne) ClearContactCity() *AppUpdateOne {
+	_u.mutation.ClearContactCity()
+	return _u
+}
+
+// SetContactState sets the "contact_state" field.
+func (_u *AppUpdateOne) SetContactState(v string) *AppUpdateOne {
+	_u.mutation.SetContactState(v)
+	return _u
+}
+
+// SetNillableContactState sets the "contact_state" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactState(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactState(*v)
+	}
+	return _u
+}
+
+// ClearContactState clears the value of the "contact_state" field.
+func (_u *AppUpdateOne) ClearContactState() *AppUpdateOne {
+	_u.mutation.ClearContactState()
+	return _u
+}
+
+// SetContactCountry sets the "contact_country" field.
+func (_u *AppUpdateOne) SetContactCountry(v string) *AppUpdateOne {
+	_u.mutation.SetContactCountry(v)
+	return _u
+}
+
+// SetNillableContactCountry sets the "contact_country" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactCountry(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactCountry(*v)
+	}
+	return _u
+}
+
+// ClearContactCountry clears the value of the "contact_country" field.
+func (_u *AppUpdateOne) ClearContactCountry() *AppUpdateOne {
+	_u.mutation.ClearContactCountry()
+	return _u
+}
+
+// SetContactPostalCode sets the "contact_postal_code" field.
+func (_u *AppUpdateOne) SetContactPostalCode(v string) *AppUpdateOne {
+	_u.mutation.SetContactPostalCode(v)
+	return _u
+}
+
+// SetNillableContactPostalCode sets the "contact_postal_code" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactPostalCode(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactPostalCode(*v)
+	}
+	return _u
+}
+
+// ClearContactPostalCode clears the value of the "contact_postal_code" field.
+func (_u *AppUpdateOne) ClearContactPostalCode() *AppUpdateOne {
+	_u.mutation.ClearContactPostalCode()
+	return _u
+}
+
+// SetContactPhone1 sets the "contact_phone1" field.
+func (_u *AppUpdateOne) SetContactPhone1(v string) *AppUpdateOne {
+	_u.mutation.SetContactPhone1(v)
+	return _u
+}
+
+// SetNillableContactPhone1 sets the "contact_phone1" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactPhone1(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactPhone1(*v)
+	}
+	return _u
+}
+
+// ClearContactPhone1 clears the value of the "contact_phone1" field.
+func (_u *AppUpdateOne) ClearContactPhone1() *AppUpdateOne {
+	_u.mutation.ClearContactPhone1()
+	return _u
+}
+
+// SetContactPhone2 sets the "contact_phone2" field.
+func (_u *AppUpdateOne) SetContactPhone2(v string) *AppUpdateOne {
+	_u.mutation.SetContactPhone2(v)
+	return _u
+}
+
+// SetNillableContactPhone2 sets the "contact_phone2" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactPhone2(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactPhone2(*v)
+	}
+	return _u
+}
+
+// ClearContactPhone2 clears the value of the "contact_phone2" field.
+func (_u *AppUpdateOne) ClearContactPhone2() *AppUpdateOne {
+	_u.mutation.ClearContactPhone2()
+	return _u
+}
+
+// SetContactEmail sets the "contact_email" field.
+func (_u *AppUpdateOne) SetContactEmail(v string) *AppUpdateOne {
+	_u.mutation.SetContactEmail(v)
+	return _u
+}
+
+// SetNillableContactEmail sets the "contact_email" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactEmail(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactEmail(*v)
+	}
+	return _u
+}
+
+// ClearContactEmail clears the value of the "contact_email" field.
+func (_u *AppUpdateOne) ClearContactEmail() *AppUpdateOne {
+	_u.mutation.ClearContactEmail()
+	return _u
+}
+
+// SetContactHours sets the "contact_hours" field.
+func (_u *AppUpdateOne) SetContactHours(v string) *AppUpdateOne {
+	_u.mutation.SetContactHours(v)
+	return _u
+}
+
+// SetNillableContactHours sets the "contact_hours" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableContactHours(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetContactHours(*v)
+	}
+	return _u
+}
+
+// ClearContactHours clears the value of the "contact_hours" field.
+func (_u *AppUpdateOne) ClearContactHours() *AppUpdateOne {
+	_u.mutation.ClearContactHours()
+	return _u
+}
+
+// SetContactSocial sets the "contact_social" field.
+func (_u *AppUpdateOne) SetContactSocial(v map[string]string) *AppUpdateOne {
+	_u.mutation.SetContactSocial(v)
+	return _u
+}
+
+// ClearContactSocial clears the value of the "contact_social" field.
+func (_u *AppUpdateOne) ClearContactSocial() *AppUpdateOne {
+	_u.mutation.ClearContactSocial()
 	return _u
 }
 
@@ -541,6 +1215,96 @@ func (_u *AppUpdateOne) sqlSave(ctx context.Context) (_node *App, err error) {
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(app.FieldName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.Tagline(); ok {
+		_spec.SetField(app.FieldTagline, field.TypeString, value)
+	}
+	if _u.mutation.TaglineCleared() {
+		_spec.ClearField(app.FieldTagline, field.TypeString)
+	}
+	if value, ok := _u.mutation.LogoURL(); ok {
+		_spec.SetField(app.FieldLogoURL, field.TypeString, value)
+	}
+	if _u.mutation.LogoURLCleared() {
+		_spec.ClearField(app.FieldLogoURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.AboutHeading(); ok {
+		_spec.SetField(app.FieldAboutHeading, field.TypeString, value)
+	}
+	if _u.mutation.AboutHeadingCleared() {
+		_spec.ClearField(app.FieldAboutHeading, field.TypeString)
+	}
+	if value, ok := _u.mutation.AboutBody(); ok {
+		_spec.SetField(app.FieldAboutBody, field.TypeString, value)
+	}
+	if _u.mutation.AboutBodyCleared() {
+		_spec.ClearField(app.FieldAboutBody, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactAddressLine1(); ok {
+		_spec.SetField(app.FieldContactAddressLine1, field.TypeString, value)
+	}
+	if _u.mutation.ContactAddressLine1Cleared() {
+		_spec.ClearField(app.FieldContactAddressLine1, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactAddressLine2(); ok {
+		_spec.SetField(app.FieldContactAddressLine2, field.TypeString, value)
+	}
+	if _u.mutation.ContactAddressLine2Cleared() {
+		_spec.ClearField(app.FieldContactAddressLine2, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactCity(); ok {
+		_spec.SetField(app.FieldContactCity, field.TypeString, value)
+	}
+	if _u.mutation.ContactCityCleared() {
+		_spec.ClearField(app.FieldContactCity, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactState(); ok {
+		_spec.SetField(app.FieldContactState, field.TypeString, value)
+	}
+	if _u.mutation.ContactStateCleared() {
+		_spec.ClearField(app.FieldContactState, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactCountry(); ok {
+		_spec.SetField(app.FieldContactCountry, field.TypeString, value)
+	}
+	if _u.mutation.ContactCountryCleared() {
+		_spec.ClearField(app.FieldContactCountry, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactPostalCode(); ok {
+		_spec.SetField(app.FieldContactPostalCode, field.TypeString, value)
+	}
+	if _u.mutation.ContactPostalCodeCleared() {
+		_spec.ClearField(app.FieldContactPostalCode, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactPhone1(); ok {
+		_spec.SetField(app.FieldContactPhone1, field.TypeString, value)
+	}
+	if _u.mutation.ContactPhone1Cleared() {
+		_spec.ClearField(app.FieldContactPhone1, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactPhone2(); ok {
+		_spec.SetField(app.FieldContactPhone2, field.TypeString, value)
+	}
+	if _u.mutation.ContactPhone2Cleared() {
+		_spec.ClearField(app.FieldContactPhone2, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactEmail(); ok {
+		_spec.SetField(app.FieldContactEmail, field.TypeString, value)
+	}
+	if _u.mutation.ContactEmailCleared() {
+		_spec.ClearField(app.FieldContactEmail, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactHours(); ok {
+		_spec.SetField(app.FieldContactHours, field.TypeString, value)
+	}
+	if _u.mutation.ContactHoursCleared() {
+		_spec.ClearField(app.FieldContactHours, field.TypeString)
+	}
+	if value, ok := _u.mutation.ContactSocial(); ok {
+		_spec.SetField(app.FieldContactSocial, field.TypeJSON, value)
+	}
+	if _u.mutation.ContactSocialCleared() {
+		_spec.ClearField(app.FieldContactSocial, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(app.FieldStatus, field.TypeInt8, value)

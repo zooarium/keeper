@@ -139,6 +139,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/keeper_pkg_render.Response"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -1690,14 +1696,92 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "internal_app.About": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "description": "may contain HTML",
+                    "type": "string"
+                },
+                "heading": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_app.AboutInput": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "heading": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_app.Address": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "line1": {
+                    "type": "string"
+                },
+                "line2": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_app.AddressInput": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "line1": {
+                    "type": "string"
+                },
+                "line2": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_app.App": {
             "type": "object",
             "properties": {
+                "about": {
+                    "$ref": "#/definitions/internal_app.About"
+                },
+                "contact": {
+                    "$ref": "#/definitions/internal_app.Contact"
+                },
                 "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
+                },
+                "logo_url": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
@@ -1705,8 +1789,64 @@ const docTemplate = `{
                 "status": {
                     "type": "integer"
                 },
+                "tagline": {
+                    "type": "string"
+                },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_app.Contact": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/internal_app.Address"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "hours": {
+                    "description": "free text",
+                    "type": "string"
+                },
+                "phone1": {
+                    "type": "string"
+                },
+                "phone2": {
+                    "type": "string"
+                },
+                "social": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "internal_app.ContactInput": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/internal_app.AddressInput"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "hours": {
+                    "type": "string"
+                },
+                "phone1": {
+                    "type": "string"
+                },
+                "phone2": {
+                    "type": "string"
+                },
+                "social": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -1716,22 +1856,46 @@ const docTemplate = `{
                 "name"
             ],
             "properties": {
+                "about": {
+                    "$ref": "#/definitions/internal_app.AboutInput"
+                },
+                "contact": {
+                    "$ref": "#/definitions/internal_app.ContactInput"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
                 "status": {
                     "type": "integer"
+                },
+                "tagline": {
+                    "type": "string"
                 }
             }
         },
         "internal_app.UpdateAppRequest": {
             "type": "object",
             "properties": {
+                "about": {
+                    "$ref": "#/definitions/internal_app.AboutInput"
+                },
+                "contact": {
+                    "$ref": "#/definitions/internal_app.ContactInput"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
                 "status": {
                     "type": "integer"
+                },
+                "tagline": {
+                    "type": "string"
                 }
             }
         },

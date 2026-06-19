@@ -36,24 +36,39 @@ const (
 // AppMutation represents an operation that mutates the App nodes in the graph.
 type AppMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	name             *string
-	status           *int8
-	addstatus        *int8
-	created_at       *time.Time
-	updated_at       *time.Time
-	clearedFields    map[string]struct{}
-	users            map[int]struct{}
-	removedusers     map[int]struct{}
-	clearedusers     bool
-	divisions        map[int]struct{}
-	removeddivisions map[int]struct{}
-	cleareddivisions bool
-	done             bool
-	oldValue         func(context.Context) (*App, error)
-	predicates       []predicate.App
+	op                    Op
+	typ                   string
+	id                    *int
+	name                  *string
+	tagline               *string
+	logo_url              *string
+	about_heading         *string
+	about_body            *string
+	contact_address_line1 *string
+	contact_address_line2 *string
+	contact_city          *string
+	contact_state         *string
+	contact_country       *string
+	contact_postal_code   *string
+	contact_phone1        *string
+	contact_phone2        *string
+	contact_email         *string
+	contact_hours         *string
+	contact_social        *map[string]string
+	status                *int8
+	addstatus             *int8
+	created_at            *time.Time
+	updated_at            *time.Time
+	clearedFields         map[string]struct{}
+	users                 map[int]struct{}
+	removedusers          map[int]struct{}
+	clearedusers          bool
+	divisions             map[int]struct{}
+	removeddivisions      map[int]struct{}
+	cleareddivisions      bool
+	done                  bool
+	oldValue              func(context.Context) (*App, error)
+	predicates            []predicate.App
 }
 
 var _ ent.Mutation = (*AppMutation)(nil)
@@ -188,6 +203,741 @@ func (m *AppMutation) OldName(ctx context.Context) (v string, err error) {
 // ResetName resets all changes to the "name" field.
 func (m *AppMutation) ResetName() {
 	m.name = nil
+}
+
+// SetTagline sets the "tagline" field.
+func (m *AppMutation) SetTagline(s string) {
+	m.tagline = &s
+}
+
+// Tagline returns the value of the "tagline" field in the mutation.
+func (m *AppMutation) Tagline() (r string, exists bool) {
+	v := m.tagline
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTagline returns the old "tagline" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldTagline(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTagline is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTagline requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTagline: %w", err)
+	}
+	return oldValue.Tagline, nil
+}
+
+// ClearTagline clears the value of the "tagline" field.
+func (m *AppMutation) ClearTagline() {
+	m.tagline = nil
+	m.clearedFields[app.FieldTagline] = struct{}{}
+}
+
+// TaglineCleared returns if the "tagline" field was cleared in this mutation.
+func (m *AppMutation) TaglineCleared() bool {
+	_, ok := m.clearedFields[app.FieldTagline]
+	return ok
+}
+
+// ResetTagline resets all changes to the "tagline" field.
+func (m *AppMutation) ResetTagline() {
+	m.tagline = nil
+	delete(m.clearedFields, app.FieldTagline)
+}
+
+// SetLogoURL sets the "logo_url" field.
+func (m *AppMutation) SetLogoURL(s string) {
+	m.logo_url = &s
+}
+
+// LogoURL returns the value of the "logo_url" field in the mutation.
+func (m *AppMutation) LogoURL() (r string, exists bool) {
+	v := m.logo_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLogoURL returns the old "logo_url" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldLogoURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLogoURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLogoURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLogoURL: %w", err)
+	}
+	return oldValue.LogoURL, nil
+}
+
+// ClearLogoURL clears the value of the "logo_url" field.
+func (m *AppMutation) ClearLogoURL() {
+	m.logo_url = nil
+	m.clearedFields[app.FieldLogoURL] = struct{}{}
+}
+
+// LogoURLCleared returns if the "logo_url" field was cleared in this mutation.
+func (m *AppMutation) LogoURLCleared() bool {
+	_, ok := m.clearedFields[app.FieldLogoURL]
+	return ok
+}
+
+// ResetLogoURL resets all changes to the "logo_url" field.
+func (m *AppMutation) ResetLogoURL() {
+	m.logo_url = nil
+	delete(m.clearedFields, app.FieldLogoURL)
+}
+
+// SetAboutHeading sets the "about_heading" field.
+func (m *AppMutation) SetAboutHeading(s string) {
+	m.about_heading = &s
+}
+
+// AboutHeading returns the value of the "about_heading" field in the mutation.
+func (m *AppMutation) AboutHeading() (r string, exists bool) {
+	v := m.about_heading
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAboutHeading returns the old "about_heading" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldAboutHeading(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAboutHeading is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAboutHeading requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAboutHeading: %w", err)
+	}
+	return oldValue.AboutHeading, nil
+}
+
+// ClearAboutHeading clears the value of the "about_heading" field.
+func (m *AppMutation) ClearAboutHeading() {
+	m.about_heading = nil
+	m.clearedFields[app.FieldAboutHeading] = struct{}{}
+}
+
+// AboutHeadingCleared returns if the "about_heading" field was cleared in this mutation.
+func (m *AppMutation) AboutHeadingCleared() bool {
+	_, ok := m.clearedFields[app.FieldAboutHeading]
+	return ok
+}
+
+// ResetAboutHeading resets all changes to the "about_heading" field.
+func (m *AppMutation) ResetAboutHeading() {
+	m.about_heading = nil
+	delete(m.clearedFields, app.FieldAboutHeading)
+}
+
+// SetAboutBody sets the "about_body" field.
+func (m *AppMutation) SetAboutBody(s string) {
+	m.about_body = &s
+}
+
+// AboutBody returns the value of the "about_body" field in the mutation.
+func (m *AppMutation) AboutBody() (r string, exists bool) {
+	v := m.about_body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAboutBody returns the old "about_body" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldAboutBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAboutBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAboutBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAboutBody: %w", err)
+	}
+	return oldValue.AboutBody, nil
+}
+
+// ClearAboutBody clears the value of the "about_body" field.
+func (m *AppMutation) ClearAboutBody() {
+	m.about_body = nil
+	m.clearedFields[app.FieldAboutBody] = struct{}{}
+}
+
+// AboutBodyCleared returns if the "about_body" field was cleared in this mutation.
+func (m *AppMutation) AboutBodyCleared() bool {
+	_, ok := m.clearedFields[app.FieldAboutBody]
+	return ok
+}
+
+// ResetAboutBody resets all changes to the "about_body" field.
+func (m *AppMutation) ResetAboutBody() {
+	m.about_body = nil
+	delete(m.clearedFields, app.FieldAboutBody)
+}
+
+// SetContactAddressLine1 sets the "contact_address_line1" field.
+func (m *AppMutation) SetContactAddressLine1(s string) {
+	m.contact_address_line1 = &s
+}
+
+// ContactAddressLine1 returns the value of the "contact_address_line1" field in the mutation.
+func (m *AppMutation) ContactAddressLine1() (r string, exists bool) {
+	v := m.contact_address_line1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactAddressLine1 returns the old "contact_address_line1" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactAddressLine1(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactAddressLine1 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactAddressLine1 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactAddressLine1: %w", err)
+	}
+	return oldValue.ContactAddressLine1, nil
+}
+
+// ClearContactAddressLine1 clears the value of the "contact_address_line1" field.
+func (m *AppMutation) ClearContactAddressLine1() {
+	m.contact_address_line1 = nil
+	m.clearedFields[app.FieldContactAddressLine1] = struct{}{}
+}
+
+// ContactAddressLine1Cleared returns if the "contact_address_line1" field was cleared in this mutation.
+func (m *AppMutation) ContactAddressLine1Cleared() bool {
+	_, ok := m.clearedFields[app.FieldContactAddressLine1]
+	return ok
+}
+
+// ResetContactAddressLine1 resets all changes to the "contact_address_line1" field.
+func (m *AppMutation) ResetContactAddressLine1() {
+	m.contact_address_line1 = nil
+	delete(m.clearedFields, app.FieldContactAddressLine1)
+}
+
+// SetContactAddressLine2 sets the "contact_address_line2" field.
+func (m *AppMutation) SetContactAddressLine2(s string) {
+	m.contact_address_line2 = &s
+}
+
+// ContactAddressLine2 returns the value of the "contact_address_line2" field in the mutation.
+func (m *AppMutation) ContactAddressLine2() (r string, exists bool) {
+	v := m.contact_address_line2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactAddressLine2 returns the old "contact_address_line2" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactAddressLine2(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactAddressLine2 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactAddressLine2 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactAddressLine2: %w", err)
+	}
+	return oldValue.ContactAddressLine2, nil
+}
+
+// ClearContactAddressLine2 clears the value of the "contact_address_line2" field.
+func (m *AppMutation) ClearContactAddressLine2() {
+	m.contact_address_line2 = nil
+	m.clearedFields[app.FieldContactAddressLine2] = struct{}{}
+}
+
+// ContactAddressLine2Cleared returns if the "contact_address_line2" field was cleared in this mutation.
+func (m *AppMutation) ContactAddressLine2Cleared() bool {
+	_, ok := m.clearedFields[app.FieldContactAddressLine2]
+	return ok
+}
+
+// ResetContactAddressLine2 resets all changes to the "contact_address_line2" field.
+func (m *AppMutation) ResetContactAddressLine2() {
+	m.contact_address_line2 = nil
+	delete(m.clearedFields, app.FieldContactAddressLine2)
+}
+
+// SetContactCity sets the "contact_city" field.
+func (m *AppMutation) SetContactCity(s string) {
+	m.contact_city = &s
+}
+
+// ContactCity returns the value of the "contact_city" field in the mutation.
+func (m *AppMutation) ContactCity() (r string, exists bool) {
+	v := m.contact_city
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactCity returns the old "contact_city" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactCity(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactCity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactCity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactCity: %w", err)
+	}
+	return oldValue.ContactCity, nil
+}
+
+// ClearContactCity clears the value of the "contact_city" field.
+func (m *AppMutation) ClearContactCity() {
+	m.contact_city = nil
+	m.clearedFields[app.FieldContactCity] = struct{}{}
+}
+
+// ContactCityCleared returns if the "contact_city" field was cleared in this mutation.
+func (m *AppMutation) ContactCityCleared() bool {
+	_, ok := m.clearedFields[app.FieldContactCity]
+	return ok
+}
+
+// ResetContactCity resets all changes to the "contact_city" field.
+func (m *AppMutation) ResetContactCity() {
+	m.contact_city = nil
+	delete(m.clearedFields, app.FieldContactCity)
+}
+
+// SetContactState sets the "contact_state" field.
+func (m *AppMutation) SetContactState(s string) {
+	m.contact_state = &s
+}
+
+// ContactState returns the value of the "contact_state" field in the mutation.
+func (m *AppMutation) ContactState() (r string, exists bool) {
+	v := m.contact_state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactState returns the old "contact_state" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactState(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactState: %w", err)
+	}
+	return oldValue.ContactState, nil
+}
+
+// ClearContactState clears the value of the "contact_state" field.
+func (m *AppMutation) ClearContactState() {
+	m.contact_state = nil
+	m.clearedFields[app.FieldContactState] = struct{}{}
+}
+
+// ContactStateCleared returns if the "contact_state" field was cleared in this mutation.
+func (m *AppMutation) ContactStateCleared() bool {
+	_, ok := m.clearedFields[app.FieldContactState]
+	return ok
+}
+
+// ResetContactState resets all changes to the "contact_state" field.
+func (m *AppMutation) ResetContactState() {
+	m.contact_state = nil
+	delete(m.clearedFields, app.FieldContactState)
+}
+
+// SetContactCountry sets the "contact_country" field.
+func (m *AppMutation) SetContactCountry(s string) {
+	m.contact_country = &s
+}
+
+// ContactCountry returns the value of the "contact_country" field in the mutation.
+func (m *AppMutation) ContactCountry() (r string, exists bool) {
+	v := m.contact_country
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactCountry returns the old "contact_country" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactCountry(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactCountry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactCountry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactCountry: %w", err)
+	}
+	return oldValue.ContactCountry, nil
+}
+
+// ClearContactCountry clears the value of the "contact_country" field.
+func (m *AppMutation) ClearContactCountry() {
+	m.contact_country = nil
+	m.clearedFields[app.FieldContactCountry] = struct{}{}
+}
+
+// ContactCountryCleared returns if the "contact_country" field was cleared in this mutation.
+func (m *AppMutation) ContactCountryCleared() bool {
+	_, ok := m.clearedFields[app.FieldContactCountry]
+	return ok
+}
+
+// ResetContactCountry resets all changes to the "contact_country" field.
+func (m *AppMutation) ResetContactCountry() {
+	m.contact_country = nil
+	delete(m.clearedFields, app.FieldContactCountry)
+}
+
+// SetContactPostalCode sets the "contact_postal_code" field.
+func (m *AppMutation) SetContactPostalCode(s string) {
+	m.contact_postal_code = &s
+}
+
+// ContactPostalCode returns the value of the "contact_postal_code" field in the mutation.
+func (m *AppMutation) ContactPostalCode() (r string, exists bool) {
+	v := m.contact_postal_code
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactPostalCode returns the old "contact_postal_code" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactPostalCode(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactPostalCode is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactPostalCode requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactPostalCode: %w", err)
+	}
+	return oldValue.ContactPostalCode, nil
+}
+
+// ClearContactPostalCode clears the value of the "contact_postal_code" field.
+func (m *AppMutation) ClearContactPostalCode() {
+	m.contact_postal_code = nil
+	m.clearedFields[app.FieldContactPostalCode] = struct{}{}
+}
+
+// ContactPostalCodeCleared returns if the "contact_postal_code" field was cleared in this mutation.
+func (m *AppMutation) ContactPostalCodeCleared() bool {
+	_, ok := m.clearedFields[app.FieldContactPostalCode]
+	return ok
+}
+
+// ResetContactPostalCode resets all changes to the "contact_postal_code" field.
+func (m *AppMutation) ResetContactPostalCode() {
+	m.contact_postal_code = nil
+	delete(m.clearedFields, app.FieldContactPostalCode)
+}
+
+// SetContactPhone1 sets the "contact_phone1" field.
+func (m *AppMutation) SetContactPhone1(s string) {
+	m.contact_phone1 = &s
+}
+
+// ContactPhone1 returns the value of the "contact_phone1" field in the mutation.
+func (m *AppMutation) ContactPhone1() (r string, exists bool) {
+	v := m.contact_phone1
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactPhone1 returns the old "contact_phone1" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactPhone1(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactPhone1 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactPhone1 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactPhone1: %w", err)
+	}
+	return oldValue.ContactPhone1, nil
+}
+
+// ClearContactPhone1 clears the value of the "contact_phone1" field.
+func (m *AppMutation) ClearContactPhone1() {
+	m.contact_phone1 = nil
+	m.clearedFields[app.FieldContactPhone1] = struct{}{}
+}
+
+// ContactPhone1Cleared returns if the "contact_phone1" field was cleared in this mutation.
+func (m *AppMutation) ContactPhone1Cleared() bool {
+	_, ok := m.clearedFields[app.FieldContactPhone1]
+	return ok
+}
+
+// ResetContactPhone1 resets all changes to the "contact_phone1" field.
+func (m *AppMutation) ResetContactPhone1() {
+	m.contact_phone1 = nil
+	delete(m.clearedFields, app.FieldContactPhone1)
+}
+
+// SetContactPhone2 sets the "contact_phone2" field.
+func (m *AppMutation) SetContactPhone2(s string) {
+	m.contact_phone2 = &s
+}
+
+// ContactPhone2 returns the value of the "contact_phone2" field in the mutation.
+func (m *AppMutation) ContactPhone2() (r string, exists bool) {
+	v := m.contact_phone2
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactPhone2 returns the old "contact_phone2" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactPhone2(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactPhone2 is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactPhone2 requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactPhone2: %w", err)
+	}
+	return oldValue.ContactPhone2, nil
+}
+
+// ClearContactPhone2 clears the value of the "contact_phone2" field.
+func (m *AppMutation) ClearContactPhone2() {
+	m.contact_phone2 = nil
+	m.clearedFields[app.FieldContactPhone2] = struct{}{}
+}
+
+// ContactPhone2Cleared returns if the "contact_phone2" field was cleared in this mutation.
+func (m *AppMutation) ContactPhone2Cleared() bool {
+	_, ok := m.clearedFields[app.FieldContactPhone2]
+	return ok
+}
+
+// ResetContactPhone2 resets all changes to the "contact_phone2" field.
+func (m *AppMutation) ResetContactPhone2() {
+	m.contact_phone2 = nil
+	delete(m.clearedFields, app.FieldContactPhone2)
+}
+
+// SetContactEmail sets the "contact_email" field.
+func (m *AppMutation) SetContactEmail(s string) {
+	m.contact_email = &s
+}
+
+// ContactEmail returns the value of the "contact_email" field in the mutation.
+func (m *AppMutation) ContactEmail() (r string, exists bool) {
+	v := m.contact_email
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactEmail returns the old "contact_email" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactEmail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactEmail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactEmail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactEmail: %w", err)
+	}
+	return oldValue.ContactEmail, nil
+}
+
+// ClearContactEmail clears the value of the "contact_email" field.
+func (m *AppMutation) ClearContactEmail() {
+	m.contact_email = nil
+	m.clearedFields[app.FieldContactEmail] = struct{}{}
+}
+
+// ContactEmailCleared returns if the "contact_email" field was cleared in this mutation.
+func (m *AppMutation) ContactEmailCleared() bool {
+	_, ok := m.clearedFields[app.FieldContactEmail]
+	return ok
+}
+
+// ResetContactEmail resets all changes to the "contact_email" field.
+func (m *AppMutation) ResetContactEmail() {
+	m.contact_email = nil
+	delete(m.clearedFields, app.FieldContactEmail)
+}
+
+// SetContactHours sets the "contact_hours" field.
+func (m *AppMutation) SetContactHours(s string) {
+	m.contact_hours = &s
+}
+
+// ContactHours returns the value of the "contact_hours" field in the mutation.
+func (m *AppMutation) ContactHours() (r string, exists bool) {
+	v := m.contact_hours
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactHours returns the old "contact_hours" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactHours(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactHours is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactHours requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactHours: %w", err)
+	}
+	return oldValue.ContactHours, nil
+}
+
+// ClearContactHours clears the value of the "contact_hours" field.
+func (m *AppMutation) ClearContactHours() {
+	m.contact_hours = nil
+	m.clearedFields[app.FieldContactHours] = struct{}{}
+}
+
+// ContactHoursCleared returns if the "contact_hours" field was cleared in this mutation.
+func (m *AppMutation) ContactHoursCleared() bool {
+	_, ok := m.clearedFields[app.FieldContactHours]
+	return ok
+}
+
+// ResetContactHours resets all changes to the "contact_hours" field.
+func (m *AppMutation) ResetContactHours() {
+	m.contact_hours = nil
+	delete(m.clearedFields, app.FieldContactHours)
+}
+
+// SetContactSocial sets the "contact_social" field.
+func (m *AppMutation) SetContactSocial(value map[string]string) {
+	m.contact_social = &value
+}
+
+// ContactSocial returns the value of the "contact_social" field in the mutation.
+func (m *AppMutation) ContactSocial() (r map[string]string, exists bool) {
+	v := m.contact_social
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContactSocial returns the old "contact_social" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldContactSocial(ctx context.Context) (v map[string]string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContactSocial is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContactSocial requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContactSocial: %w", err)
+	}
+	return oldValue.ContactSocial, nil
+}
+
+// ClearContactSocial clears the value of the "contact_social" field.
+func (m *AppMutation) ClearContactSocial() {
+	m.contact_social = nil
+	m.clearedFields[app.FieldContactSocial] = struct{}{}
+}
+
+// ContactSocialCleared returns if the "contact_social" field was cleared in this mutation.
+func (m *AppMutation) ContactSocialCleared() bool {
+	_, ok := m.clearedFields[app.FieldContactSocial]
+	return ok
+}
+
+// ResetContactSocial resets all changes to the "contact_social" field.
+func (m *AppMutation) ResetContactSocial() {
+	m.contact_social = nil
+	delete(m.clearedFields, app.FieldContactSocial)
 }
 
 // SetStatus sets the "status" field.
@@ -460,9 +1210,54 @@ func (m *AppMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AppMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 19)
 	if m.name != nil {
 		fields = append(fields, app.FieldName)
+	}
+	if m.tagline != nil {
+		fields = append(fields, app.FieldTagline)
+	}
+	if m.logo_url != nil {
+		fields = append(fields, app.FieldLogoURL)
+	}
+	if m.about_heading != nil {
+		fields = append(fields, app.FieldAboutHeading)
+	}
+	if m.about_body != nil {
+		fields = append(fields, app.FieldAboutBody)
+	}
+	if m.contact_address_line1 != nil {
+		fields = append(fields, app.FieldContactAddressLine1)
+	}
+	if m.contact_address_line2 != nil {
+		fields = append(fields, app.FieldContactAddressLine2)
+	}
+	if m.contact_city != nil {
+		fields = append(fields, app.FieldContactCity)
+	}
+	if m.contact_state != nil {
+		fields = append(fields, app.FieldContactState)
+	}
+	if m.contact_country != nil {
+		fields = append(fields, app.FieldContactCountry)
+	}
+	if m.contact_postal_code != nil {
+		fields = append(fields, app.FieldContactPostalCode)
+	}
+	if m.contact_phone1 != nil {
+		fields = append(fields, app.FieldContactPhone1)
+	}
+	if m.contact_phone2 != nil {
+		fields = append(fields, app.FieldContactPhone2)
+	}
+	if m.contact_email != nil {
+		fields = append(fields, app.FieldContactEmail)
+	}
+	if m.contact_hours != nil {
+		fields = append(fields, app.FieldContactHours)
+	}
+	if m.contact_social != nil {
+		fields = append(fields, app.FieldContactSocial)
 	}
 	if m.status != nil {
 		fields = append(fields, app.FieldStatus)
@@ -483,6 +1278,36 @@ func (m *AppMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case app.FieldName:
 		return m.Name()
+	case app.FieldTagline:
+		return m.Tagline()
+	case app.FieldLogoURL:
+		return m.LogoURL()
+	case app.FieldAboutHeading:
+		return m.AboutHeading()
+	case app.FieldAboutBody:
+		return m.AboutBody()
+	case app.FieldContactAddressLine1:
+		return m.ContactAddressLine1()
+	case app.FieldContactAddressLine2:
+		return m.ContactAddressLine2()
+	case app.FieldContactCity:
+		return m.ContactCity()
+	case app.FieldContactState:
+		return m.ContactState()
+	case app.FieldContactCountry:
+		return m.ContactCountry()
+	case app.FieldContactPostalCode:
+		return m.ContactPostalCode()
+	case app.FieldContactPhone1:
+		return m.ContactPhone1()
+	case app.FieldContactPhone2:
+		return m.ContactPhone2()
+	case app.FieldContactEmail:
+		return m.ContactEmail()
+	case app.FieldContactHours:
+		return m.ContactHours()
+	case app.FieldContactSocial:
+		return m.ContactSocial()
 	case app.FieldStatus:
 		return m.Status()
 	case app.FieldCreatedAt:
@@ -500,6 +1325,36 @@ func (m *AppMutation) OldField(ctx context.Context, name string) (ent.Value, err
 	switch name {
 	case app.FieldName:
 		return m.OldName(ctx)
+	case app.FieldTagline:
+		return m.OldTagline(ctx)
+	case app.FieldLogoURL:
+		return m.OldLogoURL(ctx)
+	case app.FieldAboutHeading:
+		return m.OldAboutHeading(ctx)
+	case app.FieldAboutBody:
+		return m.OldAboutBody(ctx)
+	case app.FieldContactAddressLine1:
+		return m.OldContactAddressLine1(ctx)
+	case app.FieldContactAddressLine2:
+		return m.OldContactAddressLine2(ctx)
+	case app.FieldContactCity:
+		return m.OldContactCity(ctx)
+	case app.FieldContactState:
+		return m.OldContactState(ctx)
+	case app.FieldContactCountry:
+		return m.OldContactCountry(ctx)
+	case app.FieldContactPostalCode:
+		return m.OldContactPostalCode(ctx)
+	case app.FieldContactPhone1:
+		return m.OldContactPhone1(ctx)
+	case app.FieldContactPhone2:
+		return m.OldContactPhone2(ctx)
+	case app.FieldContactEmail:
+		return m.OldContactEmail(ctx)
+	case app.FieldContactHours:
+		return m.OldContactHours(ctx)
+	case app.FieldContactSocial:
+		return m.OldContactSocial(ctx)
 	case app.FieldStatus:
 		return m.OldStatus(ctx)
 	case app.FieldCreatedAt:
@@ -521,6 +1376,111 @@ func (m *AppMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case app.FieldTagline:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTagline(v)
+		return nil
+	case app.FieldLogoURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLogoURL(v)
+		return nil
+	case app.FieldAboutHeading:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAboutHeading(v)
+		return nil
+	case app.FieldAboutBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAboutBody(v)
+		return nil
+	case app.FieldContactAddressLine1:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactAddressLine1(v)
+		return nil
+	case app.FieldContactAddressLine2:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactAddressLine2(v)
+		return nil
+	case app.FieldContactCity:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactCity(v)
+		return nil
+	case app.FieldContactState:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactState(v)
+		return nil
+	case app.FieldContactCountry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactCountry(v)
+		return nil
+	case app.FieldContactPostalCode:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactPostalCode(v)
+		return nil
+	case app.FieldContactPhone1:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactPhone1(v)
+		return nil
+	case app.FieldContactPhone2:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactPhone2(v)
+		return nil
+	case app.FieldContactEmail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactEmail(v)
+		return nil
+	case app.FieldContactHours:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactHours(v)
+		return nil
+	case app.FieldContactSocial:
+		v, ok := value.(map[string]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContactSocial(v)
 		return nil
 	case app.FieldStatus:
 		v, ok := value.(int8)
@@ -587,7 +1547,53 @@ func (m *AppMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *AppMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(app.FieldTagline) {
+		fields = append(fields, app.FieldTagline)
+	}
+	if m.FieldCleared(app.FieldLogoURL) {
+		fields = append(fields, app.FieldLogoURL)
+	}
+	if m.FieldCleared(app.FieldAboutHeading) {
+		fields = append(fields, app.FieldAboutHeading)
+	}
+	if m.FieldCleared(app.FieldAboutBody) {
+		fields = append(fields, app.FieldAboutBody)
+	}
+	if m.FieldCleared(app.FieldContactAddressLine1) {
+		fields = append(fields, app.FieldContactAddressLine1)
+	}
+	if m.FieldCleared(app.FieldContactAddressLine2) {
+		fields = append(fields, app.FieldContactAddressLine2)
+	}
+	if m.FieldCleared(app.FieldContactCity) {
+		fields = append(fields, app.FieldContactCity)
+	}
+	if m.FieldCleared(app.FieldContactState) {
+		fields = append(fields, app.FieldContactState)
+	}
+	if m.FieldCleared(app.FieldContactCountry) {
+		fields = append(fields, app.FieldContactCountry)
+	}
+	if m.FieldCleared(app.FieldContactPostalCode) {
+		fields = append(fields, app.FieldContactPostalCode)
+	}
+	if m.FieldCleared(app.FieldContactPhone1) {
+		fields = append(fields, app.FieldContactPhone1)
+	}
+	if m.FieldCleared(app.FieldContactPhone2) {
+		fields = append(fields, app.FieldContactPhone2)
+	}
+	if m.FieldCleared(app.FieldContactEmail) {
+		fields = append(fields, app.FieldContactEmail)
+	}
+	if m.FieldCleared(app.FieldContactHours) {
+		fields = append(fields, app.FieldContactHours)
+	}
+	if m.FieldCleared(app.FieldContactSocial) {
+		fields = append(fields, app.FieldContactSocial)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -600,6 +1606,53 @@ func (m *AppMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *AppMutation) ClearField(name string) error {
+	switch name {
+	case app.FieldTagline:
+		m.ClearTagline()
+		return nil
+	case app.FieldLogoURL:
+		m.ClearLogoURL()
+		return nil
+	case app.FieldAboutHeading:
+		m.ClearAboutHeading()
+		return nil
+	case app.FieldAboutBody:
+		m.ClearAboutBody()
+		return nil
+	case app.FieldContactAddressLine1:
+		m.ClearContactAddressLine1()
+		return nil
+	case app.FieldContactAddressLine2:
+		m.ClearContactAddressLine2()
+		return nil
+	case app.FieldContactCity:
+		m.ClearContactCity()
+		return nil
+	case app.FieldContactState:
+		m.ClearContactState()
+		return nil
+	case app.FieldContactCountry:
+		m.ClearContactCountry()
+		return nil
+	case app.FieldContactPostalCode:
+		m.ClearContactPostalCode()
+		return nil
+	case app.FieldContactPhone1:
+		m.ClearContactPhone1()
+		return nil
+	case app.FieldContactPhone2:
+		m.ClearContactPhone2()
+		return nil
+	case app.FieldContactEmail:
+		m.ClearContactEmail()
+		return nil
+	case app.FieldContactHours:
+		m.ClearContactHours()
+		return nil
+	case app.FieldContactSocial:
+		m.ClearContactSocial()
+		return nil
+	}
 	return fmt.Errorf("unknown App nullable field %s", name)
 }
 
@@ -609,6 +1662,51 @@ func (m *AppMutation) ResetField(name string) error {
 	switch name {
 	case app.FieldName:
 		m.ResetName()
+		return nil
+	case app.FieldTagline:
+		m.ResetTagline()
+		return nil
+	case app.FieldLogoURL:
+		m.ResetLogoURL()
+		return nil
+	case app.FieldAboutHeading:
+		m.ResetAboutHeading()
+		return nil
+	case app.FieldAboutBody:
+		m.ResetAboutBody()
+		return nil
+	case app.FieldContactAddressLine1:
+		m.ResetContactAddressLine1()
+		return nil
+	case app.FieldContactAddressLine2:
+		m.ResetContactAddressLine2()
+		return nil
+	case app.FieldContactCity:
+		m.ResetContactCity()
+		return nil
+	case app.FieldContactState:
+		m.ResetContactState()
+		return nil
+	case app.FieldContactCountry:
+		m.ResetContactCountry()
+		return nil
+	case app.FieldContactPostalCode:
+		m.ResetContactPostalCode()
+		return nil
+	case app.FieldContactPhone1:
+		m.ResetContactPhone1()
+		return nil
+	case app.FieldContactPhone2:
+		m.ResetContactPhone2()
+		return nil
+	case app.FieldContactEmail:
+		m.ResetContactEmail()
+		return nil
+	case app.FieldContactHours:
+		m.ResetContactHours()
+		return nil
+	case app.FieldContactSocial:
+		m.ResetContactSocial()
 		return nil
 	case app.FieldStatus:
 		m.ResetStatus()

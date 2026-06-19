@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"keeper/ent/app"
 	"strings"
@@ -19,6 +20,36 @@ type App struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Tagline holds the value of the "tagline" field.
+	Tagline string `json:"tagline,omitempty"`
+	// LogoURL holds the value of the "logo_url" field.
+	LogoURL string `json:"logo_url,omitempty"`
+	// AboutHeading holds the value of the "about_heading" field.
+	AboutHeading string `json:"about_heading,omitempty"`
+	// AboutBody holds the value of the "about_body" field.
+	AboutBody string `json:"about_body,omitempty"`
+	// ContactAddressLine1 holds the value of the "contact_address_line1" field.
+	ContactAddressLine1 string `json:"contact_address_line1,omitempty"`
+	// ContactAddressLine2 holds the value of the "contact_address_line2" field.
+	ContactAddressLine2 string `json:"contact_address_line2,omitempty"`
+	// ContactCity holds the value of the "contact_city" field.
+	ContactCity string `json:"contact_city,omitempty"`
+	// ContactState holds the value of the "contact_state" field.
+	ContactState string `json:"contact_state,omitempty"`
+	// ContactCountry holds the value of the "contact_country" field.
+	ContactCountry string `json:"contact_country,omitempty"`
+	// ContactPostalCode holds the value of the "contact_postal_code" field.
+	ContactPostalCode string `json:"contact_postal_code,omitempty"`
+	// ContactPhone1 holds the value of the "contact_phone1" field.
+	ContactPhone1 string `json:"contact_phone1,omitempty"`
+	// ContactPhone2 holds the value of the "contact_phone2" field.
+	ContactPhone2 string `json:"contact_phone2,omitempty"`
+	// ContactEmail holds the value of the "contact_email" field.
+	ContactEmail string `json:"contact_email,omitempty"`
+	// ContactHours holds the value of the "contact_hours" field.
+	ContactHours string `json:"contact_hours,omitempty"`
+	// ContactSocial holds the value of the "contact_social" field.
+	ContactSocial map[string]string `json:"contact_social,omitempty"`
 	// Status holds the value of the "status" field.
 	Status int8 `json:"status,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -65,9 +96,11 @@ func (*App) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case app.FieldContactSocial:
+			values[i] = new([]byte)
 		case app.FieldID, app.FieldStatus:
 			values[i] = new(sql.NullInt64)
-		case app.FieldName:
+		case app.FieldName, app.FieldTagline, app.FieldLogoURL, app.FieldAboutHeading, app.FieldAboutBody, app.FieldContactAddressLine1, app.FieldContactAddressLine2, app.FieldContactCity, app.FieldContactState, app.FieldContactCountry, app.FieldContactPostalCode, app.FieldContactPhone1, app.FieldContactPhone2, app.FieldContactEmail, app.FieldContactHours:
 			values[i] = new(sql.NullString)
 		case app.FieldCreatedAt, app.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -97,6 +130,98 @@ func (_m *App) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				_m.Name = value.String
+			}
+		case app.FieldTagline:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field tagline", values[i])
+			} else if value.Valid {
+				_m.Tagline = value.String
+			}
+		case app.FieldLogoURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field logo_url", values[i])
+			} else if value.Valid {
+				_m.LogoURL = value.String
+			}
+		case app.FieldAboutHeading:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field about_heading", values[i])
+			} else if value.Valid {
+				_m.AboutHeading = value.String
+			}
+		case app.FieldAboutBody:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field about_body", values[i])
+			} else if value.Valid {
+				_m.AboutBody = value.String
+			}
+		case app.FieldContactAddressLine1:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_address_line1", values[i])
+			} else if value.Valid {
+				_m.ContactAddressLine1 = value.String
+			}
+		case app.FieldContactAddressLine2:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_address_line2", values[i])
+			} else if value.Valid {
+				_m.ContactAddressLine2 = value.String
+			}
+		case app.FieldContactCity:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_city", values[i])
+			} else if value.Valid {
+				_m.ContactCity = value.String
+			}
+		case app.FieldContactState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_state", values[i])
+			} else if value.Valid {
+				_m.ContactState = value.String
+			}
+		case app.FieldContactCountry:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_country", values[i])
+			} else if value.Valid {
+				_m.ContactCountry = value.String
+			}
+		case app.FieldContactPostalCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_postal_code", values[i])
+			} else if value.Valid {
+				_m.ContactPostalCode = value.String
+			}
+		case app.FieldContactPhone1:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_phone1", values[i])
+			} else if value.Valid {
+				_m.ContactPhone1 = value.String
+			}
+		case app.FieldContactPhone2:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_phone2", values[i])
+			} else if value.Valid {
+				_m.ContactPhone2 = value.String
+			}
+		case app.FieldContactEmail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_email", values[i])
+			} else if value.Valid {
+				_m.ContactEmail = value.String
+			}
+		case app.FieldContactHours:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_hours", values[i])
+			} else if value.Valid {
+				_m.ContactHours = value.String
+			}
+		case app.FieldContactSocial:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field contact_social", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ContactSocial); err != nil {
+					return fmt.Errorf("unmarshal field contact_social: %w", err)
+				}
 			}
 		case app.FieldStatus:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -164,6 +289,51 @@ func (_m *App) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
+	builder.WriteString(", ")
+	builder.WriteString("tagline=")
+	builder.WriteString(_m.Tagline)
+	builder.WriteString(", ")
+	builder.WriteString("logo_url=")
+	builder.WriteString(_m.LogoURL)
+	builder.WriteString(", ")
+	builder.WriteString("about_heading=")
+	builder.WriteString(_m.AboutHeading)
+	builder.WriteString(", ")
+	builder.WriteString("about_body=")
+	builder.WriteString(_m.AboutBody)
+	builder.WriteString(", ")
+	builder.WriteString("contact_address_line1=")
+	builder.WriteString(_m.ContactAddressLine1)
+	builder.WriteString(", ")
+	builder.WriteString("contact_address_line2=")
+	builder.WriteString(_m.ContactAddressLine2)
+	builder.WriteString(", ")
+	builder.WriteString("contact_city=")
+	builder.WriteString(_m.ContactCity)
+	builder.WriteString(", ")
+	builder.WriteString("contact_state=")
+	builder.WriteString(_m.ContactState)
+	builder.WriteString(", ")
+	builder.WriteString("contact_country=")
+	builder.WriteString(_m.ContactCountry)
+	builder.WriteString(", ")
+	builder.WriteString("contact_postal_code=")
+	builder.WriteString(_m.ContactPostalCode)
+	builder.WriteString(", ")
+	builder.WriteString("contact_phone1=")
+	builder.WriteString(_m.ContactPhone1)
+	builder.WriteString(", ")
+	builder.WriteString("contact_phone2=")
+	builder.WriteString(_m.ContactPhone2)
+	builder.WriteString(", ")
+	builder.WriteString("contact_email=")
+	builder.WriteString(_m.ContactEmail)
+	builder.WriteString(", ")
+	builder.WriteString("contact_hours=")
+	builder.WriteString(_m.ContactHours)
+	builder.WriteString(", ")
+	builder.WriteString("contact_social=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ContactSocial))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

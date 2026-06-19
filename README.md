@@ -403,11 +403,20 @@ By default, the services are available at:
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
-- `POST /apps`: Create a new app.
-- `GET /apps`: List all apps.
-- `GET /apps/{id}`: Get app by ID.
-- `PUT /apps/{id}`: Update app by ID.
-- `DELETE /apps/{id}`: Delete app by ID.
+- `POST /apps`: Create a new app (**sysadmin only**; 403 otherwise).
+- `GET /apps`: List apps (sysadmins: all; other users: own app only).
+- `GET /apps/{id}`: Get app by ID (sysadmin or own app).
+- `PUT /apps/{id}`: Update app by ID (sysadmin or own app).
+- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app).
+
+App carries profile fields editable by sysadmin (any app) or the tenant's own
+users (own app only): `tagline`, `logo_url` (URL, light `url` validation, no file
+upload), nested `about` (`heading`, `body` — HTML allowed), and nested `contact`
+(`address`: `line1`, `line2`, `city`, `state`, `country`, `postal_code`; `phone1`,
+`phone2`, `email`, `hours` — free text, `social` — arbitrary `platform→url` JSON
+map, each value validated as an http(s) URL). All optional. On update, the `about`
+and `contact` sections replace wholesale when present.
+
 - `POST /divisions`: Create a new division.
 - `GET /divisions`: List divisions (filter: `?parent_id=`).
 - `GET /divisions/{id}`: Get division by ID.

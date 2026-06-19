@@ -159,13 +159,30 @@ To ensure codebase health and consistency, the following steps **must** be compl
 
 ### Database Schema (kpr_app table)
 
-| Field      | Type      | Description                          |
-|------------|-----------|--------------------------------------|
-| ID         | int       | Primary Key (Auto-increment)         |
-| Name       | string    | Unique app name                      |
-| Status     | smallint  | 0 (Inactive), 1 (Active)             |
-| CreatedAt  | datetime  | Creation timestamp                   |
-| UpdatedAt  | datetime  | Last update timestamp                |
+| Field                 | Type      | Description                          |
+|-----------------------|-----------|--------------------------------------|
+| ID                    | int       | Primary Key (Auto-increment)         |
+| Name                  | string    | Unique app name                      |
+| Tagline               | string    | Short tagline (optional)             |
+| LogoURL               | string    | Logo URL — no file upload (optional) |
+| AboutHeading          | string    | About section heading (optional)     |
+| AboutBody             | text      | About body, HTML allowed (optional)  |
+| ContactAddressLine1   | string    | Address line 1 (optional)            |
+| ContactAddressLine2   | string    | Address line 2 (optional)            |
+| ContactCity           | string    | City (optional)                      |
+| ContactState          | string    | State (optional)                     |
+| ContactCountry        | string    | Country (optional)                   |
+| ContactPostalCode     | string    | Postal code (optional)               |
+| ContactPhone1         | string    | Primary phone (optional)             |
+| ContactPhone2         | string    | Secondary phone (optional)           |
+| ContactEmail          | string    | Contact email (optional)             |
+| ContactHours          | text      | Business hours, free text (optional) |
+| ContactSocial         | json      | `platform→url` map, URL-validated    |
+| Status                | smallint  | 0 (Inactive), 1 (Active)             |
+| CreatedAt             | datetime  | Creation timestamp                   |
+| UpdatedAt             | datetime  | Last update timestamp                |
+
+App profile fields (tagline, logo_url, about, contact) are optional and editable by sysadmin (any app) or the tenant's own users (own app only). API exposes `about` and `contact` as **nested JSON objects** (flat columns in DB); on update both sections replace wholesale when present. `logo_url` + each `contact.social` value get light http(s) URL validation; `contact.email` validated as email.
 
 ### Database Schema (kpr_division table)
 
@@ -226,11 +243,11 @@ Other microservices (e.g. squirrel) read `division_id` from the JWT claims and s
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
-- `POST /apps`: Create a new app.
-- `GET /apps`: List all apps.
-- `GET /apps/{id}`: Get app by ID.
-- `PUT /apps/{id}`: Update app by ID.
-- `DELETE /apps/{id}`: Delete app by ID.
+- `POST /apps`: Create a new app (sysadmin only; 403 otherwise).
+- `GET /apps`: List apps (sysadmins: all; other users: own app only).
+- `GET /apps/{id}`: Get app by ID (sysadmin or own app).
+- `PUT /apps/{id}`: Update app by ID (sysadmin or own app).
+- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app).
 - `POST /divisions`: Create a new division.
 - `GET /divisions`: List divisions (query: `parent_id`).
 - `GET /divisions/{id}`: Get division by ID.

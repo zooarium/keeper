@@ -16,6 +16,36 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldTagline holds the string denoting the tagline field in the database.
+	FieldTagline = "tagline"
+	// FieldLogoURL holds the string denoting the logo_url field in the database.
+	FieldLogoURL = "logo_url"
+	// FieldAboutHeading holds the string denoting the about_heading field in the database.
+	FieldAboutHeading = "about_heading"
+	// FieldAboutBody holds the string denoting the about_body field in the database.
+	FieldAboutBody = "about_body"
+	// FieldContactAddressLine1 holds the string denoting the contact_address_line1 field in the database.
+	FieldContactAddressLine1 = "contact_address_line1"
+	// FieldContactAddressLine2 holds the string denoting the contact_address_line2 field in the database.
+	FieldContactAddressLine2 = "contact_address_line2"
+	// FieldContactCity holds the string denoting the contact_city field in the database.
+	FieldContactCity = "contact_city"
+	// FieldContactState holds the string denoting the contact_state field in the database.
+	FieldContactState = "contact_state"
+	// FieldContactCountry holds the string denoting the contact_country field in the database.
+	FieldContactCountry = "contact_country"
+	// FieldContactPostalCode holds the string denoting the contact_postal_code field in the database.
+	FieldContactPostalCode = "contact_postal_code"
+	// FieldContactPhone1 holds the string denoting the contact_phone1 field in the database.
+	FieldContactPhone1 = "contact_phone1"
+	// FieldContactPhone2 holds the string denoting the contact_phone2 field in the database.
+	FieldContactPhone2 = "contact_phone2"
+	// FieldContactEmail holds the string denoting the contact_email field in the database.
+	FieldContactEmail = "contact_email"
+	// FieldContactHours holds the string denoting the contact_hours field in the database.
+	FieldContactHours = "contact_hours"
+	// FieldContactSocial holds the string denoting the contact_social field in the database.
+	FieldContactSocial = "contact_social"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -48,6 +78,21 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldTagline,
+	FieldLogoURL,
+	FieldAboutHeading,
+	FieldAboutBody,
+	FieldContactAddressLine1,
+	FieldContactAddressLine2,
+	FieldContactCity,
+	FieldContactState,
+	FieldContactCountry,
+	FieldContactPostalCode,
+	FieldContactPhone1,
+	FieldContactPhone2,
+	FieldContactEmail,
+	FieldContactHours,
+	FieldContactSocial,
 	FieldStatus,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -85,6 +130,76 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByTagline orders the results by the tagline field.
+func ByTagline(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTagline, opts...).ToFunc()
+}
+
+// ByLogoURL orders the results by the logo_url field.
+func ByLogoURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLogoURL, opts...).ToFunc()
+}
+
+// ByAboutHeading orders the results by the about_heading field.
+func ByAboutHeading(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAboutHeading, opts...).ToFunc()
+}
+
+// ByAboutBody orders the results by the about_body field.
+func ByAboutBody(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAboutBody, opts...).ToFunc()
+}
+
+// ByContactAddressLine1 orders the results by the contact_address_line1 field.
+func ByContactAddressLine1(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactAddressLine1, opts...).ToFunc()
+}
+
+// ByContactAddressLine2 orders the results by the contact_address_line2 field.
+func ByContactAddressLine2(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactAddressLine2, opts...).ToFunc()
+}
+
+// ByContactCity orders the results by the contact_city field.
+func ByContactCity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactCity, opts...).ToFunc()
+}
+
+// ByContactState orders the results by the contact_state field.
+func ByContactState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactState, opts...).ToFunc()
+}
+
+// ByContactCountry orders the results by the contact_country field.
+func ByContactCountry(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactCountry, opts...).ToFunc()
+}
+
+// ByContactPostalCode orders the results by the contact_postal_code field.
+func ByContactPostalCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactPostalCode, opts...).ToFunc()
+}
+
+// ByContactPhone1 orders the results by the contact_phone1 field.
+func ByContactPhone1(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactPhone1, opts...).ToFunc()
+}
+
+// ByContactPhone2 orders the results by the contact_phone2 field.
+func ByContactPhone2(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactPhone2, opts...).ToFunc()
+}
+
+// ByContactEmail orders the results by the contact_email field.
+func ByContactEmail(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactEmail, opts...).ToFunc()
+}
+
+// ByContactHours orders the results by the contact_hours field.
+func ByContactHours(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldContactHours, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.
