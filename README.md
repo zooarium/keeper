@@ -384,6 +384,60 @@ Properties:
 | `AUTH.GUEST_JWT_SECRET` | Signing key for guest tokens (must match the consuming listener's `JWT_SECRET`) | placeholder — set via env in prod |
 | `AUTH.GUEST_JWT_EXPIRY` | Guest token lifetime | `30m` |
 
+## Impersonation (sysadmin "login as user")
+
+Keeper lets a **sysadmin** open a session as another user on a downstream
+service UI, with full parity of that user's rights, while keeping the admin's
+own session alive. Authorization is claims-based, so the minted token simply
+carries the impersonated user's identity (`app_id`, `user_id`, `division_id`,
+`role`); extra claims (`impersonator`, `imp`, `imp_ro`, `sid`, `aud`) add
+audit, scoping and revocation without reducing rights.
+
+```
+admin tab (keeper-ui)
+  1. POST keeper /impersonations { target_user_id, audience }   (sysadmin JWT)
+       <- { code, session_id, expires_at }    one-time code, ~60s TTL
+  2. open <service-ui>/impersonate/exchange#code=...            (new tab; fragment, not query)
+service-ui tab
+  3. POST keeper /impersonations/exchange { code }              (public, rate-limited)
+       <- { token, user, audience, session_id }  imp token signed with IMPERSONATION_JWT_SECRET
+  4. store token+user in per-tab sessionStorage overlay -> act as the user
+  5. on exit/logout -> POST keeper /impersonations/logout { session_id }  (revokes server-side)
+```
+
+Properties:
+
+- **Separate signing secret**: impersonation tokens are signed with
+  `AUTH.IMPERSONATION_JWT_SECRET` (not the primary or guest secret). Only
+  services configured with it accept them; on every other surface they fail
+  verification. Containment is cryptographic.
+- **Audience-scoped**: each token carries `aud` = a single service key. A
+  downstream service rejects any impersonation token whose audience is not its
+  own — a token minted for `squirrel` cannot be replayed against `ant`.
+- **No sysadmin target**: minting refuses when the target user is a sysadmin
+  (privilege-escalation guard).
+- **Short expiry + revocation**: `AUTH.IMPERSONATION_JWT_EXPIRY` (default
+  `10m`); revoke a session server-side via `POST /impersonations/{id}/revoke`
+  (sysadmin) or `POST /impersonations/logout` (self, by `session_id`).
+  Downstream services optionally check `GET /impersonations/active/{sid}`
+  (cached) so a revoked session dies before its expiry.
+- **One-time code handoff**: the JWT never travels in a URL — only a single-use,
+  ~60s code does, in the URL *fragment* (not sent to servers/logs). Exchanged
+  once for the token.
+- **Read-only mode (optional)**: a session may be marked read-only (`imp_ro`);
+  downstream services then reject mutating verbs. Default is full read/write.
+- **Audit**: every session is persisted (`kpr_impersonation_session`) and every
+  impersonated mutation downstream is logged with the impersonator.
+- **Service registry**: targets are declared under `SERVICES:` (key, audience,
+  UI exchange URL, UI origin) — validated at startup; drives the redirect
+  allow-list, the exchange CORS allow-list, and the token audience.
+
+| Config | Description | Default |
+|--------|-------------|---------|
+| `AUTH.IMPERSONATION_JWT_SECRET` | Signing key for impersonation tokens (must match the downstream service's `IMPERSONATION.JWT_SECRET`) | placeholder — set via env in prod |
+| `AUTH.IMPERSONATION_JWT_EXPIRY` | Impersonation token lifetime | `10m` |
+| `SERVICES` | Registered impersonation target services (`KEY`, `AUDIENCE`, `UI_EXCHANGE_URL`, `UI_ORIGIN`) | `[]` |
+
 ## Service URLs
 
 By default, the services are available at:
@@ -431,6 +485,14 @@ and `contact` sections replace wholesale when present.
 - `GET /guest-keys/{id}`: Get guest key by ID.
 - `PUT /guest-keys/{id}`: Update guest key name/status (tenant binding and site key immutable).
 - `DELETE /guest-keys/{id}`: Delete (revoke) a guest key.
+- `POST /impersonations`: Start an impersonation session; returns a one-time handoff code (sysadmin only; refuses sysadmin targets).
+- `POST /impersonations/exchange`: Exchange a one-time code for an impersonation token + user (public, 10 req/min per IP).
+- `POST /impersonations/logout`: Self-revoke a session by `session_id` (public, 10 req/min per IP).
+- `GET /impersonations/active/{session_id}`: Report whether a session is active — boolean only (public, 10 req/min per IP; for downstream revocation checks).
+- `GET /impersonations`: List active impersonation sessions (sysadmin only).
+- `GET /impersonations/services`: List registered impersonation target services for the UI picker (sysadmin only).
+- `GET /impersonations/{id}`: Get an impersonation session by ID (sysadmin only).
+- `POST /impersonations/{id}/revoke`: Revoke an impersonation session by ID (sysadmin only).
 - `GET /swagger/*`: Swagger UI.
 
 ## Rate Limiting

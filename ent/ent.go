@@ -9,6 +9,7 @@ import (
 	"keeper/ent/app"
 	"keeper/ent/division"
 	"keeper/ent/guestkey"
+	"keeper/ent/impersonationsession"
 	"keeper/ent/user"
 	"reflect"
 	"sync"
@@ -76,10 +77,11 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			app.Table:      app.ValidColumn,
-			division.Table: division.ValidColumn,
-			guestkey.Table: guestkey.ValidColumn,
-			user.Table:     user.ValidColumn,
+			app.Table:                  app.ValidColumn,
+			division.Table:             division.ValidColumn,
+			guestkey.Table:             guestkey.ValidColumn,
+			impersonationsession.Table: impersonationsession.ValidColumn,
+			user.Table:                 user.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

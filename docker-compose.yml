@@ -9,6 +9,9 @@ services:
     volumes:
       - ./data:/app/data
       - ./log:/app/log
+      # The image ships only the binary, so config (incl. SERVICES, which cannot
+      # be set via env) is mounted here. DB_PATH/LOG_DIR below still win via env.
+      - ./config:/app/config:ro
     environment:
       - GO_ENV=development
       - DB_PATH=/app/data/keeper.db

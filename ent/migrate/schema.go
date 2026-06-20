@@ -108,6 +108,35 @@ var (
 			},
 		},
 	}
+	// KprImpersonationSessionColumns holds the columns for the "kpr_impersonation_session" table.
+	KprImpersonationSessionColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "session_id", Type: field.TypeString, Unique: true},
+		{Name: "app_id", Type: field.TypeInt},
+		{Name: "division_id", Type: field.TypeInt},
+		{Name: "impersonator_user_id", Type: field.TypeInt},
+		{Name: "target_user_id", Type: field.TypeInt},
+		{Name: "audience", Type: field.TypeString},
+		{Name: "read_only", Type: field.TypeBool, Default: false},
+		{Name: "reason", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeInt8, Default: 1},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "revoked_at", Type: field.TypeTime, Nullable: true},
+	}
+	// KprImpersonationSessionTable holds the schema information for the "kpr_impersonation_session" table.
+	KprImpersonationSessionTable = &schema.Table{
+		Name:       "kpr_impersonation_session",
+		Columns:    KprImpersonationSessionColumns,
+		PrimaryKey: []*schema.Column{KprImpersonationSessionColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "impersonationsession_app_id",
+				Unique:  false,
+				Columns: []*schema.Column{KprImpersonationSessionColumns[2]},
+			},
+		},
+	}
 	// KprUserColumns holds the columns for the "kpr_user" table.
 	KprUserColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -154,6 +183,7 @@ var (
 		KprAppTable,
 		KprDivisionTable,
 		KprGuestKeyTable,
+		KprImpersonationSessionTable,
 		KprUserTable,
 	}
 )
@@ -169,6 +199,9 @@ func init() {
 	}
 	KprGuestKeyTable.Annotation = &entsql.Annotation{
 		Table: "kpr_guest_key",
+	}
+	KprImpersonationSessionTable.Annotation = &entsql.Annotation{
+		Table: "kpr_impersonation_session",
 	}
 	KprUserTable.ForeignKeys[0].RefTable = KprAppTable
 	KprUserTable.ForeignKeys[1].RefTable = KprDivisionTable

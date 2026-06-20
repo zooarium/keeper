@@ -15,5 +15,8 @@ type Division func(*sql.Selector)
 // GuestKey is the predicate function for guestkey builders.
 type GuestKey func(*sql.Selector)
 
+// ImpersonationSession is the predicate function for impersonationsession builders.
+type ImpersonationSession func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

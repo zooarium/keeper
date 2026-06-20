@@ -14,6 +14,11 @@ AUTH:
   # signed with a separate secret so they're useless on normal surfaces.
   GUEST_JWT_SECRET: "a-separate-guest-token-secret-key"
   GUEST_JWT_EXPIRY: 30m
+  # Impersonation tokens (sysadmin "login as user") are signed with their own
+  # secret so they only verify on services explicitly configured with it.
+  # Inject the real value via KEEPER_AUTH_IMPERSONATION_JWT_SECRET in production.
+  IMPERSONATION_JWT_SECRET: "a-separate-impersonation-token-secret-key"
+  IMPERSONATION_JWT_EXPIRY: 10m
 CORS:
   ALLOWED_ORIGINS:
     - "*"
@@ -34,3 +39,19 @@ SECONDARY: []
 #     ROUTES:
 #       - "POST /users/auth"
 #       - "POST /guest-keys/auth"
+# Impersonation service registry: downstream services a sysadmin can "log in as
+# a user" into. KEY/AUDIENCE must be unique; UI_EXCHANGE_URL is that service
+# UI's shared exchange page; UI_ORIGIN is its scheme://host, used as the CORS
+# allow-list for the public exchange endpoint. In production all URLs must be
+# https. Adding a service = one block here + that UI mounting the exchange route.
+SERVICES:
+  # Local dev: ant-ui served at http://localhost:5174 (admin area under /admin).
+  # http is allowed here because the host is loopback; real hosts require https.
+  - KEY: "ant"
+    AUDIENCE: "ant"
+    UI_EXCHANGE_URL: "http://localhost:5174/admin/impersonate/exchange"
+    UI_ORIGIN: "http://localhost:5174"
+  # - KEY: "squirrel"
+  #   AUDIENCE: "squirrel"
+  #   UI_EXCHANGE_URL: "https://expenses.zoo.example/impersonate/exchange"
+  #   UI_ORIGIN: "https://expenses.zoo.example"

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
 
@@ -18,6 +19,27 @@ type Config struct {
 	Seed        SeedConfig
 	CORS        CORSConfig
 	Secondary   []SecondaryConfig `mapstructure:"SECONDARY"`
+	Services    []ServiceEntry    `mapstructure:"SERVICES"`
+}
+
+// ServiceEntry registers a downstream service that can be impersonated into.
+// It drives three things at once: the redirect allow-list (keeper-ui may only
+// hand off to a registered UIExchangeURL), the CORS allow-list for the public
+// exchange endpoint (only registered UIOrigins may call it), and the audience
+// stamped into the minted impersonation token (downstream rejects a token whose
+// audience is not its own service key). Adding a new service is a single block
+// here plus that UI implementing the shared exchange route.
+type ServiceEntry struct {
+	// Key uniquely identifies the service (e.g. "squirrel", "ant").
+	Key string `mapstructure:"KEY"`
+	// Audience stamped into the token's aud claim. Defaults to Key when empty.
+	Audience string `mapstructure:"AUDIENCE"`
+	// UIExchangeURL is the absolute URL of that service UI's exchange page,
+	// opened with the one-time code in the fragment.
+	UIExchangeURL string `mapstructure:"UI_EXCHANGE_URL"`
+	// UIOrigin is the scheme://host[:port] of that service UI, used as the CORS
+	// allow-list entry for the public exchange endpoint.
+	UIOrigin string `mapstructure:"UI_ORIGIN"`
 }
 
 // SecondaryConfig drives one optional secondary listener: an additional HTTP
@@ -76,6 +98,11 @@ type AuthConfig struct {
 	// cryptographically useless on surfaces that verify with JWT_SECRET.
 	GuestJWTSecret string        `mapstructure:"GUEST_JWT_SECRET"`
 	GuestJWTExpiry time.Duration `mapstructure:"GUEST_JWT_EXPIRY"`
+	// Impersonation tokens are signed with their own secret so they only verify
+	// on surfaces explicitly configured with it (and never on primary/guest
+	// surfaces). Kept deliberately short-lived.
+	ImpersonationJWTSecret string        `mapstructure:"IMPERSONATION_JWT_SECRET"`
+	ImpersonationJWTExpiry time.Duration `mapstructure:"IMPERSONATION_JWT_EXPIRY"`
 }
 
 // SeedConfig holds credentials for the bootstrapped sysadmin user.
@@ -104,6 +131,8 @@ func Load() (*Config, error) {
 	v.SetDefault("AUTH.JWT_EXPIRY", 24*time.Hour)
 	v.SetDefault("AUTH.GUEST_JWT_SECRET", "a-separate-guest-token-secret-key")
 	v.SetDefault("AUTH.GUEST_JWT_EXPIRY", 30*time.Minute)
+	v.SetDefault("AUTH.IMPERSONATION_JWT_SECRET", "a-separate-impersonation-token-secret-key")
+	v.SetDefault("AUTH.IMPERSONATION_JWT_EXPIRY", 10*time.Minute)
 	v.SetDefault("SEED.ADMIN_EMAIL", "admin@admin.com")
 	v.SetDefault("SEED.ADMIN_PASSWORD", "admin")
 	v.SetDefault("CORS.ALLOWED_ORIGINS", []string{"*"})
@@ -149,7 +178,80 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	if err := normalizeServices(&cfg); err != nil {
+		return nil, err
+	}
+
 	return &cfg, nil
+}
+
+// normalizeServices validates the impersonation service registry and applies
+// per-entry defaults (viper defaults cannot reach into list elements). Keys and
+// origins must be unique; exchange URL and origin are required and must be
+// http(s); in production both must be https.
+func normalizeServices(cfg *Config) error {
+	prod := cfg.Environment == "production"
+	seenKey := map[string]bool{}
+	seenOrigin := map[string]bool{}
+	for i := range cfg.Services {
+		s := &cfg.Services[i]
+		if s.Key == "" {
+			return fmt.Errorf("SERVICES[%d]: KEY is required", i)
+		}
+		if seenKey[s.Key] {
+			return fmt.Errorf("SERVICES[%d]: KEY %q already in use by another service", i, s.Key)
+		}
+		seenKey[s.Key] = true
+
+		if s.Audience == "" {
+			s.Audience = s.Key
+		}
+		if s.UIExchangeURL == "" {
+			return fmt.Errorf("SERVICES[%d] (%s): UI_EXCHANGE_URL is required", i, s.Key)
+		}
+		if err := validateHTTPURL(s.UIExchangeURL, prod); err != nil {
+			return fmt.Errorf("SERVICES[%d] (%s): UI_EXCHANGE_URL %v", i, s.Key, err)
+		}
+		if s.UIOrigin == "" {
+			return fmt.Errorf("SERVICES[%d] (%s): UI_ORIGIN is required", i, s.Key)
+		}
+		if err := validateHTTPURL(s.UIOrigin, prod); err != nil {
+			return fmt.Errorf("SERVICES[%d] (%s): UI_ORIGIN %v", i, s.Key, err)
+		}
+		if seenOrigin[s.UIOrigin] {
+			return fmt.Errorf("SERVICES[%d] (%s): UI_ORIGIN %q already in use by another service", i, s.Key, s.UIOrigin)
+		}
+		seenOrigin[s.UIOrigin] = true
+	}
+	return nil
+}
+
+// validateHTTPURL checks that raw is an absolute http(s) URL. When prod is true
+// only https is accepted — except for loopback hosts (localhost/127.0.0.1/::1),
+// which may use http so local development works without TLS.
+func validateHTTPURL(raw string, prod bool) error {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("is not a valid URL: %w", err)
+	}
+	if u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") {
+		return fmt.Errorf("must be an absolute http(s) URL, got %q", raw)
+	}
+	if prod && u.Scheme != "https" && !isLoopbackHost(u.Hostname()) {
+		return fmt.Errorf("must be https in production, got %q", raw)
+	}
+	return nil
+}
+
+// isLoopbackHost reports whether host is a loopback address where plain http is
+// acceptable even in production (local development).
+func isLoopbackHost(host string) bool {
+	switch host {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	default:
+		return false
+	}
 }
 
 // normalizeSecondary validates the secondary listener entries and applies

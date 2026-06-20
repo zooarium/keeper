@@ -11,6 +11,7 @@ import (
 	"keeper/internal/app"
 	"keeper/internal/division"
 	"keeper/internal/guestkey"
+	"keeper/internal/impersonation"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
@@ -46,6 +47,10 @@ type mockGuestKeyService struct {
 	guestkey.GuestKeyService
 }
 
+type mockImpersonationService struct {
+	impersonation.ImpersonationService
+}
+
 func (m *mockDivisionService) List(ctx context.Context, appID int, parentID *int, limit, offset int) ([]*division.Division, error) {
 	return []*division.Division{}, nil
 }
@@ -65,12 +70,14 @@ func TestRouterAuthentication(t *testing.T) {
 	gkSvc := &mockGuestKeyService{}
 	gkHandler := guestkey.NewGuestKeyHandler(gkSvc)
 
+	impHandler := impersonation.NewImpersonationHandler(&mockImpersonationService{})
+
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, impHandler, jwtManager, cfg)
 
 	tests := []struct {
 		name           string
@@ -122,12 +129,14 @@ func TestRouterAuthentication_ValidToken(t *testing.T) {
 	gkSvc := &mockGuestKeyService{}
 	gkHandler := guestkey.NewGuestKeyHandler(gkSvc)
 
+	impHandler := impersonation.NewImpersonationHandler(&mockImpersonationService{})
+
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, impHandler, jwtManager, cfg)
 
 	token, _ := jwtManager.Generate(1, 1, 1, 0)
 

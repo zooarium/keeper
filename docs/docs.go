@@ -1300,6 +1300,488 @@ const docTemplate = `{
                 }
             }
         },
+        "/impersonations": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Sysadmin-only. Lists active impersonation sessions for audit.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "List active impersonation sessions",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 50, max 500)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Result offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_impersonation.ImpersonationSession"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Sysadmin-only. Mints a one-time handoff code for logging in as another user on a registered downstream service. The code is exchanged (cross-origin) for the actual token. Refuses to target a sysadmin.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "Start an impersonation session",
+                "parameters": [
+                    {
+                        "description": "Target user and audience",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_impersonation.StartImpersonationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_impersonation.StartImpersonationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/impersonations/active/{session_id}": {
+            "get": {
+                "description": "Public (no auth) and rate-limited. Returns a boolean only — no identity or tenant data — so downstream services can cheaply enforce revocation.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "Check whether an impersonation session is active",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Opaque session id",
+                        "name": "session_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_impersonation.SessionStatusResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/impersonations/exchange": {
+            "post": {
+                "description": "Public (no auth) and rate-limited. Redeems a one-time code for a short-lived, audience-scoped impersonation token plus the impersonated user object. Called cross-origin by the target service UI's exchange page.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "Exchange a handoff code for an impersonation token",
+                "parameters": [
+                    {
+                        "description": "Handoff code",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_impersonation.ExchangeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_impersonation.ExchangeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/impersonations/logout": {
+            "post": {
+                "description": "Public (no auth) and rate-limited. Revokes a session by its opaque id — used by the impersonation tab on exit. Knowing the unguessable session id is the capability; revocation only reduces access.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "Revoke an impersonation session (self-service)",
+                "parameters": [
+                    {
+                        "description": "Session id",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_impersonation.LogoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/impersonations/services": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Sysadmin-only. Returns the services a sysadmin can impersonate a user into, for the UI service picker.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "List registered impersonation target services",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_impersonation.ServiceInfo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/impersonations/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Sysadmin-only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "Get an impersonation session by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_impersonation.ImpersonationSession"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/impersonations/{id}/revoke": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Sysadmin-only. Revokes a session server-side; downstream services reject its token on next request.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "impersonation"
+                ],
+                "summary": "Revoke an impersonation session by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Session ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_impersonation.ImpersonationSession"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "security": [
@@ -2075,6 +2557,181 @@ const docTemplate = `{
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_impersonation.ExchangeRequest": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_impersonation.ExchangeResponse": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/internal_impersonation.TargetUser"
+                }
+            }
+        },
+        "internal_impersonation.ImpersonationSession": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "integer"
+                },
+                "audience": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "division_id": {
+                    "type": "integer"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "impersonator_user_id": {
+                    "type": "integer"
+                },
+                "read_only": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "revoked_at": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                },
+                "target_user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_impersonation.LogoutRequest": {
+            "type": "object",
+            "required": [
+                "session_id"
+            ],
+            "properties": {
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_impersonation.ServiceInfo": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "ui_exchange_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_impersonation.SessionStatusResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "internal_impersonation.StartImpersonationRequest": {
+            "type": "object",
+            "required": [
+                "audience",
+                "target_user_id"
+            ],
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "read_only": {
+                    "type": "boolean"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "target_user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_impersonation.StartImpersonationResponse": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "type": "string"
+                },
+                "code": {
+                    "type": "string"
+                },
+                "expires_at": {
+                    "type": "string"
+                },
+                "session_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_impersonation.TargetUser": {
+            "type": "object",
+            "properties": {
+                "app_id": {
+                    "type": "integer"
+                },
+                "division_id": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "firstname": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "integer"
                 },
                 "status": {
                     "type": "integer"

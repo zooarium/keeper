@@ -9,6 +9,7 @@ import (
 	"keeper/ent/app"
 	"keeper/ent/division"
 	"keeper/ent/guestkey"
+	"keeper/ent/impersonationsession"
 	"keeper/ent/predicate"
 	"keeper/ent/user"
 	"sync"
@@ -27,10 +28,11 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeApp      = "App"
-	TypeDivision = "Division"
-	TypeGuestKey = "GuestKey"
-	TypeUser     = "User"
+	TypeApp                  = "App"
+	TypeDivision             = "Division"
+	TypeGuestKey             = "GuestKey"
+	TypeImpersonationSession = "ImpersonationSession"
+	TypeUser                 = "User"
 )
 
 // AppMutation represents an operation that mutates the App nodes in the graph.
@@ -3785,6 +3787,1135 @@ func (m *GuestKeyMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *GuestKeyMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown GuestKey edge %s", name)
+}
+
+// ImpersonationSessionMutation represents an operation that mutates the ImpersonationSession nodes in the graph.
+type ImpersonationSessionMutation struct {
+	config
+	op                      Op
+	typ                     string
+	id                      *int
+	session_id              *string
+	app_id                  *int
+	addapp_id               *int
+	division_id             *int
+	adddivision_id          *int
+	impersonator_user_id    *int
+	addimpersonator_user_id *int
+	target_user_id          *int
+	addtarget_user_id       *int
+	audience                *string
+	read_only               *bool
+	reason                  *string
+	status                  *int8
+	addstatus               *int8
+	created_at              *time.Time
+	expires_at              *time.Time
+	revoked_at              *time.Time
+	clearedFields           map[string]struct{}
+	done                    bool
+	oldValue                func(context.Context) (*ImpersonationSession, error)
+	predicates              []predicate.ImpersonationSession
+}
+
+var _ ent.Mutation = (*ImpersonationSessionMutation)(nil)
+
+// impersonationsessionOption allows management of the mutation configuration using functional options.
+type impersonationsessionOption func(*ImpersonationSessionMutation)
+
+// newImpersonationSessionMutation creates new mutation for the ImpersonationSession entity.
+func newImpersonationSessionMutation(c config, op Op, opts ...impersonationsessionOption) *ImpersonationSessionMutation {
+	m := &ImpersonationSessionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeImpersonationSession,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withImpersonationSessionID sets the ID field of the mutation.
+func withImpersonationSessionID(id int) impersonationsessionOption {
+	return func(m *ImpersonationSessionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ImpersonationSession
+		)
+		m.oldValue = func(ctx context.Context) (*ImpersonationSession, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ImpersonationSession.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withImpersonationSession sets the old ImpersonationSession of the mutation.
+func withImpersonationSession(node *ImpersonationSession) impersonationsessionOption {
+	return func(m *ImpersonationSessionMutation) {
+		m.oldValue = func(context.Context) (*ImpersonationSession, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ImpersonationSessionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ImpersonationSessionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ImpersonationSessionMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ImpersonationSessionMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ImpersonationSession.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSessionID sets the "session_id" field.
+func (m *ImpersonationSessionMutation) SetSessionID(s string) {
+	m.session_id = &s
+}
+
+// SessionID returns the value of the "session_id" field in the mutation.
+func (m *ImpersonationSessionMutation) SessionID() (r string, exists bool) {
+	v := m.session_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSessionID returns the old "session_id" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldSessionID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSessionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSessionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSessionID: %w", err)
+	}
+	return oldValue.SessionID, nil
+}
+
+// ResetSessionID resets all changes to the "session_id" field.
+func (m *ImpersonationSessionMutation) ResetSessionID() {
+	m.session_id = nil
+}
+
+// SetAppID sets the "app_id" field.
+func (m *ImpersonationSessionMutation) SetAppID(i int) {
+	m.app_id = &i
+	m.addapp_id = nil
+}
+
+// AppID returns the value of the "app_id" field in the mutation.
+func (m *ImpersonationSessionMutation) AppID() (r int, exists bool) {
+	v := m.app_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAppID returns the old "app_id" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldAppID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAppID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAppID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAppID: %w", err)
+	}
+	return oldValue.AppID, nil
+}
+
+// AddAppID adds i to the "app_id" field.
+func (m *ImpersonationSessionMutation) AddAppID(i int) {
+	if m.addapp_id != nil {
+		*m.addapp_id += i
+	} else {
+		m.addapp_id = &i
+	}
+}
+
+// AddedAppID returns the value that was added to the "app_id" field in this mutation.
+func (m *ImpersonationSessionMutation) AddedAppID() (r int, exists bool) {
+	v := m.addapp_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAppID resets all changes to the "app_id" field.
+func (m *ImpersonationSessionMutation) ResetAppID() {
+	m.app_id = nil
+	m.addapp_id = nil
+}
+
+// SetDivisionID sets the "division_id" field.
+func (m *ImpersonationSessionMutation) SetDivisionID(i int) {
+	m.division_id = &i
+	m.adddivision_id = nil
+}
+
+// DivisionID returns the value of the "division_id" field in the mutation.
+func (m *ImpersonationSessionMutation) DivisionID() (r int, exists bool) {
+	v := m.division_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDivisionID returns the old "division_id" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldDivisionID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDivisionID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDivisionID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDivisionID: %w", err)
+	}
+	return oldValue.DivisionID, nil
+}
+
+// AddDivisionID adds i to the "division_id" field.
+func (m *ImpersonationSessionMutation) AddDivisionID(i int) {
+	if m.adddivision_id != nil {
+		*m.adddivision_id += i
+	} else {
+		m.adddivision_id = &i
+	}
+}
+
+// AddedDivisionID returns the value that was added to the "division_id" field in this mutation.
+func (m *ImpersonationSessionMutation) AddedDivisionID() (r int, exists bool) {
+	v := m.adddivision_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDivisionID resets all changes to the "division_id" field.
+func (m *ImpersonationSessionMutation) ResetDivisionID() {
+	m.division_id = nil
+	m.adddivision_id = nil
+}
+
+// SetImpersonatorUserID sets the "impersonator_user_id" field.
+func (m *ImpersonationSessionMutation) SetImpersonatorUserID(i int) {
+	m.impersonator_user_id = &i
+	m.addimpersonator_user_id = nil
+}
+
+// ImpersonatorUserID returns the value of the "impersonator_user_id" field in the mutation.
+func (m *ImpersonationSessionMutation) ImpersonatorUserID() (r int, exists bool) {
+	v := m.impersonator_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImpersonatorUserID returns the old "impersonator_user_id" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldImpersonatorUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImpersonatorUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImpersonatorUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImpersonatorUserID: %w", err)
+	}
+	return oldValue.ImpersonatorUserID, nil
+}
+
+// AddImpersonatorUserID adds i to the "impersonator_user_id" field.
+func (m *ImpersonationSessionMutation) AddImpersonatorUserID(i int) {
+	if m.addimpersonator_user_id != nil {
+		*m.addimpersonator_user_id += i
+	} else {
+		m.addimpersonator_user_id = &i
+	}
+}
+
+// AddedImpersonatorUserID returns the value that was added to the "impersonator_user_id" field in this mutation.
+func (m *ImpersonationSessionMutation) AddedImpersonatorUserID() (r int, exists bool) {
+	v := m.addimpersonator_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetImpersonatorUserID resets all changes to the "impersonator_user_id" field.
+func (m *ImpersonationSessionMutation) ResetImpersonatorUserID() {
+	m.impersonator_user_id = nil
+	m.addimpersonator_user_id = nil
+}
+
+// SetTargetUserID sets the "target_user_id" field.
+func (m *ImpersonationSessionMutation) SetTargetUserID(i int) {
+	m.target_user_id = &i
+	m.addtarget_user_id = nil
+}
+
+// TargetUserID returns the value of the "target_user_id" field in the mutation.
+func (m *ImpersonationSessionMutation) TargetUserID() (r int, exists bool) {
+	v := m.target_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTargetUserID returns the old "target_user_id" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldTargetUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTargetUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTargetUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTargetUserID: %w", err)
+	}
+	return oldValue.TargetUserID, nil
+}
+
+// AddTargetUserID adds i to the "target_user_id" field.
+func (m *ImpersonationSessionMutation) AddTargetUserID(i int) {
+	if m.addtarget_user_id != nil {
+		*m.addtarget_user_id += i
+	} else {
+		m.addtarget_user_id = &i
+	}
+}
+
+// AddedTargetUserID returns the value that was added to the "target_user_id" field in this mutation.
+func (m *ImpersonationSessionMutation) AddedTargetUserID() (r int, exists bool) {
+	v := m.addtarget_user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTargetUserID resets all changes to the "target_user_id" field.
+func (m *ImpersonationSessionMutation) ResetTargetUserID() {
+	m.target_user_id = nil
+	m.addtarget_user_id = nil
+}
+
+// SetAudience sets the "audience" field.
+func (m *ImpersonationSessionMutation) SetAudience(s string) {
+	m.audience = &s
+}
+
+// Audience returns the value of the "audience" field in the mutation.
+func (m *ImpersonationSessionMutation) Audience() (r string, exists bool) {
+	v := m.audience
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAudience returns the old "audience" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldAudience(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAudience is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAudience requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAudience: %w", err)
+	}
+	return oldValue.Audience, nil
+}
+
+// ResetAudience resets all changes to the "audience" field.
+func (m *ImpersonationSessionMutation) ResetAudience() {
+	m.audience = nil
+}
+
+// SetReadOnly sets the "read_only" field.
+func (m *ImpersonationSessionMutation) SetReadOnly(b bool) {
+	m.read_only = &b
+}
+
+// ReadOnly returns the value of the "read_only" field in the mutation.
+func (m *ImpersonationSessionMutation) ReadOnly() (r bool, exists bool) {
+	v := m.read_only
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReadOnly returns the old "read_only" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldReadOnly(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReadOnly is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReadOnly requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReadOnly: %w", err)
+	}
+	return oldValue.ReadOnly, nil
+}
+
+// ResetReadOnly resets all changes to the "read_only" field.
+func (m *ImpersonationSessionMutation) ResetReadOnly() {
+	m.read_only = nil
+}
+
+// SetReason sets the "reason" field.
+func (m *ImpersonationSessionMutation) SetReason(s string) {
+	m.reason = &s
+}
+
+// Reason returns the value of the "reason" field in the mutation.
+func (m *ImpersonationSessionMutation) Reason() (r string, exists bool) {
+	v := m.reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReason returns the old "reason" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReason: %w", err)
+	}
+	return oldValue.Reason, nil
+}
+
+// ClearReason clears the value of the "reason" field.
+func (m *ImpersonationSessionMutation) ClearReason() {
+	m.reason = nil
+	m.clearedFields[impersonationsession.FieldReason] = struct{}{}
+}
+
+// ReasonCleared returns if the "reason" field was cleared in this mutation.
+func (m *ImpersonationSessionMutation) ReasonCleared() bool {
+	_, ok := m.clearedFields[impersonationsession.FieldReason]
+	return ok
+}
+
+// ResetReason resets all changes to the "reason" field.
+func (m *ImpersonationSessionMutation) ResetReason() {
+	m.reason = nil
+	delete(m.clearedFields, impersonationsession.FieldReason)
+}
+
+// SetStatus sets the "status" field.
+func (m *ImpersonationSessionMutation) SetStatus(i int8) {
+	m.status = &i
+	m.addstatus = nil
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *ImpersonationSessionMutation) Status() (r int8, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldStatus(ctx context.Context) (v int8, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// AddStatus adds i to the "status" field.
+func (m *ImpersonationSessionMutation) AddStatus(i int8) {
+	if m.addstatus != nil {
+		*m.addstatus += i
+	} else {
+		m.addstatus = &i
+	}
+}
+
+// AddedStatus returns the value that was added to the "status" field in this mutation.
+func (m *ImpersonationSessionMutation) AddedStatus() (r int8, exists bool) {
+	v := m.addstatus
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *ImpersonationSessionMutation) ResetStatus() {
+	m.status = nil
+	m.addstatus = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ImpersonationSessionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ImpersonationSessionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ImpersonationSessionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *ImpersonationSessionMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *ImpersonationSessionMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *ImpersonationSessionMutation) ResetExpiresAt() {
+	m.expires_at = nil
+}
+
+// SetRevokedAt sets the "revoked_at" field.
+func (m *ImpersonationSessionMutation) SetRevokedAt(t time.Time) {
+	m.revoked_at = &t
+}
+
+// RevokedAt returns the value of the "revoked_at" field in the mutation.
+func (m *ImpersonationSessionMutation) RevokedAt() (r time.Time, exists bool) {
+	v := m.revoked_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRevokedAt returns the old "revoked_at" field's value of the ImpersonationSession entity.
+// If the ImpersonationSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ImpersonationSessionMutation) OldRevokedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRevokedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRevokedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRevokedAt: %w", err)
+	}
+	return oldValue.RevokedAt, nil
+}
+
+// ClearRevokedAt clears the value of the "revoked_at" field.
+func (m *ImpersonationSessionMutation) ClearRevokedAt() {
+	m.revoked_at = nil
+	m.clearedFields[impersonationsession.FieldRevokedAt] = struct{}{}
+}
+
+// RevokedAtCleared returns if the "revoked_at" field was cleared in this mutation.
+func (m *ImpersonationSessionMutation) RevokedAtCleared() bool {
+	_, ok := m.clearedFields[impersonationsession.FieldRevokedAt]
+	return ok
+}
+
+// ResetRevokedAt resets all changes to the "revoked_at" field.
+func (m *ImpersonationSessionMutation) ResetRevokedAt() {
+	m.revoked_at = nil
+	delete(m.clearedFields, impersonationsession.FieldRevokedAt)
+}
+
+// Where appends a list predicates to the ImpersonationSessionMutation builder.
+func (m *ImpersonationSessionMutation) Where(ps ...predicate.ImpersonationSession) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ImpersonationSessionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ImpersonationSessionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ImpersonationSession, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ImpersonationSessionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ImpersonationSessionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ImpersonationSession).
+func (m *ImpersonationSessionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ImpersonationSessionMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.session_id != nil {
+		fields = append(fields, impersonationsession.FieldSessionID)
+	}
+	if m.app_id != nil {
+		fields = append(fields, impersonationsession.FieldAppID)
+	}
+	if m.division_id != nil {
+		fields = append(fields, impersonationsession.FieldDivisionID)
+	}
+	if m.impersonator_user_id != nil {
+		fields = append(fields, impersonationsession.FieldImpersonatorUserID)
+	}
+	if m.target_user_id != nil {
+		fields = append(fields, impersonationsession.FieldTargetUserID)
+	}
+	if m.audience != nil {
+		fields = append(fields, impersonationsession.FieldAudience)
+	}
+	if m.read_only != nil {
+		fields = append(fields, impersonationsession.FieldReadOnly)
+	}
+	if m.reason != nil {
+		fields = append(fields, impersonationsession.FieldReason)
+	}
+	if m.status != nil {
+		fields = append(fields, impersonationsession.FieldStatus)
+	}
+	if m.created_at != nil {
+		fields = append(fields, impersonationsession.FieldCreatedAt)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, impersonationsession.FieldExpiresAt)
+	}
+	if m.revoked_at != nil {
+		fields = append(fields, impersonationsession.FieldRevokedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ImpersonationSessionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case impersonationsession.FieldSessionID:
+		return m.SessionID()
+	case impersonationsession.FieldAppID:
+		return m.AppID()
+	case impersonationsession.FieldDivisionID:
+		return m.DivisionID()
+	case impersonationsession.FieldImpersonatorUserID:
+		return m.ImpersonatorUserID()
+	case impersonationsession.FieldTargetUserID:
+		return m.TargetUserID()
+	case impersonationsession.FieldAudience:
+		return m.Audience()
+	case impersonationsession.FieldReadOnly:
+		return m.ReadOnly()
+	case impersonationsession.FieldReason:
+		return m.Reason()
+	case impersonationsession.FieldStatus:
+		return m.Status()
+	case impersonationsession.FieldCreatedAt:
+		return m.CreatedAt()
+	case impersonationsession.FieldExpiresAt:
+		return m.ExpiresAt()
+	case impersonationsession.FieldRevokedAt:
+		return m.RevokedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ImpersonationSessionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case impersonationsession.FieldSessionID:
+		return m.OldSessionID(ctx)
+	case impersonationsession.FieldAppID:
+		return m.OldAppID(ctx)
+	case impersonationsession.FieldDivisionID:
+		return m.OldDivisionID(ctx)
+	case impersonationsession.FieldImpersonatorUserID:
+		return m.OldImpersonatorUserID(ctx)
+	case impersonationsession.FieldTargetUserID:
+		return m.OldTargetUserID(ctx)
+	case impersonationsession.FieldAudience:
+		return m.OldAudience(ctx)
+	case impersonationsession.FieldReadOnly:
+		return m.OldReadOnly(ctx)
+	case impersonationsession.FieldReason:
+		return m.OldReason(ctx)
+	case impersonationsession.FieldStatus:
+		return m.OldStatus(ctx)
+	case impersonationsession.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case impersonationsession.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case impersonationsession.FieldRevokedAt:
+		return m.OldRevokedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown ImpersonationSession field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ImpersonationSessionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case impersonationsession.FieldSessionID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSessionID(v)
+		return nil
+	case impersonationsession.FieldAppID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAppID(v)
+		return nil
+	case impersonationsession.FieldDivisionID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDivisionID(v)
+		return nil
+	case impersonationsession.FieldImpersonatorUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImpersonatorUserID(v)
+		return nil
+	case impersonationsession.FieldTargetUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTargetUserID(v)
+		return nil
+	case impersonationsession.FieldAudience:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAudience(v)
+		return nil
+	case impersonationsession.FieldReadOnly:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReadOnly(v)
+		return nil
+	case impersonationsession.FieldReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReason(v)
+		return nil
+	case impersonationsession.FieldStatus:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case impersonationsession.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case impersonationsession.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case impersonationsession.FieldRevokedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRevokedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ImpersonationSession field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ImpersonationSessionMutation) AddedFields() []string {
+	var fields []string
+	if m.addapp_id != nil {
+		fields = append(fields, impersonationsession.FieldAppID)
+	}
+	if m.adddivision_id != nil {
+		fields = append(fields, impersonationsession.FieldDivisionID)
+	}
+	if m.addimpersonator_user_id != nil {
+		fields = append(fields, impersonationsession.FieldImpersonatorUserID)
+	}
+	if m.addtarget_user_id != nil {
+		fields = append(fields, impersonationsession.FieldTargetUserID)
+	}
+	if m.addstatus != nil {
+		fields = append(fields, impersonationsession.FieldStatus)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ImpersonationSessionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case impersonationsession.FieldAppID:
+		return m.AddedAppID()
+	case impersonationsession.FieldDivisionID:
+		return m.AddedDivisionID()
+	case impersonationsession.FieldImpersonatorUserID:
+		return m.AddedImpersonatorUserID()
+	case impersonationsession.FieldTargetUserID:
+		return m.AddedTargetUserID()
+	case impersonationsession.FieldStatus:
+		return m.AddedStatus()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ImpersonationSessionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case impersonationsession.FieldAppID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAppID(v)
+		return nil
+	case impersonationsession.FieldDivisionID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDivisionID(v)
+		return nil
+	case impersonationsession.FieldImpersonatorUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddImpersonatorUserID(v)
+		return nil
+	case impersonationsession.FieldTargetUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTargetUserID(v)
+		return nil
+	case impersonationsession.FieldStatus:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStatus(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ImpersonationSession numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ImpersonationSessionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(impersonationsession.FieldReason) {
+		fields = append(fields, impersonationsession.FieldReason)
+	}
+	if m.FieldCleared(impersonationsession.FieldRevokedAt) {
+		fields = append(fields, impersonationsession.FieldRevokedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ImpersonationSessionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ImpersonationSessionMutation) ClearField(name string) error {
+	switch name {
+	case impersonationsession.FieldReason:
+		m.ClearReason()
+		return nil
+	case impersonationsession.FieldRevokedAt:
+		m.ClearRevokedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown ImpersonationSession nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ImpersonationSessionMutation) ResetField(name string) error {
+	switch name {
+	case impersonationsession.FieldSessionID:
+		m.ResetSessionID()
+		return nil
+	case impersonationsession.FieldAppID:
+		m.ResetAppID()
+		return nil
+	case impersonationsession.FieldDivisionID:
+		m.ResetDivisionID()
+		return nil
+	case impersonationsession.FieldImpersonatorUserID:
+		m.ResetImpersonatorUserID()
+		return nil
+	case impersonationsession.FieldTargetUserID:
+		m.ResetTargetUserID()
+		return nil
+	case impersonationsession.FieldAudience:
+		m.ResetAudience()
+		return nil
+	case impersonationsession.FieldReadOnly:
+		m.ResetReadOnly()
+		return nil
+	case impersonationsession.FieldReason:
+		m.ResetReason()
+		return nil
+	case impersonationsession.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case impersonationsession.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case impersonationsession.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case impersonationsession.FieldRevokedAt:
+		m.ResetRevokedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown ImpersonationSession field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ImpersonationSessionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ImpersonationSessionMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ImpersonationSessionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ImpersonationSessionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ImpersonationSessionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ImpersonationSessionMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ImpersonationSessionMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ImpersonationSession unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ImpersonationSessionMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ImpersonationSession edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

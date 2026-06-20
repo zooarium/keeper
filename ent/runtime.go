@@ -6,6 +6,7 @@ import (
 	"keeper/ent/app"
 	"keeper/ent/division"
 	"keeper/ent/guestkey"
+	"keeper/ent/impersonationsession"
 	"keeper/ent/schema"
 	"keeper/ent/user"
 	"time"
@@ -67,6 +68,20 @@ func init() {
 	guestkey.DefaultUpdatedAt = guestkeyDescUpdatedAt.Default.(func() time.Time)
 	// guestkey.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	guestkey.UpdateDefaultUpdatedAt = guestkeyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	impersonationsessionFields := schema.ImpersonationSession{}.Fields()
+	_ = impersonationsessionFields
+	// impersonationsessionDescReadOnly is the schema descriptor for read_only field.
+	impersonationsessionDescReadOnly := impersonationsessionFields[6].Descriptor()
+	// impersonationsession.DefaultReadOnly holds the default value on creation for the read_only field.
+	impersonationsession.DefaultReadOnly = impersonationsessionDescReadOnly.Default.(bool)
+	// impersonationsessionDescStatus is the schema descriptor for status field.
+	impersonationsessionDescStatus := impersonationsessionFields[8].Descriptor()
+	// impersonationsession.DefaultStatus holds the default value on creation for the status field.
+	impersonationsession.DefaultStatus = impersonationsessionDescStatus.Default.(int8)
+	// impersonationsessionDescCreatedAt is the schema descriptor for created_at field.
+	impersonationsessionDescCreatedAt := impersonationsessionFields[9].Descriptor()
+	// impersonationsession.DefaultCreatedAt holds the default value on creation for the created_at field.
+	impersonationsession.DefaultCreatedAt = impersonationsessionDescCreatedAt.Default.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescRole is the schema descriptor for role field.

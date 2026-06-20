@@ -18,6 +18,7 @@ import (
 	"keeper/internal/db"
 	"keeper/internal/division"
 	"keeper/internal/guestkey"
+	"keeper/internal/impersonation"
 	platformhttp "keeper/internal/platform/http"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
@@ -36,6 +37,11 @@ import (
 // @in header
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
+
+// impersonationCodeTTL bounds how long a one-time handoff code is valid before
+// it must be exchanged for a token. Kept very short — the code only needs to
+// survive the redirect into the target service UI.
+const impersonationCodeTTL = 60 * time.Second
 
 func main() {
 	checkConfig := flag.Bool("check-config", false, "validate configuration (including secondary listeners) and exit")
@@ -60,7 +66,7 @@ func main() {
 				os.Exit(1)
 			}
 		}
-		fmt.Printf("config OK: primary %s, %d secondary listener(s) enabled\n", cfg.Server.Addr, enabled)
+		fmt.Printf("config OK: primary %s, %d secondary listener(s) enabled, %d impersonation service(s) registered\n", cfg.Server.Addr, enabled, len(cfg.Services))
 		os.Exit(0)
 	}
 
@@ -140,7 +146,23 @@ func main() {
 	guestKeySvc := guestkey.NewGuestKeyService(guestKeyRepo, guestJWTManager, cfg.Auth.GuestJWTExpiry)
 	guestKeyHandler := guestkey.NewGuestKeyHandler(guestKeySvc)
 
-	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, guestKeyHandler, jwtManager, cfg)
+	// Impersonation tokens are signed with their own dedicated secret so they
+	// only verify on services explicitly configured with it (and never on
+	// primary/guest surfaces). The audience set is the registered service list.
+	impJWTManager := auth.NewJWTManager(cfg.Auth.ImpersonationJWTSecret, cfg.Auth.ImpersonationJWTExpiry)
+	impServices := make([]impersonation.ServiceInfo, len(cfg.Services))
+	for i := range cfg.Services {
+		impServices[i] = impersonation.ServiceInfo{
+			Key:           cfg.Services[i].Key,
+			Audience:      cfg.Services[i].Audience,
+			UIExchangeURL: cfg.Services[i].UIExchangeURL,
+		}
+	}
+	impersonationRepo := impersonation.NewImpersonationRepository(client)
+	impersonationSvc := impersonation.NewImpersonationService(impersonationRepo, impJWTManager, cfg.Auth.ImpersonationJWTExpiry, impersonationCodeTTL, impServices)
+	impersonationHandler := impersonation.NewImpersonationHandler(impersonationSvc)
+
+	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, guestKeyHandler, impersonationHandler, jwtManager, cfg)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.Addr,
@@ -166,6 +188,7 @@ func main() {
 		r.Mount("/apps", appHandler.Routes(jm))
 		r.Mount("/divisions", divisionHandler.Routes(jm))
 		r.Mount("/guest-keys", guestKeyHandler.Routes(jm))
+		r.Mount("/impersonations", impersonationHandler.Routes(jm))
 	}
 
 	var secondarySrvs []*http.Server

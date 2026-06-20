@@ -7,6 +7,7 @@ import (
 	"keeper/internal/app"
 	"keeper/internal/division"
 	"keeper/internal/guestkey"
+	"keeper/internal/impersonation"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
@@ -20,16 +21,24 @@ import (
 )
 
 // NewRouter creates a new chi router with default middleware and application routes.
-func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisionHandler *division.DivisionHandler, guestKeyHandler *guestkey.GuestKeyHandler, jwtManager *auth.JWTManager, cfg *config.Config) *chi.Mux {
+func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisionHandler *division.DivisionHandler, guestKeyHandler *guestkey.GuestKeyHandler, impersonationHandler *impersonation.ImpersonationHandler, jwtManager *auth.JWTManager, cfg *config.Config) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(MetricsMiddleware)
 
+	// The impersonation exchange/logout/status endpoints are called cross-origin
+	// from each registered service UI, so those origins must be allowed even if
+	// the global CORS list is later tightened from "*".
+	allowedOrigins := cfg.CORS.AllowedOrigins
+	for i := range cfg.Services {
+		allowedOrigins = append(allowedOrigins, cfg.Services[i].UIOrigin)
+	}
+
 	// Add CORS middleware
 	corsMiddleware := cors.New(cors.Options{
-		AllowedOrigins:   cfg.CORS.AllowedOrigins,
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -53,6 +62,7 @@ func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisi
 	r.Mount("/apps", appHandler.Routes(jwtManager))
 	r.Mount("/divisions", divisionHandler.Routes(jwtManager))
 	r.Mount("/guest-keys", guestKeyHandler.Routes(jwtManager))
+	r.Mount("/impersonations", impersonationHandler.Routes(jwtManager))
 
 	return r
 }

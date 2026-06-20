@@ -14,6 +14,7 @@ import (
 	"keeper/ent/app"
 	"keeper/ent/division"
 	"keeper/ent/guestkey"
+	"keeper/ent/impersonationsession"
 	"keeper/ent/user"
 
 	"entgo.io/ent"
@@ -33,6 +34,8 @@ type Client struct {
 	Division *DivisionClient
 	// GuestKey is the client for interacting with the GuestKey builders.
 	GuestKey *GuestKeyClient
+	// ImpersonationSession is the client for interacting with the ImpersonationSession builders.
+	ImpersonationSession *ImpersonationSessionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -49,6 +52,7 @@ func (c *Client) init() {
 	c.App = NewAppClient(c.config)
 	c.Division = NewDivisionClient(c.config)
 	c.GuestKey = NewGuestKeyClient(c.config)
+	c.ImpersonationSession = NewImpersonationSessionClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -140,12 +144,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		App:      NewAppClient(cfg),
-		Division: NewDivisionClient(cfg),
-		GuestKey: NewGuestKeyClient(cfg),
-		User:     NewUserClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		App:                  NewAppClient(cfg),
+		Division:             NewDivisionClient(cfg),
+		GuestKey:             NewGuestKeyClient(cfg),
+		ImpersonationSession: NewImpersonationSessionClient(cfg),
+		User:                 NewUserClient(cfg),
 	}, nil
 }
 
@@ -163,12 +168,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:      ctx,
-		config:   cfg,
-		App:      NewAppClient(cfg),
-		Division: NewDivisionClient(cfg),
-		GuestKey: NewGuestKeyClient(cfg),
-		User:     NewUserClient(cfg),
+		ctx:                  ctx,
+		config:               cfg,
+		App:                  NewAppClient(cfg),
+		Division:             NewDivisionClient(cfg),
+		GuestKey:             NewGuestKeyClient(cfg),
+		ImpersonationSession: NewImpersonationSessionClient(cfg),
+		User:                 NewUserClient(cfg),
 	}, nil
 }
 
@@ -200,6 +206,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.App.Use(hooks...)
 	c.Division.Use(hooks...)
 	c.GuestKey.Use(hooks...)
+	c.ImpersonationSession.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -209,6 +216,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.App.Intercept(interceptors...)
 	c.Division.Intercept(interceptors...)
 	c.GuestKey.Intercept(interceptors...)
+	c.ImpersonationSession.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -221,6 +229,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Division.mutate(ctx, m)
 	case *GuestKeyMutation:
 		return c.GuestKey.mutate(ctx, m)
+	case *ImpersonationSessionMutation:
+		return c.ImpersonationSession.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -723,6 +733,139 @@ func (c *GuestKeyClient) mutate(ctx context.Context, m *GuestKeyMutation) (Value
 	}
 }
 
+// ImpersonationSessionClient is a client for the ImpersonationSession schema.
+type ImpersonationSessionClient struct {
+	config
+}
+
+// NewImpersonationSessionClient returns a client for the ImpersonationSession from the given config.
+func NewImpersonationSessionClient(c config) *ImpersonationSessionClient {
+	return &ImpersonationSessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `impersonationsession.Hooks(f(g(h())))`.
+func (c *ImpersonationSessionClient) Use(hooks ...Hook) {
+	c.hooks.ImpersonationSession = append(c.hooks.ImpersonationSession, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `impersonationsession.Intercept(f(g(h())))`.
+func (c *ImpersonationSessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ImpersonationSession = append(c.inters.ImpersonationSession, interceptors...)
+}
+
+// Create returns a builder for creating a ImpersonationSession entity.
+func (c *ImpersonationSessionClient) Create() *ImpersonationSessionCreate {
+	mutation := newImpersonationSessionMutation(c.config, OpCreate)
+	return &ImpersonationSessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ImpersonationSession entities.
+func (c *ImpersonationSessionClient) CreateBulk(builders ...*ImpersonationSessionCreate) *ImpersonationSessionCreateBulk {
+	return &ImpersonationSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ImpersonationSessionClient) MapCreateBulk(slice any, setFunc func(*ImpersonationSessionCreate, int)) *ImpersonationSessionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ImpersonationSessionCreateBulk{err: fmt.Errorf("calling to ImpersonationSessionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ImpersonationSessionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ImpersonationSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ImpersonationSession.
+func (c *ImpersonationSessionClient) Update() *ImpersonationSessionUpdate {
+	mutation := newImpersonationSessionMutation(c.config, OpUpdate)
+	return &ImpersonationSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ImpersonationSessionClient) UpdateOne(_m *ImpersonationSession) *ImpersonationSessionUpdateOne {
+	mutation := newImpersonationSessionMutation(c.config, OpUpdateOne, withImpersonationSession(_m))
+	return &ImpersonationSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ImpersonationSessionClient) UpdateOneID(id int) *ImpersonationSessionUpdateOne {
+	mutation := newImpersonationSessionMutation(c.config, OpUpdateOne, withImpersonationSessionID(id))
+	return &ImpersonationSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ImpersonationSession.
+func (c *ImpersonationSessionClient) Delete() *ImpersonationSessionDelete {
+	mutation := newImpersonationSessionMutation(c.config, OpDelete)
+	return &ImpersonationSessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ImpersonationSessionClient) DeleteOne(_m *ImpersonationSession) *ImpersonationSessionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ImpersonationSessionClient) DeleteOneID(id int) *ImpersonationSessionDeleteOne {
+	builder := c.Delete().Where(impersonationsession.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ImpersonationSessionDeleteOne{builder}
+}
+
+// Query returns a query builder for ImpersonationSession.
+func (c *ImpersonationSessionClient) Query() *ImpersonationSessionQuery {
+	return &ImpersonationSessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeImpersonationSession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ImpersonationSession entity by its id.
+func (c *ImpersonationSessionClient) Get(ctx context.Context, id int) (*ImpersonationSession, error) {
+	return c.Query().Where(impersonationsession.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ImpersonationSessionClient) GetX(ctx context.Context, id int) *ImpersonationSession {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ImpersonationSessionClient) Hooks() []Hook {
+	return c.hooks.ImpersonationSession
+}
+
+// Interceptors returns the client interceptors.
+func (c *ImpersonationSessionClient) Interceptors() []Interceptor {
+	return c.inters.ImpersonationSession
+}
+
+func (c *ImpersonationSessionClient) mutate(ctx context.Context, m *ImpersonationSessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ImpersonationSessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ImpersonationSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ImpersonationSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ImpersonationSessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ImpersonationSession mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -891,9 +1034,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		App, Division, GuestKey, User []ent.Hook
+		App, Division, GuestKey, ImpersonationSession, User []ent.Hook
 	}
 	inters struct {
-		App, Division, GuestKey, User []ent.Interceptor
+		App, Division, GuestKey, ImpersonationSession, User []ent.Interceptor
 	}
 )

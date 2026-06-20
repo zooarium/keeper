@@ -18,6 +18,8 @@ type Tx struct {
 	Division *DivisionClient
 	// GuestKey is the client for interacting with the GuestKey builders.
 	GuestKey *GuestKeyClient
+	// ImpersonationSession is the client for interacting with the ImpersonationSession builders.
+	ImpersonationSession *ImpersonationSessionClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -154,6 +156,7 @@ func (tx *Tx) init() {
 	tx.App = NewAppClient(tx.config)
 	tx.Division = NewDivisionClient(tx.config)
 	tx.GuestKey = NewGuestKeyClient(tx.config)
+	tx.ImpersonationSession = NewImpersonationSessionClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 
