@@ -18,7 +18,7 @@ func TestService_Create(t *testing.T) {
 	}()
 
 	repo := NewAppRepository(client)
-	svc := NewAppService(repo)
+	svc := NewAppService(repo, nil)
 
 	ctx := context.Background()
 	req := CreateAppRequest{
@@ -39,7 +39,7 @@ func TestService_Create_FullProfile(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	svc := NewAppService(NewAppRepository(client))
+	svc := NewAppService(NewAppRepository(client), nil)
 	ctx := context.Background()
 
 	req := CreateAppRequest{
@@ -92,7 +92,7 @@ func TestService_Create_InvalidSocialURL(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	svc := NewAppService(NewAppRepository(client))
+	svc := NewAppService(NewAppRepository(client), nil)
 	ctx := context.Background()
 
 	_, err := svc.Create(ctx, CreateAppRequest{
@@ -109,7 +109,7 @@ func TestService_Update_Profile(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	svc := NewAppService(NewAppRepository(client))
+	svc := NewAppService(NewAppRepository(client), nil)
 	ctx := context.Background()
 
 	a, err := svc.Create(ctx, CreateAppRequest{Name: "Orig"})
@@ -138,7 +138,7 @@ func TestService_Update(t *testing.T) {
 	}()
 
 	repo := NewAppRepository(client)
-	svc := NewAppService(repo)
+	svc := NewAppService(repo, nil)
 
 	ctx := context.Background()
 	a, err := svc.Create(ctx, CreateAppRequest{
@@ -167,7 +167,7 @@ func TestService_Delete(t *testing.T) {
 	}()
 
 	repo := NewAppRepository(client)
-	svc := NewAppService(repo)
+	svc := NewAppService(repo, nil)
 
 	ctx := context.Background()
 	a, err := svc.Create(ctx, CreateAppRequest{
@@ -191,7 +191,7 @@ func TestService_List(t *testing.T) {
 	}()
 
 	repo := NewAppRepository(client)
-	svc := NewAppService(repo)
+	svc := NewAppService(repo, nil)
 
 	ctx := context.Background()
 	_, _ = svc.Create(ctx, CreateAppRequest{Name: "App 1"})
@@ -200,6 +200,63 @@ func TestService_List(t *testing.T) {
 	apps, err := svc.List(ctx, 50, 0)
 	assert.NoError(t, err)
 	assert.Len(t, apps, 2)
+}
+
+// fakeResolver is a stub GuestKeyResolver for the public lookup tests.
+type fakeResolver struct {
+	appID int
+	err   error
+}
+
+func (f fakeResolver) AppIDBySiteKey(ctx context.Context, siteKey string) (int, error) {
+	return f.appID, f.err
+}
+
+func int8Ptr(v int8) *int8 { return &v }
+
+func TestService_PublicBySiteKey_Active(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:ent_app_pub?mode=memory&cache=shared&_fk=1")
+	defer func() { assert.NoError(t, client.Close()) }()
+
+	repo := NewAppRepository(client)
+	ctx := context.Background()
+	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Pub App", Tagline: "t"})
+	assert.NoError(t, err)
+
+	svc := NewAppService(repo, fakeResolver{appID: a.ID})
+	pub, err := svc.PublicBySiteKey(ctx, "gk_x")
+	assert.NoError(t, err)
+	assert.Equal(t, a.ID, pub.ID)
+	assert.Equal(t, "Pub App", pub.Name)
+}
+
+func TestService_PublicBySiteKey_Inactive(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:ent_app_pub_inactive?mode=memory&cache=shared&_fk=1")
+	defer func() { assert.NoError(t, client.Close()) }()
+
+	repo := NewAppRepository(client)
+	ctx := context.Background()
+	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Off App"})
+	assert.NoError(t, err)
+	_, err = NewAppService(repo, nil).Update(ctx, a.ID, UpdateAppRequest{Status: int8Ptr(0)})
+	assert.NoError(t, err)
+
+	svc := NewAppService(repo, fakeResolver{appID: a.ID})
+	_, err = svc.PublicBySiteKey(ctx, "gk_x")
+	assert.ErrorIs(t, err, ErrAppNotPublic)
+}
+
+func TestService_PublicBySiteKey_BadSiteKey(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:ent_app_pub_bad?mode=memory&cache=shared&_fk=1")
+	defer func() { assert.NoError(t, client.Close()) }()
+
+	svc := NewAppService(NewAppRepository(client), fakeResolver{err: assert.AnError})
+	_, err := svc.PublicBySiteKey(context.Background(), "gk_bad")
+	assert.ErrorIs(t, err, ErrAppNotPublic)
+
+	// Empty site key short-circuits without touching the resolver.
+	_, err = svc.PublicBySiteKey(context.Background(), "")
+	assert.ErrorIs(t, err, ErrAppNotPublic)
 }
 
 func TestIsHTTPURL(t *testing.T) {

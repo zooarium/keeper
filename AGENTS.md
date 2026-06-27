@@ -243,6 +243,7 @@ Other microservices (e.g. squirrel) read `division_id` from the JWT claims and s
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
+- `GET /apps/lookup?site_key=...`: Public app profile by publishable guest site key (no auth, 10/1m per IP). Resolves site_key→app_id via guestkey, returns public-safe profile (id, name, tagline, logo_url, about, contact — no status/timestamps) only for active apps; 404 otherwise (unknown/inactive key or inactive app, indistinguishable).
 - `POST /apps`: Create a new app (sysadmin only; 403 otherwise).
 - `GET /apps`: List apps (sysadmins: all; other users: own app only).
 - `GET /apps/{id}`: Get app by ID (sysadmin or own app).

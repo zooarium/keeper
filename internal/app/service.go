@@ -2,10 +2,17 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/url"
 )
+
+// ErrAppNotPublic is returned by the public site-key lookup when no active app
+// can be resolved for the supplied site key. It intentionally conflates an
+// unknown/inactive site key with a missing/inactive app so the public endpoint
+// never leaks which of the two failed.
+var ErrAppNotPublic = errors.New("no app found for the given site key")
 
 // isHTTPURL reports whether s is empty (optional) or a valid http(s) URL.
 func isHTTPURL(s string) bool {
@@ -51,6 +58,25 @@ func toContact(in ContactInput) Contact {
 	}
 }
 
+// toPublicApp maps a full app to its public-safe projection.
+func toPublicApp(a *App) *PublicApp {
+	return &PublicApp{
+		ID:      a.ID,
+		Name:    a.Name,
+		Tagline: a.Tagline,
+		LogoURL: a.LogoURL,
+		About:   a.About,
+		Contact: a.Contact,
+	}
+}
+
+// GuestKeyResolver resolves a publishable guest site key to its bound app ID.
+// Implemented by the guestkey service; injected to keep the app package free of
+// a direct dependency on guestkey.
+type GuestKeyResolver interface {
+	AppIDBySiteKey(ctx context.Context, siteKey string) (int, error)
+}
+
 // AppRepository defines the data access contract for apps.
 type AppRepository interface {
 	Create(ctx context.Context, a App) (*App, error)
@@ -67,15 +93,18 @@ type AppService interface {
 	List(ctx context.Context, limit, offset int) ([]*App, error)
 	Update(ctx context.Context, id int, req UpdateAppRequest) (*App, error)
 	Delete(ctx context.Context, id int) error
+	PublicBySiteKey(ctx context.Context, siteKey string) (*PublicApp, error)
 }
 
 type appService struct {
-	repo AppRepository
+	repo     AppRepository
+	resolver GuestKeyResolver
 }
 
-// NewAppService creates a new app service.
-func NewAppService(repo AppRepository) AppService {
-	return &appService{repo: repo}
+// NewAppService creates a new app service. resolver may be nil where the public
+// site-key lookup is not exercised (e.g. in unit tests).
+func NewAppService(repo AppRepository, resolver GuestKeyResolver) AppService {
+	return &appService{repo: repo, resolver: resolver}
 }
 
 func (s *appService) Create(ctx context.Context, req CreateAppRequest) (*App, error) {
@@ -164,4 +193,33 @@ func (s *appService) Delete(ctx context.Context, id int) error {
 	}
 	slog.Info("app deleted successfully", "id", id)
 	return nil
+}
+
+// PublicBySiteKey resolves a publishable guest site key to its app and returns
+// the public-safe profile. Returns ErrAppNotPublic when the site key is
+// unknown/inactive or the resolved app is missing/inactive.
+func (s *appService) PublicBySiteKey(ctx context.Context, siteKey string) (*PublicApp, error) {
+	if siteKey == "" || s.resolver == nil {
+		return nil, ErrAppNotPublic
+	}
+
+	appID, err := s.resolver.AppIDBySiteKey(ctx, siteKey)
+	if err != nil {
+		slog.Warn("public app lookup: site key did not resolve", "error", err)
+		return nil, ErrAppNotPublic
+	}
+
+	a, err := s.repo.GetByID(ctx, appID)
+	if err != nil {
+		slog.Warn("public app lookup: app not found", "app_id", appID, "error", err)
+		return nil, ErrAppNotPublic
+	}
+
+	if a.Status != 1 {
+		slog.Warn("public app lookup: app inactive", "app_id", appID)
+		return nil, ErrAppNotPublic
+	}
+
+	slog.Info("public app profile served", "app_id", appID)
+	return toPublicApp(a), nil
 }

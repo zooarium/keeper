@@ -457,6 +457,7 @@ By default, the services are available at:
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
+- `GET /apps/lookup?site_key=...`: Resolve the public profile (name, tagline, logo, about, contact) for the app bound to a publishable guest site key (**public**, no auth, 10 req/min per IP). Returns 404 for an unknown/inactive site key or inactive app, without distinguishing between them. Excludes status + timestamps.
 - `POST /apps`: Create a new app (**sysadmin only**; 403 otherwise).
 - `GET /apps`: List apps (sysadmins: all; other users: own app only).
 - `GET /apps/{id}`: Get app by ID (sysadmin or own app).

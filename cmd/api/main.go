@@ -131,10 +131,6 @@ func main() {
 	userSvc := user.NewUserService(userRepo, jwtManager)
 	userHandler := user.NewUserHandler(userSvc)
 
-	appRepo := app.NewAppRepository(client)
-	appSvc := app.NewAppService(appRepo)
-	appHandler := app.NewAppHandler(appSvc)
-
 	divisionRepo := division.NewDivisionRepository(client)
 	divisionSvc := division.NewDivisionService(divisionRepo)
 	divisionHandler := division.NewDivisionHandler(divisionSvc)
@@ -145,6 +141,12 @@ func main() {
 	guestKeyRepo := guestkey.NewGuestKeyRepository(client)
 	guestKeySvc := guestkey.NewGuestKeyService(guestKeyRepo, guestJWTManager, cfg.Auth.GuestJWTExpiry)
 	guestKeyHandler := guestkey.NewGuestKeyHandler(guestKeySvc)
+
+	// appSvc depends on guestKeySvc to resolve publishable site keys to app IDs
+	// for the public /apps/lookup profile endpoint.
+	appRepo := app.NewAppRepository(client)
+	appSvc := app.NewAppService(appRepo, guestKeySvc)
+	appHandler := app.NewAppHandler(appSvc)
 
 	// Impersonation tokens are signed with their own dedicated secret so they
 	// only verify on services explicitly configured with it (and never on

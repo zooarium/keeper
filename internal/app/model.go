@@ -43,6 +43,17 @@ type App struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// PublicApp is the public-safe projection of an app returned by the
+// unauthenticated site-key lookup endpoint. Status and timestamps are omitted.
+type PublicApp struct {
+	ID      int     `json:"id"`
+	Name    string  `json:"name"`
+	Tagline string  `json:"tagline"`
+	LogoURL string  `json:"logo_url"`
+	About   About   `json:"about"`
+	Contact Contact `json:"contact"`
+}
+
 // AddressInput is the request payload for an app's address.
 type AddressInput struct {
 	Line1      string `json:"line1" validate:"omitempty"`

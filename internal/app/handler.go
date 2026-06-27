@@ -2,14 +2,17 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
+	"time"
 
 	"keeper/pkg/auth"
 	"keeper/pkg/render"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/httprate"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -38,6 +41,13 @@ func NewAppHandler(svc AppService) *AppHandler {
 func (h *AppHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 	r := chi.NewRouter()
 
+	// Public, hard rate-limited site-key lookup for public websites. Mirrors
+	// the guest-keys/lookup containment: no auth, 10 req/min per IP.
+	r.Group(func(r chi.Router) {
+		r.Use(httprate.LimitByIP(10, 1*time.Minute))
+		r.Get("/lookup", h.LookupApp)
+	})
+
 	// All routes are protected
 	r.Group(func(r chi.Router) {
 		r.Use(auth.Middleware(jwtManager))
@@ -53,6 +63,38 @@ func (h *AppHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 	})
 
 	return r
+}
+
+// LookupApp godoc
+// @Summary Look up public app profile by site key
+// @Description Resolve the public-safe profile (name, tagline, logo, about, contact) for the app bound to a publishable guest site key. Public (no auth) and hard rate-limited. Returns 404 for an unknown/inactive site key or an inactive app, without distinguishing between them.
+// @Tags apps
+// @Produce json
+// @Param site_key query string true "Publishable guest site key (gk_...)"
+// @Success 200 {object} render.Response{data=PublicApp}
+// @Failure 400 {object} render.Response
+// @Failure 404 {object} render.Response
+// @Failure 429 {object} render.Response
+// @Router /apps/lookup [get]
+func (h *AppHandler) LookupApp(w http.ResponseWriter, r *http.Request) {
+	siteKey := r.URL.Query().Get("site_key")
+	if siteKey == "" {
+		render.Error(w, http.StatusBadRequest, "site_key query param is required")
+		return
+	}
+
+	a, err := h.svc.PublicBySiteKey(r.Context(), siteKey)
+	if err != nil {
+		if errors.Is(err, ErrAppNotPublic) {
+			slog.Warn("public app lookup found no match", "remote_addr", r.RemoteAddr)
+			render.Error(w, http.StatusNotFound, err.Error())
+			return
+		}
+		render.Error(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	render.JSON(w, http.StatusOK, a)
 }
 
 // CreateApp godoc

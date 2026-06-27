@@ -155,7 +155,7 @@ func NewHTTPRevocationChecker(client *http.Client, keeperBaseURL string, ttl tim
 			slog.Warn("revocation check: request failed, failing open", "error", err)
 			return true
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode == http.StatusOK {
 			var body struct {

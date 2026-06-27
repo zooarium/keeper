@@ -148,6 +148,65 @@
                 }
             }
         },
+        "/apps/lookup": {
+            "get": {
+                "description": "Resolve the public-safe profile (name, tagline, logo, about, contact) for the app bound to a publishable guest site key. Public (no auth) and hard rate-limited. Returns 404 for an unknown/inactive site key or an inactive app, without distinguishing between them.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Look up public app profile by site key",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Publishable guest site key (gk_...)",
+                        "name": "site_key",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_app.PublicApp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/apps/{id}": {
             "get": {
                 "security": [
@@ -2346,6 +2405,29 @@
                 },
                 "status": {
                     "type": "integer"
+                },
+                "tagline": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_app.PublicApp": {
+            "type": "object",
+            "properties": {
+                "about": {
+                    "$ref": "#/definitions/internal_app.About"
+                },
+                "contact": {
+                    "$ref": "#/definitions/internal_app.Contact"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 },
                 "tagline": {
                     "type": "string"

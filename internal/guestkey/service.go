@@ -50,6 +50,7 @@ type GuestKeyService interface {
 	Delete(ctx context.Context, id int) error
 	Authenticate(ctx context.Context, req GuestAuthRequest) (*GuestAuthResponse, error)
 	LookupSiteKey(ctx context.Context, rawURL string) (*SiteKeyLookupResponse, error)
+	AppIDBySiteKey(ctx context.Context, siteKey string) (int, error)
 }
 
 type guestKeyService struct {
@@ -190,6 +191,17 @@ func (s *guestKeyService) LookupSiteKey(ctx context.Context, rawURL string) (*Si
 
 	slog.Info("site key resolved for domain", "domain", domain, "guest_key_id", k.ID)
 	return &SiteKeyLookupResponse{SiteKey: k.SiteKey}, nil
+}
+
+// AppIDBySiteKey resolves an active publishable site key to its bound app ID.
+// Used by the app package's public profile lookup. Returns ErrInvalidSiteKey
+// when the site key is unknown or inactive.
+func (s *guestKeyService) AppIDBySiteKey(ctx context.Context, siteKey string) (int, error) {
+	k, err := s.repo.GetActiveBySiteKey(ctx, siteKey)
+	if err != nil {
+		return 0, ErrInvalidSiteKey
+	}
+	return k.AppID, nil
 }
 
 // normalizeDomain canonicalizes a URL into the stored domain form: scheme is

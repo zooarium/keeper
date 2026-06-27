@@ -56,6 +56,14 @@ func (m *mockAppService) Delete(ctx context.Context, id int) error {
 	return args.Error(0)
 }
 
+func (m *mockAppService) PublicBySiteKey(ctx context.Context, siteKey string) (*PublicApp, error) {
+	args := m.Called(ctx, siteKey)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*PublicApp), args.Error(1)
+}
+
 // withClaims returns a request carrying the given user claims in context,
 // mirroring how auth middleware injects them.
 func withClaims(req *http.Request, claims *auth.UserClaims) *http.Request {
@@ -187,4 +195,52 @@ func TestHandler_List_NoClaims_Unauthorized(t *testing.T) {
 	handler.ListApps(rr, req)
 
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
+}
+
+func TestHandler_LookupApp_Success(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	pub := &PublicApp{ID: 3, Name: "Public App", Tagline: "hi"}
+	svc.On("PublicBySiteKey", mock.Anything, "gk_abc").Return(pub, nil)
+
+	req, _ := http.NewRequest("GET", "/apps/lookup?site_key=gk_abc", nil)
+	rr := httptest.NewRecorder()
+
+	handler.LookupApp(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var resp render.Response
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	data := resp.Data.(map[string]interface{})
+	assert.Equal(t, "Public App", data["name"])
+}
+
+func TestHandler_LookupApp_MissingSiteKey(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	req, _ := http.NewRequest("GET", "/apps/lookup", nil)
+	rr := httptest.NewRecorder()
+
+	handler.LookupApp(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	svc.AssertNotCalled(t, "PublicBySiteKey", mock.Anything, mock.Anything)
+}
+
+func TestHandler_LookupApp_NotFound(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	svc.On("PublicBySiteKey", mock.Anything, "gk_bad").Return(nil, ErrAppNotPublic)
+
+	req, _ := http.NewRequest("GET", "/apps/lookup?site_key=gk_bad", nil)
+	rr := httptest.NewRecorder()
+
+	handler.LookupApp(rr, req)
+
+	assert.Equal(t, http.StatusNotFound, rr.Code)
 }
