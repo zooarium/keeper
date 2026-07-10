@@ -46,6 +46,10 @@ func (h *AppHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 	r.Group(func(r chi.Router) {
 		r.Use(httprate.LimitByIP(10, 1*time.Minute))
 		r.Get("/lookup", h.LookupApp)
+		// Public-safe profile by app ID, for downstream services enriching
+		// their responses (e.g. ant order details). Same projection and rate
+		// containment as the site-key lookup.
+		r.Get("/{id}/public", h.PublicAppByID)
 	})
 
 	// All routes are protected
@@ -87,6 +91,37 @@ func (h *AppHandler) LookupApp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, ErrAppNotPublic) {
 			slog.Warn("public app lookup found no match", "remote_addr", r.RemoteAddr)
+			render.Error(w, http.StatusNotFound, err.Error())
+			return
+		}
+		render.Error(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	render.JSON(w, http.StatusOK, a)
+}
+
+// PublicAppByID godoc
+// @Summary Get public app profile by ID
+// @Description Public-safe profile (name, tagline, logo, about, contact) for an active app. Public (no auth) and hard rate-limited; used by downstream services to enrich their responses. Returns 404 for an unknown or inactive app.
+// @Tags apps
+// @Produce json
+// @Param id path int true "App ID"
+// @Success 200 {object} render.Response{data=PublicApp}
+// @Failure 400 {object} render.Response
+// @Failure 404 {object} render.Response
+// @Failure 429 {object} render.Response
+// @Router /apps/{id}/public [get]
+func (h *AppHandler) PublicAppByID(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		render.Error(w, http.StatusBadRequest, "invalid app id")
+		return
+	}
+
+	a, err := h.svc.PublicByID(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, ErrAppNotPublic) {
 			render.Error(w, http.StatusNotFound, err.Error())
 			return
 		}

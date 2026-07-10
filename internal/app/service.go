@@ -94,6 +94,7 @@ type AppService interface {
 	Update(ctx context.Context, id int, req UpdateAppRequest) (*App, error)
 	Delete(ctx context.Context, id int) error
 	PublicBySiteKey(ctx context.Context, siteKey string) (*PublicApp, error)
+	PublicByID(ctx context.Context, id int) (*PublicApp, error)
 }
 
 type appService struct {
@@ -221,5 +222,24 @@ func (s *appService) PublicBySiteKey(ctx context.Context, siteKey string) (*Publ
 	}
 
 	slog.Info("public app profile served", "app_id", appID)
+	return toPublicApp(a), nil
+}
+
+// PublicByID returns the public-safe profile for an app by its ID. Used by
+// downstream services (e.g. ant order enrichment) that hold an app_id from
+// JWT claims or persisted rows. Same projection and inactive-app containment
+// as PublicBySiteKey.
+func (s *appService) PublicByID(ctx context.Context, id int) (*PublicApp, error) {
+	a, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		slog.Warn("public app profile: app not found", "app_id", id, "error", err)
+		return nil, ErrAppNotPublic
+	}
+
+	if a.Status != 1 {
+		slog.Warn("public app profile: app inactive", "app_id", id)
+		return nil, ErrAppNotPublic
+	}
+
 	return toPublicApp(a), nil
 }
