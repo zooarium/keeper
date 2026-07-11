@@ -46,6 +46,10 @@ const (
 	FieldContactHours = "contact_hours"
 	// FieldContactSocial holds the string denoting the contact_social field in the database.
 	FieldContactSocial = "contact_social"
+	// FieldTaxNumber holds the string denoting the tax_number field in the database.
+	FieldTaxNumber = "tax_number"
+	// FieldTaxPercent holds the string denoting the tax_percent field in the database.
+	FieldTaxPercent = "tax_percent"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -93,6 +97,8 @@ var Columns = []string{
 	FieldContactEmail,
 	FieldContactHours,
 	FieldContactSocial,
+	FieldTaxNumber,
+	FieldTaxPercent,
 	FieldStatus,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -109,6 +115,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// DefaultTaxPercent holds the default value on creation for the "tax_percent" field.
+	DefaultTaxPercent float64
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus int8
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -200,6 +208,16 @@ func ByContactEmail(opts ...sql.OrderTermOption) OrderOption {
 // ByContactHours orders the results by the contact_hours field.
 func ByContactHours(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldContactHours, opts...).ToFunc()
+}
+
+// ByTaxNumber orders the results by the tax_number field.
+func ByTaxNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTaxNumber, opts...).ToFunc()
+}
+
+// ByTaxPercent orders the results by the tax_percent field.
+func ByTaxPercent(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTaxPercent, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.

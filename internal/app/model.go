@@ -32,26 +32,30 @@ type Contact struct {
 
 // App represents the domain model for an app.
 type App struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Tagline   string    `json:"tagline"`
-	LogoURL   string    `json:"logo_url"`
-	About     About     `json:"about"`
-	Contact   Contact   `json:"contact"`
-	Status    int8      `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID         int       `json:"id"`
+	Name       string    `json:"name"`
+	Tagline    string    `json:"tagline"`
+	LogoURL    string    `json:"logo_url"`
+	About      About     `json:"about"`
+	Contact    Contact   `json:"contact"`
+	TaxNumber  string    `json:"tax_number"`
+	TaxPercent float64   `json:"tax_percent"`
+	Status     int8      `json:"status"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 // PublicApp is the public-safe projection of an app returned by the
 // unauthenticated site-key lookup endpoint. Status and timestamps are omitted.
 type PublicApp struct {
-	ID      int     `json:"id"`
-	Name    string  `json:"name"`
-	Tagline string  `json:"tagline"`
-	LogoURL string  `json:"logo_url"`
-	About   About   `json:"about"`
-	Contact Contact `json:"contact"`
+	ID         int     `json:"id"`
+	Name       string  `json:"name"`
+	Tagline    string  `json:"tagline"`
+	LogoURL    string  `json:"logo_url"`
+	About      About   `json:"about"`
+	Contact    Contact `json:"contact"`
+	TaxNumber  string  `json:"tax_number"`
+	TaxPercent float64 `json:"tax_percent"`
 }
 
 // AddressInput is the request payload for an app's address.
@@ -83,21 +87,25 @@ type ContactInput struct {
 
 // CreateAppRequest defines the payload for creating an app.
 type CreateAppRequest struct {
-	Name    string       `json:"name" validate:"required"`
-	Tagline string       `json:"tagline" validate:"omitempty"`
-	LogoURL string       `json:"logo_url" validate:"omitempty,httpurl"`
-	About   AboutInput   `json:"about"`
-	Contact ContactInput `json:"contact"`
-	Status  int8         `json:"status" validate:"omitempty"`
+	Name       string       `json:"name" validate:"required"`
+	Tagline    string       `json:"tagline" validate:"omitempty"`
+	LogoURL    string       `json:"logo_url" validate:"omitempty,httpurl"`
+	About      AboutInput   `json:"about"`
+	Contact    ContactInput `json:"contact"`
+	TaxNumber  string       `json:"tax_number" validate:"omitempty"`
+	TaxPercent float64      `json:"tax_percent" validate:"omitempty,gte=0,lte=100"`
+	Status     int8         `json:"status" validate:"omitempty"`
 }
 
 // UpdateAppRequest defines the payload for updating an app. Nested sections
 // (about, contact) replace the whole section when present.
 type UpdateAppRequest struct {
-	Name    *string       `json:"name" validate:"omitempty"`
-	Tagline *string       `json:"tagline" validate:"omitempty"`
-	LogoURL *string       `json:"logo_url" validate:"omitempty,httpurl"`
-	About   *AboutInput   `json:"about" validate:"omitempty"`
-	Contact *ContactInput `json:"contact" validate:"omitempty"`
-	Status  *int8         `json:"status" validate:"omitempty"`
+	Name       *string       `json:"name" validate:"omitempty"`
+	Tagline    *string       `json:"tagline" validate:"omitempty"`
+	LogoURL    *string       `json:"logo_url" validate:"omitempty,httpurl"`
+	About      *AboutInput   `json:"about" validate:"omitempty"`
+	Contact    *ContactInput `json:"contact" validate:"omitempty"`
+	TaxNumber  *string       `json:"tax_number" validate:"omitempty"`
+	TaxPercent *float64      `json:"tax_percent" validate:"omitempty,gte=0,lte=100"`
+	Status     *int8         `json:"status" validate:"omitempty"`
 }

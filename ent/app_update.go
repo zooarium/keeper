@@ -336,6 +336,47 @@ func (_u *AppUpdate) ClearContactSocial() *AppUpdate {
 	return _u
 }
 
+// SetTaxNumber sets the "tax_number" field.
+func (_u *AppUpdate) SetTaxNumber(v string) *AppUpdate {
+	_u.mutation.SetTaxNumber(v)
+	return _u
+}
+
+// SetNillableTaxNumber sets the "tax_number" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableTaxNumber(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetTaxNumber(*v)
+	}
+	return _u
+}
+
+// ClearTaxNumber clears the value of the "tax_number" field.
+func (_u *AppUpdate) ClearTaxNumber() *AppUpdate {
+	_u.mutation.ClearTaxNumber()
+	return _u
+}
+
+// SetTaxPercent sets the "tax_percent" field.
+func (_u *AppUpdate) SetTaxPercent(v float64) *AppUpdate {
+	_u.mutation.ResetTaxPercent()
+	_u.mutation.SetTaxPercent(v)
+	return _u
+}
+
+// SetNillableTaxPercent sets the "tax_percent" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableTaxPercent(v *float64) *AppUpdate {
+	if v != nil {
+		_u.SetTaxPercent(*v)
+	}
+	return _u
+}
+
+// AddTaxPercent adds value to the "tax_percent" field.
+func (_u *AppUpdate) AddTaxPercent(v float64) *AppUpdate {
+	_u.mutation.AddTaxPercent(v)
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *AppUpdate) SetStatus(v int8) *AppUpdate {
 	_u.mutation.ResetStatus()
@@ -591,6 +632,18 @@ func (_u *AppUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ContactSocialCleared() {
 		_spec.ClearField(app.FieldContactSocial, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.TaxNumber(); ok {
+		_spec.SetField(app.FieldTaxNumber, field.TypeString, value)
+	}
+	if _u.mutation.TaxNumberCleared() {
+		_spec.ClearField(app.FieldTaxNumber, field.TypeString)
+	}
+	if value, ok := _u.mutation.TaxPercent(); ok {
+		_spec.SetField(app.FieldTaxPercent, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedTaxPercent(); ok {
+		_spec.AddField(app.FieldTaxPercent, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(app.FieldStatus, field.TypeInt8, value)
@@ -1020,6 +1073,47 @@ func (_u *AppUpdateOne) ClearContactSocial() *AppUpdateOne {
 	return _u
 }
 
+// SetTaxNumber sets the "tax_number" field.
+func (_u *AppUpdateOne) SetTaxNumber(v string) *AppUpdateOne {
+	_u.mutation.SetTaxNumber(v)
+	return _u
+}
+
+// SetNillableTaxNumber sets the "tax_number" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableTaxNumber(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetTaxNumber(*v)
+	}
+	return _u
+}
+
+// ClearTaxNumber clears the value of the "tax_number" field.
+func (_u *AppUpdateOne) ClearTaxNumber() *AppUpdateOne {
+	_u.mutation.ClearTaxNumber()
+	return _u
+}
+
+// SetTaxPercent sets the "tax_percent" field.
+func (_u *AppUpdateOne) SetTaxPercent(v float64) *AppUpdateOne {
+	_u.mutation.ResetTaxPercent()
+	_u.mutation.SetTaxPercent(v)
+	return _u
+}
+
+// SetNillableTaxPercent sets the "tax_percent" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableTaxPercent(v *float64) *AppUpdateOne {
+	if v != nil {
+		_u.SetTaxPercent(*v)
+	}
+	return _u
+}
+
+// AddTaxPercent adds value to the "tax_percent" field.
+func (_u *AppUpdateOne) AddTaxPercent(v float64) *AppUpdateOne {
+	_u.mutation.AddTaxPercent(v)
+	return _u
+}
+
 // SetStatus sets the "status" field.
 func (_u *AppUpdateOne) SetStatus(v int8) *AppUpdateOne {
 	_u.mutation.ResetStatus()
@@ -1305,6 +1399,18 @@ func (_u *AppUpdateOne) sqlSave(ctx context.Context) (_node *App, err error) {
 	}
 	if _u.mutation.ContactSocialCleared() {
 		_spec.ClearField(app.FieldContactSocial, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.TaxNumber(); ok {
+		_spec.SetField(app.FieldTaxNumber, field.TypeString, value)
+	}
+	if _u.mutation.TaxNumberCleared() {
+		_spec.ClearField(app.FieldTaxNumber, field.TypeString)
+	}
+	if value, ok := _u.mutation.TaxPercent(); ok {
+		_spec.SetField(app.FieldTaxPercent, field.TypeFloat64, value)
+	}
+	if value, ok := _u.mutation.AddedTaxPercent(); ok {
+		_spec.AddField(app.FieldTaxPercent, field.TypeFloat64, value)
 	}
 	if value, ok := _u.mutation.Status(); ok {
 		_spec.SetField(app.FieldStatus, field.TypeInt8, value)

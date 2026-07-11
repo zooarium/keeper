@@ -18,16 +18,20 @@ import (
 func init() {
 	appFields := schema.App{}.Fields()
 	_ = appFields
+	// appDescTaxPercent is the schema descriptor for tax_percent field.
+	appDescTaxPercent := appFields[17].Descriptor()
+	// app.DefaultTaxPercent holds the default value on creation for the tax_percent field.
+	app.DefaultTaxPercent = appDescTaxPercent.Default.(float64)
 	// appDescStatus is the schema descriptor for status field.
-	appDescStatus := appFields[16].Descriptor()
+	appDescStatus := appFields[18].Descriptor()
 	// app.DefaultStatus holds the default value on creation for the status field.
 	app.DefaultStatus = appDescStatus.Default.(int8)
 	// appDescCreatedAt is the schema descriptor for created_at field.
-	appDescCreatedAt := appFields[17].Descriptor()
+	appDescCreatedAt := appFields[19].Descriptor()
 	// app.DefaultCreatedAt holds the default value on creation for the created_at field.
 	app.DefaultCreatedAt = appDescCreatedAt.Default.(func() time.Time)
 	// appDescUpdatedAt is the schema descriptor for updated_at field.
-	appDescUpdatedAt := appFields[18].Descriptor()
+	appDescUpdatedAt := appFields[20].Descriptor()
 	// app.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	app.DefaultUpdatedAt = appDescUpdatedAt.Default.(func() time.Time)
 	// app.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

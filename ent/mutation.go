@@ -57,6 +57,9 @@ type AppMutation struct {
 	contact_email         *string
 	contact_hours         *string
 	contact_social        *map[string]string
+	tax_number            *string
+	tax_percent           *float64
+	addtax_percent        *float64
 	status                *int8
 	addstatus             *int8
 	created_at            *time.Time
@@ -942,6 +945,111 @@ func (m *AppMutation) ResetContactSocial() {
 	delete(m.clearedFields, app.FieldContactSocial)
 }
 
+// SetTaxNumber sets the "tax_number" field.
+func (m *AppMutation) SetTaxNumber(s string) {
+	m.tax_number = &s
+}
+
+// TaxNumber returns the value of the "tax_number" field in the mutation.
+func (m *AppMutation) TaxNumber() (r string, exists bool) {
+	v := m.tax_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTaxNumber returns the old "tax_number" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldTaxNumber(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTaxNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTaxNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTaxNumber: %w", err)
+	}
+	return oldValue.TaxNumber, nil
+}
+
+// ClearTaxNumber clears the value of the "tax_number" field.
+func (m *AppMutation) ClearTaxNumber() {
+	m.tax_number = nil
+	m.clearedFields[app.FieldTaxNumber] = struct{}{}
+}
+
+// TaxNumberCleared returns if the "tax_number" field was cleared in this mutation.
+func (m *AppMutation) TaxNumberCleared() bool {
+	_, ok := m.clearedFields[app.FieldTaxNumber]
+	return ok
+}
+
+// ResetTaxNumber resets all changes to the "tax_number" field.
+func (m *AppMutation) ResetTaxNumber() {
+	m.tax_number = nil
+	delete(m.clearedFields, app.FieldTaxNumber)
+}
+
+// SetTaxPercent sets the "tax_percent" field.
+func (m *AppMutation) SetTaxPercent(f float64) {
+	m.tax_percent = &f
+	m.addtax_percent = nil
+}
+
+// TaxPercent returns the value of the "tax_percent" field in the mutation.
+func (m *AppMutation) TaxPercent() (r float64, exists bool) {
+	v := m.tax_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTaxPercent returns the old "tax_percent" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldTaxPercent(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTaxPercent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTaxPercent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTaxPercent: %w", err)
+	}
+	return oldValue.TaxPercent, nil
+}
+
+// AddTaxPercent adds f to the "tax_percent" field.
+func (m *AppMutation) AddTaxPercent(f float64) {
+	if m.addtax_percent != nil {
+		*m.addtax_percent += f
+	} else {
+		m.addtax_percent = &f
+	}
+}
+
+// AddedTaxPercent returns the value that was added to the "tax_percent" field in this mutation.
+func (m *AppMutation) AddedTaxPercent() (r float64, exists bool) {
+	v := m.addtax_percent
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTaxPercent resets all changes to the "tax_percent" field.
+func (m *AppMutation) ResetTaxPercent() {
+	m.tax_percent = nil
+	m.addtax_percent = nil
+}
+
 // SetStatus sets the "status" field.
 func (m *AppMutation) SetStatus(i int8) {
 	m.status = &i
@@ -1212,7 +1320,7 @@ func (m *AppMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AppMutation) Fields() []string {
-	fields := make([]string, 0, 19)
+	fields := make([]string, 0, 21)
 	if m.name != nil {
 		fields = append(fields, app.FieldName)
 	}
@@ -1260,6 +1368,12 @@ func (m *AppMutation) Fields() []string {
 	}
 	if m.contact_social != nil {
 		fields = append(fields, app.FieldContactSocial)
+	}
+	if m.tax_number != nil {
+		fields = append(fields, app.FieldTaxNumber)
+	}
+	if m.tax_percent != nil {
+		fields = append(fields, app.FieldTaxPercent)
 	}
 	if m.status != nil {
 		fields = append(fields, app.FieldStatus)
@@ -1310,6 +1424,10 @@ func (m *AppMutation) Field(name string) (ent.Value, bool) {
 		return m.ContactHours()
 	case app.FieldContactSocial:
 		return m.ContactSocial()
+	case app.FieldTaxNumber:
+		return m.TaxNumber()
+	case app.FieldTaxPercent:
+		return m.TaxPercent()
 	case app.FieldStatus:
 		return m.Status()
 	case app.FieldCreatedAt:
@@ -1357,6 +1475,10 @@ func (m *AppMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldContactHours(ctx)
 	case app.FieldContactSocial:
 		return m.OldContactSocial(ctx)
+	case app.FieldTaxNumber:
+		return m.OldTaxNumber(ctx)
+	case app.FieldTaxPercent:
+		return m.OldTaxPercent(ctx)
 	case app.FieldStatus:
 		return m.OldStatus(ctx)
 	case app.FieldCreatedAt:
@@ -1484,6 +1606,20 @@ func (m *AppMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetContactSocial(v)
 		return nil
+	case app.FieldTaxNumber:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTaxNumber(v)
+		return nil
+	case app.FieldTaxPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTaxPercent(v)
+		return nil
 	case app.FieldStatus:
 		v, ok := value.(int8)
 		if !ok {
@@ -1513,6 +1649,9 @@ func (m *AppMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *AppMutation) AddedFields() []string {
 	var fields []string
+	if m.addtax_percent != nil {
+		fields = append(fields, app.FieldTaxPercent)
+	}
 	if m.addstatus != nil {
 		fields = append(fields, app.FieldStatus)
 	}
@@ -1524,6 +1663,8 @@ func (m *AppMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *AppMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case app.FieldTaxPercent:
+		return m.AddedTaxPercent()
 	case app.FieldStatus:
 		return m.AddedStatus()
 	}
@@ -1535,6 +1676,13 @@ func (m *AppMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *AppMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case app.FieldTaxPercent:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTaxPercent(v)
+		return nil
 	case app.FieldStatus:
 		v, ok := value.(int8)
 		if !ok {
@@ -1595,6 +1743,9 @@ func (m *AppMutation) ClearedFields() []string {
 	if m.FieldCleared(app.FieldContactSocial) {
 		fields = append(fields, app.FieldContactSocial)
 	}
+	if m.FieldCleared(app.FieldTaxNumber) {
+		fields = append(fields, app.FieldTaxNumber)
+	}
 	return fields
 }
 
@@ -1654,6 +1805,9 @@ func (m *AppMutation) ClearField(name string) error {
 	case app.FieldContactSocial:
 		m.ClearContactSocial()
 		return nil
+	case app.FieldTaxNumber:
+		m.ClearTaxNumber()
+		return nil
 	}
 	return fmt.Errorf("unknown App nullable field %s", name)
 }
@@ -1709,6 +1863,12 @@ func (m *AppMutation) ResetField(name string) error {
 		return nil
 	case app.FieldContactSocial:
 		m.ResetContactSocial()
+		return nil
+	case app.FieldTaxNumber:
+		m.ResetTaxNumber()
+		return nil
+	case app.FieldTaxPercent:
+		m.ResetTaxPercent()
 		return nil
 	case app.FieldStatus:
 		m.ResetStatus()

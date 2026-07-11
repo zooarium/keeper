@@ -130,6 +130,16 @@ func ContactHours(v string) predicate.App {
 	return predicate.App(sql.FieldEQ(FieldContactHours, v))
 }
 
+// TaxNumber applies equality check predicate on the "tax_number" field. It's identical to TaxNumberEQ.
+func TaxNumber(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldTaxNumber, v))
+}
+
+// TaxPercent applies equality check predicate on the "tax_percent" field. It's identical to TaxPercentEQ.
+func TaxPercent(v float64) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldTaxPercent, v))
+}
+
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
 func Status(v int8) predicate.App {
 	return predicate.App(sql.FieldEQ(FieldStatus, v))
@@ -1268,6 +1278,121 @@ func ContactSocialIsNil() predicate.App {
 // ContactSocialNotNil applies the NotNil predicate on the "contact_social" field.
 func ContactSocialNotNil() predicate.App {
 	return predicate.App(sql.FieldNotNull(FieldContactSocial))
+}
+
+// TaxNumberEQ applies the EQ predicate on the "tax_number" field.
+func TaxNumberEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldTaxNumber, v))
+}
+
+// TaxNumberNEQ applies the NEQ predicate on the "tax_number" field.
+func TaxNumberNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldTaxNumber, v))
+}
+
+// TaxNumberIn applies the In predicate on the "tax_number" field.
+func TaxNumberIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldTaxNumber, vs...))
+}
+
+// TaxNumberNotIn applies the NotIn predicate on the "tax_number" field.
+func TaxNumberNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldTaxNumber, vs...))
+}
+
+// TaxNumberGT applies the GT predicate on the "tax_number" field.
+func TaxNumberGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldTaxNumber, v))
+}
+
+// TaxNumberGTE applies the GTE predicate on the "tax_number" field.
+func TaxNumberGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldTaxNumber, v))
+}
+
+// TaxNumberLT applies the LT predicate on the "tax_number" field.
+func TaxNumberLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldTaxNumber, v))
+}
+
+// TaxNumberLTE applies the LTE predicate on the "tax_number" field.
+func TaxNumberLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldTaxNumber, v))
+}
+
+// TaxNumberContains applies the Contains predicate on the "tax_number" field.
+func TaxNumberContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldTaxNumber, v))
+}
+
+// TaxNumberHasPrefix applies the HasPrefix predicate on the "tax_number" field.
+func TaxNumberHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldTaxNumber, v))
+}
+
+// TaxNumberHasSuffix applies the HasSuffix predicate on the "tax_number" field.
+func TaxNumberHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldTaxNumber, v))
+}
+
+// TaxNumberIsNil applies the IsNil predicate on the "tax_number" field.
+func TaxNumberIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldTaxNumber))
+}
+
+// TaxNumberNotNil applies the NotNil predicate on the "tax_number" field.
+func TaxNumberNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldTaxNumber))
+}
+
+// TaxNumberEqualFold applies the EqualFold predicate on the "tax_number" field.
+func TaxNumberEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldTaxNumber, v))
+}
+
+// TaxNumberContainsFold applies the ContainsFold predicate on the "tax_number" field.
+func TaxNumberContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldTaxNumber, v))
+}
+
+// TaxPercentEQ applies the EQ predicate on the "tax_percent" field.
+func TaxPercentEQ(v float64) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldTaxPercent, v))
+}
+
+// TaxPercentNEQ applies the NEQ predicate on the "tax_percent" field.
+func TaxPercentNEQ(v float64) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldTaxPercent, v))
+}
+
+// TaxPercentIn applies the In predicate on the "tax_percent" field.
+func TaxPercentIn(vs ...float64) predicate.App {
+	return predicate.App(sql.FieldIn(FieldTaxPercent, vs...))
+}
+
+// TaxPercentNotIn applies the NotIn predicate on the "tax_percent" field.
+func TaxPercentNotIn(vs ...float64) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldTaxPercent, vs...))
+}
+
+// TaxPercentGT applies the GT predicate on the "tax_percent" field.
+func TaxPercentGT(v float64) predicate.App {
+	return predicate.App(sql.FieldGT(FieldTaxPercent, v))
+}
+
+// TaxPercentGTE applies the GTE predicate on the "tax_percent" field.
+func TaxPercentGTE(v float64) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldTaxPercent, v))
+}
+
+// TaxPercentLT applies the LT predicate on the "tax_percent" field.
+func TaxPercentLT(v float64) predicate.App {
+	return predicate.App(sql.FieldLT(FieldTaxPercent, v))
+}
+
+// TaxPercentLTE applies the LTE predicate on the "tax_percent" field.
+func TaxPercentLTE(v float64) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldTaxPercent, v))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.

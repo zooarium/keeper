@@ -32,7 +32,7 @@ DOCKER_GO := docker run --rm \
 	-e CGO_ENABLED=1 -e CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
 	$(DEV_IMAGE)
 
-.PHONY: all build up down restart refresh logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade health info
+.PHONY: all build up down restart refresh logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade health info release
 
 # Build the dev/CI toolchain image (cached by Docker layer cache).
 dev-image:
@@ -234,8 +234,19 @@ help:
 	@echo "  run-script    Run script from scripts/ (use name=... args=...)"
 	@echo "  sql           Run SQL query (use query=...)"
 	@echo "  config-check  Validate config incl. secondary listeners"
+	@echo "  release        Release VERSION=x.y.z (rotate CHANGELOG, commit, tag)"
 	@echo "  clean         Deep clean containers/images"
 	@echo "  health        Check service health endpoint (curl /health)"
 	@echo "  info          Show service metadata (name, port, purpose, Go version)"
 	@echo "  help          Show this help message"
 
+
+release:
+	@[ -n "$(VERSION)" ] || { echo "Usage: make release VERSION=x.y.z"; exit 1; }
+	@echo "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$$' || { echo "Error: VERSION must be x.y.z"; exit 1; }
+	@git diff --quiet HEAD || { echo "Error: working tree dirty, commit first"; exit 1; }
+	@! git rev-parse -q --verify "refs/tags/v$(VERSION)" >/dev/null || { echo "Error: tag v$(VERSION) already exists"; exit 1; }
+	@awk '/^## \[Unreleased\]/{f=1;next} /^## /{exit} f&&NF{ok=1} END{exit !ok}' CHANGELOG.md || { echo "Error: CHANGELOG.md [Unreleased] section empty, nothing to release"; exit 1; }
+	@sed -i "s/^## \[Unreleased\]$$/## [Unreleased]\n\n## [$(VERSION)] - $$(date +%F)/" CHANGELOG.md
+	@git add CHANGELOG.md && git commit -m "release v$(VERSION)" && git tag "v$(VERSION)"
+	@echo "Released v$(VERSION). Push: git push && git push origin v$(VERSION)"

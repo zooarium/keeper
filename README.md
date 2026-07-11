@@ -457,7 +457,7 @@ By default, the services are available at:
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
-- `GET /apps/lookup?site_key=...`: Resolve the public profile (name, tagline, logo, about, contact) for the app bound to a publishable guest site key (**public**, no auth, 10 req/min per IP). Returns 404 for an unknown/inactive site key or inactive app, without distinguishing between them. Excludes status + timestamps.
+- `GET /apps/lookup?site_key=...`: Resolve the public profile (name, tagline, logo, about, contact, tax_number, tax_percent) for the app bound to a publishable guest site key (**public**, no auth, 10 req/min per IP). Returns 404 for an unknown/inactive site key or inactive app, without distinguishing between them. Excludes status + timestamps.
 - `POST /apps`: Create a new app (**sysadmin only**; 403 otherwise).
 - `GET /apps`: List apps (sysadmins: all; other users: own app only).
 - `GET /apps/{id}`: Get app by ID (sysadmin or own app).
@@ -469,8 +469,9 @@ users (own app only): `tagline`, `logo_url` (URL, light `url` validation, no fil
 upload), nested `about` (`heading`, `body` — HTML allowed), and nested `contact`
 (`address`: `line1`, `line2`, `city`, `state`, `country`, `postal_code`; `phone1`,
 `phone2`, `email`, `hours` — free text, `social` — arbitrary `platform→url` JSON
-map, each value validated as an http(s) URL). All optional. On update, the `about`
-and `contact` sections replace wholesale when present.
+map, each value validated as an http(s) URL), plus flat `tax_number` (free text,
+e.g. VAT/GST registration) and `tax_percent` (float, 0–100). All optional. On
+update, the `about` and `contact` sections replace wholesale when present.
 
 - `POST /divisions`: Create a new division.
 - `GET /divisions`: List divisions (filter: `?parent_id=`).

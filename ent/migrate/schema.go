@@ -28,6 +28,8 @@ var (
 		{Name: "contact_email", Type: field.TypeString, Nullable: true},
 		{Name: "contact_hours", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "contact_social", Type: field.TypeJSON, Nullable: true},
+		{Name: "tax_number", Type: field.TypeString, Nullable: true},
+		{Name: "tax_percent", Type: field.TypeFloat64, Default: 0},
 		{Name: "status", Type: field.TypeInt8, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},

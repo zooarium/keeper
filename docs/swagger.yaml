@@ -63,6 +63,10 @@ definitions:
         type: integer
       tagline:
         type: string
+      tax_number:
+        type: string
+      tax_percent:
+        type: number
       updated_at:
         type: string
     type: object
@@ -115,6 +119,12 @@ definitions:
         type: integer
       tagline:
         type: string
+      tax_number:
+        type: string
+      tax_percent:
+        maximum: 100
+        minimum: 0
+        type: number
     required:
     - name
     type: object
@@ -132,6 +142,10 @@ definitions:
         type: string
       tagline:
         type: string
+      tax_number:
+        type: string
+      tax_percent:
+        type: number
     type: object
   internal_app.UpdateAppRequest:
     properties:
@@ -147,6 +161,12 @@ definitions:
         type: integer
       tagline:
         type: string
+      tax_number:
+        type: string
+      tax_percent:
+        maximum: 100
+        minimum: 0
+        type: number
     type: object
   internal_division.CreateDivisionRequest:
     properties:
@@ -684,6 +704,44 @@ paths:
       security:
       - Bearer: []
       summary: Update app
+      tags:
+      - apps
+  /apps/{id}/public:
+    get:
+      description: Public-safe profile (name, tagline, logo, about, contact) for an
+        active app. Public (no auth) and hard rate-limited; used by downstream services
+        to enrich their responses. Returns 404 for an unknown or inactive app.
+      parameters:
+      - description: App ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/internal_app.PublicApp'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/keeper_pkg_render.Response'
+      summary: Get public app profile by ID
       tags:
       - apps
   /apps/lookup:

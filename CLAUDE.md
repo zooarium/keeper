@@ -1,1 +1,285 @@
-./AGENTS.md
+# Keeper Project Guide for Gemini CLI
+
+This document provides a comprehensive overview of the Keeper project, its architecture, development workflows, and technical details to assist Gemini CLI in understanding and maintaining the codebase.
+
+## Project Overview
+Keeper is a microservice for user management, providing RESTful APIs for authentication, user creation, and management. It is built with Go, uses SQLite for persistence, and is containerized with Docker.
+
+## Technical Stack
+- **Language**: Go v1.26
+- **Database**: SQLite v3.51.2
+- **ORM**: [Ent](https://entgo.io/)
+- **Router**: [chi](https://github.com/go-chi/chi)
+- **Validation**: [validator v10](https://github.com/go-playground/validator)
+- **Authentication**: JWT (JSON Web Tokens)
+- **Documentation**: Swagger (via `swag`)
+- **Logging**: Structured logging with `log/slog`
+- **Rate Limiting**: `httprate` (primary: 100 req/min per IP; secondary listeners: per-listener config)
+- **Migrations**: Atlas (integrated with Ent)
+
+## Directory Structure
+```text
+/
+├── cmd/
+│   └── api/
+│       └── main.go         # Application entry point
+├── internal/
+│   ├── app/                # App domain logic
+│   │   ├── handler.go      # HTTP handlers
+│   │   ├── service.go      # Business logic
+│   │   ├── repository.go   # Data access logic
+│   │   ├── model.go        # Domain & Request/Response models
+│   │   ├── service_test.go # Unit tests for service
+│   │   └── handler_test.go # Unit tests for handler
+│   ├── division/           # Division domain logic (hierarchical categorisation)
+│   │   ├── handler.go      # HTTP handlers
+│   │   ├── service.go      # Business logic + materialized path maintenance
+│   │   ├── repository.go   # Data access logic
+│   │   ├── model.go        # Domain & Request/Response models
+│   │   ├── service_test.go # Unit tests for service
+│   │   └── handler_test.go # Unit tests for handler
+│   ├── user/               # User domain logic
+│   │   ├── handler.go      # HTTP handlers
+│   │   ├── service.go      # Business logic
+│   │   ├── repository.go   # Data access logic
+│   │   ├── model.go        # Domain & Request/Response models
+│   │   ├── service_test.go # Unit tests for service
+│   │   └── handler_test.go # Unit tests for handler
+│   ├── platform/           # Cross-cutting concerns
+│   │   ├── auth/           # JWT & Authentication logic
+│   │   ├── http/           # Router & Middleware
+│   │   └── render/         # Standard API responses
+│   └── db/
+│       └── client.go       # DB client init (sqlite/postgres)
+├── ent/                    # Ent ORM generated code & schema
+│   └── schema/
+│       ├── app.go          # App database schema definition
+│       ├── division.go     # Division database schema definition
+│       └── user.go         # User database schema definition
+├── pkg/                    # Shared packages (logger, config)
+├── data/                   # SQLite database file (persisted via volume)
+├── log/                    # Application logs (persisted via volume)
+├── docs/                   # Swagger documentation
+├── Dockerfile              # Docker build configuration
+├── docker-compose.yml      # Service orchestration
+└── Makefile                # Development automation
+```
+
+## Secondary Listeners
+Config-driven extra HTTP servers in the same process (`SECONDARY:` list in config — see README.md for the full reference). Each entry: `NAME`, `ENABLED`, `ADDR` (unique, required), `JWT_SECRET` (optional — entity routes on that listener verify with this key instead of `AUTH.JWT_SECRET`), `RATE_LIMIT` (default 100/1m), `ROUTES` (chi-syntax `"METHOD /path"` allow-list; non-listed = 404).
+
+Key facts:
+- Built by `internal/platform/http/secondary.go` (`NewSecondaryRouter`); reuses the same handlers via the `mount(r, jm)` hook in `cmd/api/main.go` — when mounting a new entity in the primary router, mount it in the hook too. Never duplicate handler wiring.
+- Keeper bakes JWT auth into entity routers (`Routes(jwtManager)`, with `POST /users/auth` and `POST /guest-keys/auth` public), so listeners always inherit that protection. Identity always comes from JWT — no anonymous mode anywhere.
+- `/health` + `/metrics` always exposed per listener; swagger only on primary (covers all routes — shared handlers).
+- Validation at startup via `pkg/config` `normalizeSecondary()` + `allowRoutes()` pattern checks; `make config-check` (or binary `-check-config` flag) vets config without starting servers.
+- Env vars cannot override list entries (viper limitation) — YAML only.
+- New secondary port → publish it in docker-compose.yml `ports:` (skip for internal s2s listeners — network isolation is the guard).
+
+## Guest Keys & Guest Tokens
+Keeper mints short-lived tenant-scoped guest JWTs for public surfaces (e.g. ant's `order-intake`). `internal/guestkey`: kpr_guest_key {app_id, division_id, user_id (designated guest identity), name, site_key (unique, server-generated `gk_`+48hex), domain (unique, normalized URL the UI is served from), status}. Flow: public UI optionally bootstraps its site key via `GET /guest-keys/lookup?url=...` (public, httprate 10/1m per IP — normalizes the URL the same way `domain` is stored, exact-matches it, returns site key only) → embeds the publishable site key → `POST /guest-keys/auth {site_key}` (public, httprate 10/1m per IP) → JWT with claims {app_id, division_id, user_id, role=guest}, signed with `AUTH.GUEST_JWT_SECRET` (NOT the primary secret — containment is cryptographic; only listeners configured with the guest secret accept these tokens), expiry `AUTH.GUEST_JWT_EXPIRY` (default 30m).
+
+Rules:
+- `pkg/auth`: `RoleUser=0, RoleSysAdmin=1, RoleGuest=2`, `claims.IsGuest()`. Changing `pkg/auth` requires re-vendoring ant + squirrel (`make vendor`).
+- Guest key create validates the designated user exists in the given app+division (`UserBelongsTo`) and requires a non-empty `domain`. `domain` is normalized in `normalizeDomain()` (scheme/port stripped, host lowercased, `host[+path]`, trailing slash trimmed) on both create and lookup so they always agree. Tenant binding + site key + domain immutable — rotate by delete + create.
+- CRUD scoping: sysadmin = all; others = own app only.
+- Both secrets are placeholders in config.yaml — production must inject via env (`KEEPER_AUTH_JWT_SECRET`, `KEEPER_AUTH_GUEST_JWT_SECRET`).
+
+## Architecture & Design Patterns
+- **Directional Dependencies**: HTTP (Handler) → Service → Repository.
+- **Dependency Injection**: Used to decouple components and facilitate testing.
+- **Interface Segregation**: Core logic is defined through interfaces.
+- **Standardized Responses**: All API responses follow a consistent JSON format defined in `internal/platform/render`.
+- **Context Propagation**: `context.Context` is passed through all layers for cancellation and timeouts.
+- **Graceful Shutdown**: The API server handles `SIGINT` and `SIGTERM` for graceful termination.
+- **Database Conventions**: All database table names **must** be in singular format (e.g., `user` instead of `users`) and **must** include a `kpr_` prefix (e.g., `kpr_user`). This is enforced in the Ent schema using `entsql.Annotation`.
+
+## Naming Conventions
+- **Packages**: Short, lowercase, single-word names (e.g., `user`, `auth`). Avoid underscores or mixedCaps.
+- **Files**: Lowercase, using underscores only if necessary (e.g., `handler.go`, `service_test.go`).
+- **Variables & Constants**: Use `CamelCase` (`MixedCaps` for exported, `mixedCaps` for unexported). Keep acronyms consistent (e.g., `userID`, `APIKey`).
+- **Receivers**: Use short, consistent names (1-3 letters) representing the type (e.g., `func (u *User) ...`).
+- **Interfaces**: Name based on behavior, often ending in `-er` for single-action interfaces (e.g., `Reader`), or use descriptive nouns for domain logic (e.g., `Service`, `Repository`).
+- **REST API Components**:
+    - **Handlers**: `[Action][Entity]` (e.g., `CreateUser`, `ListUsers`).
+    - **Services**: `[Entity]Service`.
+    - **Repositories**: `[Entity]Repository`.
+    - **Models**: Use `[Entity]` for domain models and `[Action][Entity]Request/Response` for DTOs.
+- **Database**: Table names and Ent schemas **must** be singular and include the `kpr_` prefix (e.g., `kpr_user`).
+
+## Development Workflow
+
+### Command Preference
+Always prefer using `make` commands defined in the `Makefile` over direct `docker` or `go` commands. The `Makefile` ensures a consistent environment (using specific Go versions and dependencies) by running tools inside Docker containers.
+
+### Mandatory Workflow for Every Change
+To ensure codebase health and consistency, the following steps **must** be completed for every modification or new feature:
+1. **Follow Naming Conventions**: Adhere to the project's naming conventions for packages, files, variables, and API components as defined in this document.
+2.  **Structured Logging**: Add or update structured logging (using `slog`) to capture important events, business logic milestones, and error conditions.
+3.  **Write Unit Tests**: Every new feature or bug fix must include corresponding unit tests (e.g., `*_test.go`).
+4.  **Update Makefile**: If new development commands are required, add them to the `Makefile` and update the documentation accordingly.
+5.  **Run Formatter**: Every code change MUST be formatted to ensure consistent code style and import management. Run `make fmt` after any modification to source files.
+6.  **Run Linter**: Ensure code quality by running `make lint` after code and test changes.
+7.  **Update Swagger Documentation**: If any API endpoints are added or modified, regenerate documentation using `make swag`.
+8.  **Update README.md**: Ensure any new features, endpoints, or configuration changes are documented in `README.md`.
+9.  **Update GEMINI.md**: Ensure this project guide is updated to reflect any changes in architecture, workflows, or documentation standards.
+10.  **Run All Tests**: Verify that all tests pass by running `make test`. (Note: `make test` automatically runs `make fmt` as a prerequisite).
+11.  **Custom Scripts**: You **MUST** always run any custom script using the `make run-script` command to ensure a consistent environment and proper dependency handling.
+
+### Common Commands (Makefile)
+- `make all`: Run the full pipeline (fmt, vet, lint, test, swag, build, up).
+- `make build`: Build Docker images.
+- `make up`: Start services in the background.
+- `make down`: Stop services.
+- `make deps-upgrade`: Update Go dependencies using a Docker container.
+- `make fmt`: Format code and organize imports using `goimports`.
+- `make tidy`: Clean up `go.mod` and `go.sum` files.
+- `make vet`: Run `go vet` for static analysis.
+- `make generate`: Run `go generate` for all packages.
+- `make vendor`: Create and update the `vendor` directory.
+- `make coverage`: Generate an HTML test coverage report.
+- `make coverage-view`: Open the HTML coverage report in your default browser.
+- `make build-local`: Build the API binary on the host machine.
+- `make help`: Display all available Makefile commands.
+- `make test`: Run unit tests in a fresh Go container.
+- `make benchmark`: Run performance benchmarks in a fresh Go container.
+- `make logs`: Follow container logs.
+- `make swag`: Regenerate Swagger documentation.
+- `make migrate-gen name=NAME`: Generate a new database migration.
+- `make migrate-apply`: Apply pending migrations.
+- `make release VERSION=x.y.z`: Release — rotates CHANGELOG.md `[Unreleased]` into dated version section, commits, tags `vx.y.z` (push tags manually).
+- `make run-script name=NAME args="ARGS"`: Run a script from the `scripts/` directory in a fresh Go container.
+- `make sql query=QUERY`: Run a SQL query against the SQLite database.
+- `make config-check`: Validate config (incl. secondary listeners) without starting servers.
+
+### Database Migrations
+1.  **Modify Schema**: Edit files in `ent/schema/` (e.g., `user.go`, `app.go`).
+2.  **Generate Code**: `make generate`
+3.  **Generate Migration**: `make migrate-gen name=change_description`.
+4.  **Apply**: `make migrate-apply` (or restart the app for auto-migration).
+
+### Database Schema (kpr_app table)
+
+| Field                 | Type      | Description                          |
+|-----------------------|-----------|--------------------------------------|
+| ID                    | int       | Primary Key (Auto-increment)         |
+| Name                  | string    | Unique app name                      |
+| Tagline               | string    | Short tagline (optional)             |
+| LogoURL               | string    | Logo URL — no file upload (optional) |
+| AboutHeading          | string    | About section heading (optional)     |
+| AboutBody             | text      | About body, HTML allowed (optional)  |
+| ContactAddressLine1   | string    | Address line 1 (optional)            |
+| ContactAddressLine2   | string    | Address line 2 (optional)            |
+| ContactCity           | string    | City (optional)                      |
+| ContactState          | string    | State (optional)                     |
+| ContactCountry        | string    | Country (optional)                   |
+| ContactPostalCode     | string    | Postal code (optional)               |
+| ContactPhone1         | string    | Primary phone (optional)             |
+| ContactPhone2         | string    | Secondary phone (optional)           |
+| ContactEmail          | string    | Contact email (optional)             |
+| ContactHours          | text      | Business hours, free text (optional) |
+| ContactSocial         | json      | `platform→url` map, URL-validated    |
+| TaxNumber             | string    | Tax/VAT registration number (optional) |
+| TaxPercent            | float     | Tax percentage, 0–100 (default 0)    |
+| Status                | smallint  | 0 (Inactive), 1 (Active)             |
+| CreatedAt             | datetime  | Creation timestamp                   |
+| UpdatedAt             | datetime  | Last update timestamp                |
+
+App profile fields (tagline, logo_url, about, contact, tax_number, tax_percent) are optional and editable by sysadmin (any app) or the tenant's own users (own app only). API exposes `about` and `contact` as **nested JSON objects** (flat columns in DB); on update both sections replace wholesale when present. `logo_url` + each `contact.social` value get light http(s) URL validation; `contact.email` validated as email.
+
+### Database Schema (kpr_division table)
+
+Hierarchical grouping using **Materialized Path**. Enables company → department → team structure scoped per app. Other microservices store `division_id` alongside `app_id` for granular data filtering.
+
+| Field      | Type      | Description                                              |
+|------------|-----------|----------------------------------------------------------|
+| ID         | int       | Primary Key (Auto-increment)                             |
+| AppID      | int       | Foreign Key to kpr_app (CASCADE DELETE)                  |
+| ParentID   | int       | Nullable FK to kpr_division (self-ref; NULL = root)      |
+| Name       | string    | Division display name                                    |
+| Path       | string    | Materialized path e.g. `/1/3/7/` (indexed)              |
+| Depth      | smallint  | 0 = root; auto-computed from path on create/move         |
+| Status     | smallint  | 0 (Inactive), 1 (Active)                                |
+| CreatedAt  | datetime  | Creation timestamp                                       |
+| UpdatedAt  | datetime  | Last update timestamp                                    |
+
+**Path rules:**
+- Root division: `path = "/{id}/"`
+- Child: `path = parent.path + "{id}/"`
+- Subtree query: `WHERE path LIKE '/1/3/%'`
+- Move cascade: updates path + depth for node and all descendants
+
+### Database Schema (kpr_user table)
+
+| Field        | Type      | Description                          |
+|--------------|-----------|--------------------------------------|
+| ID           | int       | Primary Key (Auto-increment)         |
+| AppID        | int       | Foreign Key to kpr_app               |
+| DivisionID   | int       | Foreign Key to kpr_division (required) |
+| Firstname    | string    | User's first name                    |
+| Lastname     | string    | User's last name                     |
+| Email        | string    | Unique email address                 |
+| Password     | string    | Hashed password (sensitive)          |
+| Status       | smallint  | 0 (Inactive), 1 (Active)             |
+| CreatedAt    | datetime  | Creation timestamp                   |
+| UpdatedAt    | datetime  | Last update timestamp                |
+
+
+
+## JWT Claims
+
+`POST /users/auth` returns a token containing:
+
+| Claim        | Type | Description                       |
+|--------------|------|-----------------------------------|
+| `app_id`     | int  | User's app ID                     |
+| `user_id`    | int  | User's ID                         |
+| `division_id`| int  | User's division ID                |
+
+Other microservices (e.g. squirrel) read `division_id` from the JWT claims and store it alongside `app_id` and `user_id` — no separate division management in downstream services.
+
+## API Endpoints
+- `GET /health`: Check service health.
+- `POST /users`: Create a new user.
+- `GET /users`: List all users.
+- `POST /users/auth`: Authenticate and get JWT (includes division_id in claims).
+- `GET /users/{id}`: Get user by ID.
+- `PUT /users/{id}`: Update user by ID.
+- `DELETE /users/{id}`: Delete user by ID.
+- `GET /apps/lookup?site_key=...`: Public app profile by publishable guest site key (no auth, 10/1m per IP). Resolves site_key→app_id via guestkey, returns public-safe profile (id, name, tagline, logo_url, about, contact — no status/timestamps) only for active apps; 404 otherwise (unknown/inactive key or inactive app, indistinguishable).
+- `POST /apps`: Create a new app (sysadmin only; 403 otherwise).
+- `GET /apps`: List apps (sysadmins: all; other users: own app only).
+- `GET /apps/{id}`: Get app by ID (sysadmin or own app).
+- `PUT /apps/{id}`: Update app by ID (sysadmin or own app).
+- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app).
+- `POST /divisions`: Create a new division.
+- `GET /divisions`: List divisions (query: `parent_id`).
+- `GET /divisions/{id}`: Get division by ID.
+- `GET /divisions/{id}/descendants`: Get full subtree of division.
+- `PUT /divisions/{id}`: Update division name/status.
+- `PUT /divisions/{id}/move`: Move division to new parent (cascades path update).
+- `DELETE /divisions/{id}`: Delete division (blocked if has children or users).
+- `GET /swagger/*`: Swagger UI.
+
+## Logging & Monitoring
+- Logs are written to **stdout** and `./log/api.log`.
+- Log format is JSON (structured).
+- Levels: `INFO` for normal operations, `WARN` for client errors/auth failures, `ERROR` for system failures.
+
+## Persistence & Volumes
+- **Database**: `./data/keeper.db` mapped to `/app/data/keeper.db`.
+- **Logs**: `./log/` mapped to `/app/log/`.
+- **Environment**: `DB_PATH` and `LOG_DIR` control these paths.
+
+## Engineering Constraints (mandatory for all new code)
+
+- **Pagination**: every list endpoint MUST accept `limit` (default 50, max 500) and `offset` (default 0) query params and apply them at the query level (`.Limit()/.Offset()`). Never return unbounded result sets.
+- **Indexes**: do not add indexes unilaterally. When a query pattern would benefit from one (column in WHERE, JOIN, or ORDER BY), propose it to the user — including composite options where queries filter multiple columns — and add it only after explicit confirmation. Define via `Indexes()` in the ent schema.
+- **Transactions**: any operation performing more than one dependent write MUST run inside a single DB transaction (`client.Tx(ctx)`) with rollback on error.
+- **Column selection**: when only a subset of columns is needed, use ent `.Select()` instead of fetching full entities.
+- **DB portability**: DB driver is configurable (`DB.DRIVER`: sqlite3 | postgres). Keep schema and queries portable across SQLite and Postgres; no driver-specific SQL in business code. Plan: migrate to Postgres as row counts grow.
+- **Caching**: frequently-read, rarely-changing responses (e.g. aggregates/stats) should be cached in-memory with a short TTL and explicit invalidation on writes.
+- **Sensitive fields**: never expose secrets or password hashes in JSON (`json:"-"`) or logs.
+- **Observability**: structured JSON logging via slog (level from `LOG.LEVEL` config); the service exposes Prometheus `/metrics`; new endpoints are automatically covered by the metrics middleware.
+- **Outbound HTTP**: any future HTTP client must use a shared client with a timeout sourced from config (never a zero-timeout default client).
+- **Locking / race safety**: every operation touching shared mutable state MUST be race-free without sacrificing performance. Guard in-memory state (caches, counters, maps) with `sync.RWMutex` (read locks for reads); protect check-then-write DB flows with a single transaction plus re-check inside it, or a unique constraint. Prefer fine-grained locks over coarse global ones; never hold a lock across I/O. Verify with `go test -race`.

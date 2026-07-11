@@ -50,6 +50,10 @@ type App struct {
 	ContactHours string `json:"contact_hours,omitempty"`
 	// ContactSocial holds the value of the "contact_social" field.
 	ContactSocial map[string]string `json:"contact_social,omitempty"`
+	// TaxNumber holds the value of the "tax_number" field.
+	TaxNumber string `json:"tax_number,omitempty"`
+	// TaxPercent holds the value of the "tax_percent" field.
+	TaxPercent float64 `json:"tax_percent,omitempty"`
 	// Status holds the value of the "status" field.
 	Status int8 `json:"status,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -98,9 +102,11 @@ func (*App) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case app.FieldContactSocial:
 			values[i] = new([]byte)
+		case app.FieldTaxPercent:
+			values[i] = new(sql.NullFloat64)
 		case app.FieldID, app.FieldStatus:
 			values[i] = new(sql.NullInt64)
-		case app.FieldName, app.FieldTagline, app.FieldLogoURL, app.FieldAboutHeading, app.FieldAboutBody, app.FieldContactAddressLine1, app.FieldContactAddressLine2, app.FieldContactCity, app.FieldContactState, app.FieldContactCountry, app.FieldContactPostalCode, app.FieldContactPhone1, app.FieldContactPhone2, app.FieldContactEmail, app.FieldContactHours:
+		case app.FieldName, app.FieldTagline, app.FieldLogoURL, app.FieldAboutHeading, app.FieldAboutBody, app.FieldContactAddressLine1, app.FieldContactAddressLine2, app.FieldContactCity, app.FieldContactState, app.FieldContactCountry, app.FieldContactPostalCode, app.FieldContactPhone1, app.FieldContactPhone2, app.FieldContactEmail, app.FieldContactHours, app.FieldTaxNumber:
 			values[i] = new(sql.NullString)
 		case app.FieldCreatedAt, app.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -223,6 +229,18 @@ func (_m *App) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field contact_social: %w", err)
 				}
 			}
+		case app.FieldTaxNumber:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field tax_number", values[i])
+			} else if value.Valid {
+				_m.TaxNumber = value.String
+			}
+		case app.FieldTaxPercent:
+			if value, ok := values[i].(*sql.NullFloat64); !ok {
+				return fmt.Errorf("unexpected type %T for field tax_percent", values[i])
+			} else if value.Valid {
+				_m.TaxPercent = value.Float64
+			}
 		case app.FieldStatus:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
@@ -334,6 +352,12 @@ func (_m *App) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("contact_social=")
 	builder.WriteString(fmt.Sprintf("%v", _m.ContactSocial))
+	builder.WriteString(", ")
+	builder.WriteString("tax_number=")
+	builder.WriteString(_m.TaxNumber)
+	builder.WriteString(", ")
+	builder.WriteString("tax_percent=")
+	builder.WriteString(fmt.Sprintf("%v", _m.TaxPercent))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

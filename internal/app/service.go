@@ -61,12 +61,14 @@ func toContact(in ContactInput) Contact {
 // toPublicApp maps a full app to its public-safe projection.
 func toPublicApp(a *App) *PublicApp {
 	return &PublicApp{
-		ID:      a.ID,
-		Name:    a.Name,
-		Tagline: a.Tagline,
-		LogoURL: a.LogoURL,
-		About:   a.About,
-		Contact: a.Contact,
+		ID:         a.ID,
+		Name:       a.Name,
+		Tagline:    a.Tagline,
+		LogoURL:    a.LogoURL,
+		About:      a.About,
+		Contact:    a.Contact,
+		TaxNumber:  a.TaxNumber,
+		TaxPercent: a.TaxPercent,
 	}
 }
 
@@ -122,12 +124,14 @@ func (s *appService) Create(ctx context.Context, req CreateAppRequest) (*App, er
 	}
 
 	created, err := s.repo.Create(ctx, App{
-		Name:    req.Name,
-		Tagline: req.Tagline,
-		LogoURL: req.LogoURL,
-		About:   toAbout(req.About),
-		Contact: toContact(req.Contact),
-		Status:  status,
+		Name:       req.Name,
+		Tagline:    req.Tagline,
+		LogoURL:    req.LogoURL,
+		About:      toAbout(req.About),
+		Contact:    toContact(req.Contact),
+		TaxNumber:  req.TaxNumber,
+		TaxPercent: req.TaxPercent,
+		Status:     status,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("repository create: %w", err)
@@ -172,6 +176,12 @@ func (s *appService) Update(ctx context.Context, id int, req UpdateAppRequest) (
 			return nil, err
 		}
 		existing.Contact = toContact(*req.Contact)
+	}
+	if req.TaxNumber != nil {
+		existing.TaxNumber = *req.TaxNumber
+	}
+	if req.TaxPercent != nil {
+		existing.TaxPercent = *req.TaxPercent
 	}
 	if req.Status != nil {
 		existing.Status = *req.Status

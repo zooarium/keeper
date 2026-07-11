@@ -230,6 +230,34 @@ func (_c *AppCreate) SetContactSocial(v map[string]string) *AppCreate {
 	return _c
 }
 
+// SetTaxNumber sets the "tax_number" field.
+func (_c *AppCreate) SetTaxNumber(v string) *AppCreate {
+	_c.mutation.SetTaxNumber(v)
+	return _c
+}
+
+// SetNillableTaxNumber sets the "tax_number" field if the given value is not nil.
+func (_c *AppCreate) SetNillableTaxNumber(v *string) *AppCreate {
+	if v != nil {
+		_c.SetTaxNumber(*v)
+	}
+	return _c
+}
+
+// SetTaxPercent sets the "tax_percent" field.
+func (_c *AppCreate) SetTaxPercent(v float64) *AppCreate {
+	_c.mutation.SetTaxPercent(v)
+	return _c
+}
+
+// SetNillableTaxPercent sets the "tax_percent" field if the given value is not nil.
+func (_c *AppCreate) SetNillableTaxPercent(v *float64) *AppCreate {
+	if v != nil {
+		_c.SetTaxPercent(*v)
+	}
+	return _c
+}
+
 // SetStatus sets the "status" field.
 func (_c *AppCreate) SetStatus(v int8) *AppCreate {
 	_c.mutation.SetStatus(v)
@@ -337,6 +365,10 @@ func (_c *AppCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *AppCreate) defaults() {
+	if _, ok := _c.mutation.TaxPercent(); !ok {
+		v := app.DefaultTaxPercent
+		_c.mutation.SetTaxPercent(v)
+	}
 	if _, ok := _c.mutation.Status(); !ok {
 		v := app.DefaultStatus
 		_c.mutation.SetStatus(v)
@@ -355,6 +387,9 @@ func (_c *AppCreate) defaults() {
 func (_c *AppCreate) check() error {
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "App.name"`)}
+	}
+	if _, ok := _c.mutation.TaxPercent(); !ok {
+		return &ValidationError{Name: "tax_percent", err: errors.New(`ent: missing required field "App.tax_percent"`)}
 	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "App.status"`)}
@@ -454,6 +489,14 @@ func (_c *AppCreate) createSpec() (*App, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ContactSocial(); ok {
 		_spec.SetField(app.FieldContactSocial, field.TypeJSON, value)
 		_node.ContactSocial = value
+	}
+	if value, ok := _c.mutation.TaxNumber(); ok {
+		_spec.SetField(app.FieldTaxNumber, field.TypeString, value)
+		_node.TaxNumber = value
+	}
+	if value, ok := _c.mutation.TaxPercent(); ok {
+		_spec.SetField(app.FieldTaxPercent, field.TypeFloat64, value)
+		_node.TaxPercent = value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(app.FieldStatus, field.TypeInt8, value)

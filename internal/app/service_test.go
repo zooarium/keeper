@@ -64,6 +64,8 @@ func TestService_Create_FullProfile(t *testing.T) {
 				"facebook": "https://facebook.com/me",
 			},
 		},
+		TaxNumber:  "NL123456789B01",
+		TaxPercent: 21,
 	}
 
 	a, err := svc.Create(ctx, req)
@@ -83,6 +85,8 @@ func TestService_Create_FullProfile(t *testing.T) {
 	assert.Equal(t, "Mon-Fri 9-5\nSat closed", got.Contact.Hours)
 	assert.Equal(t, "https://twitter.com/me", got.Contact.Social["twitter"])
 	assert.Len(t, got.Contact.Social, 2)
+	assert.Equal(t, "NL123456789B01", got.TaxNumber)
+	assert.Equal(t, float64(21), got.TaxPercent)
 }
 
 func TestService_Create_InvalidSocialURL(t *testing.T) {
@@ -116,18 +120,30 @@ func TestService_Update_Profile(t *testing.T) {
 	assert.NoError(t, err)
 
 	tagline := "New tagline"
+	taxNumber := "NL987654321B01"
+	taxPercent := 9.0
 	req := UpdateAppRequest{
 		Tagline: &tagline,
 		Contact: &ContactInput{
 			Phone1: "+31 999",
 			Social: map[string]string{"linkedin": "https://linkedin.com/in/me"},
 		},
+		TaxNumber:  &taxNumber,
+		TaxPercent: &taxPercent,
 	}
 	updated, err := svc.Update(ctx, a.ID, req)
 	assert.NoError(t, err)
 	assert.Equal(t, "New tagline", updated.Tagline)
 	assert.Equal(t, "+31 999", updated.Contact.Phone1)
 	assert.Equal(t, "https://linkedin.com/in/me", updated.Contact.Social["linkedin"])
+	assert.Equal(t, "NL987654321B01", updated.TaxNumber)
+	assert.Equal(t, 9.0, updated.TaxPercent)
+
+	// Absent tax fields leave existing values untouched.
+	updated, err = svc.Update(ctx, a.ID, UpdateAppRequest{Tagline: &tagline})
+	assert.NoError(t, err)
+	assert.Equal(t, "NL987654321B01", updated.TaxNumber)
+	assert.Equal(t, 9.0, updated.TaxPercent)
 }
 
 func TestService_Update(t *testing.T) {
@@ -220,7 +236,7 @@ func TestService_PublicBySiteKey_Active(t *testing.T) {
 
 	repo := NewAppRepository(client)
 	ctx := context.Background()
-	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Pub App", Tagline: "t"})
+	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Pub App", Tagline: "t", TaxNumber: "NL123456789B01", TaxPercent: 21})
 	assert.NoError(t, err)
 
 	svc := NewAppService(repo, fakeResolver{appID: a.ID})
@@ -228,6 +244,8 @@ func TestService_PublicBySiteKey_Active(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, a.ID, pub.ID)
 	assert.Equal(t, "Pub App", pub.Name)
+	assert.Equal(t, "NL123456789B01", pub.TaxNumber)
+	assert.Equal(t, float64(21), pub.TaxPercent)
 }
 
 func TestService_PublicBySiteKey_Inactive(t *testing.T) {

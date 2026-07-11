@@ -41,6 +41,8 @@ func (App) Fields() []ent.Field {
 		field.String("contact_email").Optional(),
 		field.Text("contact_hours").Optional(),
 		field.JSON("contact_social", map[string]string{}).Optional(),
+		field.String("tax_number").Optional(),
+		field.Float("tax_percent").Default(0),
 		field.Int8("status").Default(1),
 		field.Time("created_at").Default(time.Now),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),

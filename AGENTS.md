@@ -178,11 +178,13 @@ To ensure codebase health and consistency, the following steps **must** be compl
 | ContactEmail          | string    | Contact email (optional)             |
 | ContactHours          | text      | Business hours, free text (optional) |
 | ContactSocial         | json      | `platform→url` map, URL-validated    |
+| TaxNumber             | string    | Tax/VAT registration number (optional) |
+| TaxPercent            | float     | Tax percentage, 0–100 (default 0)    |
 | Status                | smallint  | 0 (Inactive), 1 (Active)             |
 | CreatedAt             | datetime  | Creation timestamp                   |
 | UpdatedAt             | datetime  | Last update timestamp                |
 
-App profile fields (tagline, logo_url, about, contact) are optional and editable by sysadmin (any app) or the tenant's own users (own app only). API exposes `about` and `contact` as **nested JSON objects** (flat columns in DB); on update both sections replace wholesale when present. `logo_url` + each `contact.social` value get light http(s) URL validation; `contact.email` validated as email.
+App profile fields (tagline, logo_url, about, contact, tax_number, tax_percent) are optional and editable by sysadmin (any app) or the tenant's own users (own app only). API exposes `about` and `contact` as **nested JSON objects** (flat columns in DB); on update both sections replace wholesale when present. `logo_url` + each `contact.social` value get light http(s) URL validation; `contact.email` validated as email.
 
 ### Database Schema (kpr_division table)
 

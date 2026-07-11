@@ -64,6 +64,14 @@ func (m *mockAppService) PublicBySiteKey(ctx context.Context, siteKey string) (*
 	return args.Get(0).(*PublicApp), args.Error(1)
 }
 
+func (m *mockAppService) PublicByID(ctx context.Context, id int) (*PublicApp, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*PublicApp), args.Error(1)
+}
+
 // withClaims returns a request carrying the given user claims in context,
 // mirroring how auth middleware injects them.
 func withClaims(req *http.Request, claims *auth.UserClaims) *http.Request {
@@ -102,6 +110,21 @@ func TestHandler_Create_SysAdmin(t *testing.T) {
 
 	dataMap := resp.Data.(map[string]interface{})
 	assert.Equal(t, expectedApp.Name, dataMap["name"])
+}
+
+func TestHandler_Create_TaxPercentOutOfRange(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	body, _ := json.Marshal(CreateAppRequest{Name: "Test App", TaxPercent: 101})
+	req, _ := http.NewRequest("POST", "/apps", bytes.NewBuffer(body))
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin})
+	rr := httptest.NewRecorder()
+
+	handler.CreateApp(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	svc.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
 func TestHandler_Create_NonSysAdmin_Forbidden(t *testing.T) {

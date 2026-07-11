@@ -37,6 +37,8 @@ func (r *appRepository) Create(ctx context.Context, a App) (*App, error) {
 		SetContactEmail(a.Contact.Email).
 		SetContactHours(a.Contact.Hours).
 		SetContactSocial(a.Contact.Social).
+		SetTaxNumber(a.TaxNumber).
+		SetTaxPercent(a.TaxPercent).
 		SetStatus(a.Status).
 		Save(ctx)
 	if err != nil {
@@ -94,6 +96,8 @@ func (r *appRepository) Update(ctx context.Context, id int, a *App) (*App, error
 		SetContactEmail(a.Contact.Email).
 		SetContactHours(a.Contact.Hours).
 		SetContactSocial(a.Contact.Social).
+		SetTaxNumber(a.TaxNumber).
+		SetTaxPercent(a.TaxPercent).
 		SetStatus(a.Status).
 		Save(ctx)
 	if err != nil {
@@ -141,8 +145,10 @@ func (r *appRepository) mapToModel(a *ent.App) *App {
 			Hours:  a.ContactHours,
 			Social: a.ContactSocial,
 		},
-		Status:    a.Status,
-		CreatedAt: a.CreatedAt,
-		UpdatedAt: a.UpdatedAt,
+		TaxNumber:  a.TaxNumber,
+		TaxPercent: a.TaxPercent,
+		Status:     a.Status,
+		CreatedAt:  a.CreatedAt,
+		UpdatedAt:  a.UpdatedAt,
 	}
 }

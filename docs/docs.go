@@ -398,6 +398,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/apps/{id}/public": {
+            "get": {
+                "description": "Public-safe profile (name, tagline, logo, about, contact) for an active app. Public (no auth) and hard rate-limited; used by downstream services to enrich their responses. Returns 404 for an unknown or inactive app.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "apps"
+                ],
+                "summary": "Get public app profile by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "App ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/internal_app.PublicApp"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/divisions": {
             "get": {
                 "security": [
@@ -2333,6 +2392,12 @@ const docTemplate = `{
                 "tagline": {
                     "type": "string"
                 },
+                "tax_number": {
+                    "type": "string"
+                },
+                "tax_percent": {
+                    "type": "number"
+                },
                 "updated_at": {
                     "type": "string"
                 }
@@ -2414,6 +2479,14 @@ const docTemplate = `{
                 },
                 "tagline": {
                     "type": "string"
+                },
+                "tax_number": {
+                    "type": "string"
+                },
+                "tax_percent": {
+                    "type": "number",
+                    "maximum": 100,
+                    "minimum": 0
                 }
             }
         },
@@ -2437,6 +2510,12 @@ const docTemplate = `{
                 },
                 "tagline": {
                     "type": "string"
+                },
+                "tax_number": {
+                    "type": "string"
+                },
+                "tax_percent": {
+                    "type": "number"
                 }
             }
         },
@@ -2460,6 +2539,14 @@ const docTemplate = `{
                 },
                 "tagline": {
                     "type": "string"
+                },
+                "tax_number": {
+                    "type": "string"
+                },
+                "tax_percent": {
+                    "type": "number",
+                    "maximum": 100,
+                    "minimum": 0
                 }
             }
         },
