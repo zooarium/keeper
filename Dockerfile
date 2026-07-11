@@ -29,6 +29,7 @@ WORKDIR /app
 
 # Copy the binary from the builder stage
 COPY --from=builder /app/keeper .
+COPY CHANGELOG.md .
 
 # Expose port 8080
 EXPOSE 8080

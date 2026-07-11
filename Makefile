@@ -32,7 +32,7 @@ DOCKER_GO := docker run --rm \
 	-e CGO_ENABLED=1 -e CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
 	$(DEV_IMAGE)
 
-.PHONY: all build up down restart refresh logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade health info release
+.PHONY: all build up down restart refresh logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade health info release version
 
 # Build the dev/CI toolchain image (cached by Docker layer cache).
 dev-image:
@@ -191,6 +191,7 @@ health:
 info:
 	@echo "Service:        $(SERVICE)"
 	@echo "Purpose:        $(SERVICE_DESC)"
+	@printf "Version:        "; $(MAKE) -s version
 	@echo "Primary port:   $(HEALTH_PORT)"
 	@echo "Health:         $(HEALTH_URL)"
 	@echo "Go (toolchain): $(GO_VERSION)"
@@ -235,6 +236,7 @@ help:
 	@echo "  sql           Run SQL query (use query=...)"
 	@echo "  config-check  Validate config incl. secondary listeners"
 	@echo "  release        Release VERSION=x.y.z (rotate CHANGELOG, commit, tag)"
+	@echo "  version        Print current version (from CHANGELOG.md)"
 	@echo "  clean         Deep clean containers/images"
 	@echo "  health        Check service health endpoint (curl /health)"
 	@echo "  info          Show service metadata (name, port, purpose, Go version)"
@@ -250,3 +252,6 @@ release:
 	@sed -i "s/^## \[Unreleased\]$$/## [Unreleased]\n\n## [$(VERSION)] - $$(date +%F)/" CHANGELOG.md
 	@git add CHANGELOG.md && git commit -m "release v$(VERSION)" && git tag "v$(VERSION)"
 	@echo "Released v$(VERSION). Push: git push && git push origin v$(VERSION)"
+
+version:
+	@v=$$(sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p' CHANGELOG.md 2>/dev/null | head -1); echo "$${v:-dev}"

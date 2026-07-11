@@ -125,6 +125,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 9.  **Update GEMINI.md**: Ensure this project guide is updated to reflect any changes in architecture, workflows, or documentation standards.
 10.  **Run All Tests**: Verify that all tests pass by running `make test`. (Note: `make test` automatically runs `make fmt` as a prerequisite).
 11.  **Custom Scripts**: You **MUST** always run any custom script using the `make run-script` command to ensure a consistent environment and proper dependency handling.
+12.  **Update CHANGELOG.md**: Record every code change under `## [Unreleased]` (Added/Changed/Fixed/Removed) as part of the same change.
 
 ### Common Commands (Makefile)
 - `make all`: Run the full pipeline (fmt, vet, lint, test, swag, build, up).

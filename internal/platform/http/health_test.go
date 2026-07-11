@@ -28,4 +28,5 @@ func TestHealthHandler(t *testing.T) {
 
 	dataMap := resp.Data.(map[string]interface{})
 	assert.Equal(t, "UP", dataMap["status"])
+	assert.NotEmpty(t, dataMap["version"])
 }
