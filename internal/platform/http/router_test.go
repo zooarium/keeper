@@ -77,7 +77,7 @@ func TestRouterAuthentication(t *testing.T) {
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, impHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, impHandler, jwtManager, cfg, nil)
 
 	tests := []struct {
 		name           string
@@ -136,7 +136,7 @@ func TestRouterAuthentication_ValidToken(t *testing.T) {
 			AllowedOrigins: []string{"*"},
 		},
 	}
-	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, impHandler, jwtManager, cfg)
+	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, impHandler, jwtManager, cfg, nil)
 
 	token, _ := jwtManager.Generate(1, 1, 1, 0)
 

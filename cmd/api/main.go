@@ -15,6 +15,7 @@ import (
 
 	"keeper/docs"
 	"keeper/internal/app"
+	"keeper/internal/audit"
 	"keeper/internal/db"
 	"keeper/internal/division"
 	"keeper/internal/guestkey"
@@ -104,10 +105,24 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(mw, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
+	// Audit trail is a separate file from api.log — who-changed-what should
+	// stay readable on its own, not interleaved with request/debug noise.
+	auditLogFile, err := os.OpenFile(filepath.Join(cfg.Log.Dir, "audit.log"), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("failed to open audit log file: %v\n", err)
+		os.Exit(1)
+	}
+	defer func() {
+		if err := auditLogFile.Close(); err != nil {
+			slog.Error("failed to close audit log file", "error", err)
+		}
+	}()
+	auditLogger := slog.New(slog.NewJSONHandler(auditLogFile, &slog.HandlerOptions{Level: slog.LevelInfo}))
+
 	// Override Swagger host
 	docs.SwaggerInfo.Host = cfg.Server.Host
 
-	client, err := db.NewClient(cfg.DB)
+	client, dbDriver, err := db.NewClient(cfg.DB)
 	if err != nil {
 		slog.Error("failed to open database client", "error", err)
 		os.Exit(1)
@@ -117,6 +132,7 @@ func main() {
 			slog.Error("failed to close database client", "error", err)
 		}
 	}()
+	client.Use(audit.Hook(auditLogger))
 
 	if err := db.Seed(context.Background(), client, cfg.Seed); err != nil {
 		slog.Error("failed to seed initial data", "error", err)
@@ -164,7 +180,7 @@ func main() {
 	impersonationSvc := impersonation.NewImpersonationService(impersonationRepo, impJWTManager, cfg.Auth.ImpersonationJWTExpiry, impersonationCodeTTL, impServices)
 	impersonationHandler := impersonation.NewImpersonationHandler(impersonationSvc)
 
-	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, guestKeyHandler, impersonationHandler, jwtManager, cfg)
+	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, guestKeyHandler, impersonationHandler, jwtManager, cfg, dbDriver)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.Addr,
@@ -200,7 +216,7 @@ func main() {
 			continue
 		}
 
-		secondaryRouter, err := platformhttp.NewSecondaryRouter(cfg, sec, jwtManager, mount)
+		secondaryRouter, err := platformhttp.NewSecondaryRouter(cfg, sec, jwtManager, mount, dbDriver)
 		if err != nil {
 			slog.Error("failed to build secondary router", "name", sec.Name, "error", err)
 			os.Exit(1)

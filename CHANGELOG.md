@@ -6,6 +6,13 @@ Release with `make release VERSION=x.y.z` — rotates this file, commits, tags `
 
 ## [Unreleased]
 
+### Added
+- Request ID middleware (`internal/platform/http/requestlog.go`): `chi/middleware.RequestID` first in the chain on primary and secondary routers, structured JSON request-completion log (method/path/status/duration/remote addr) replacing chi's plain-text logger, `X-Request-Id` echoed on every response.
+- `GET /ready`: DB-ping readiness check (`internal/db/client.go` `Ping`), separate from the pure-liveness `GET /health`; 503 on unreachable DB. Registered on primary and secondary listeners.
+- `make backup` / `make restore`: online-safe SQLite `.backup` to `data/backups/` (14-day retention) and manual restore from a backup file. Documented in `docs/DEPLOYMENT_USING_DOCKER.md`.
+- `pkg/httpclient`: shared outbound `*http.Client` with retry (2 attempts, backoff+jitter, on network errors/5xx/429) and circuit breaker (`sony/gobreaker`), for any future keeper-side outbound call. Vendored into squirrel/ant.
+- `internal/audit`: Ent client-level mutation hook logging one JSON line per create/update/delete to a dedicated `log/audit.log` (separate from `api.log`) — actor/app/division from JWT claims + mutation, no DB table. `make audit-logs` to tail it.
+
 ## [0.0.3] - 2026-07-25
 
 ### Added

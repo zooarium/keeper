@@ -12,6 +12,7 @@ import (
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
 
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -21,10 +22,11 @@ import (
 )
 
 // NewRouter creates a new chi router with default middleware and application routes.
-func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisionHandler *division.DivisionHandler, guestKeyHandler *guestkey.GuestKeyHandler, impersonationHandler *impersonation.ImpersonationHandler, jwtManager *auth.JWTManager, cfg *config.Config) *chi.Mux {
+func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisionHandler *division.DivisionHandler, guestKeyHandler *guestkey.GuestKeyHandler, impersonationHandler *impersonation.ImpersonationHandler, jwtManager *auth.JWTManager, cfg *config.Config, dbDriver *entsql.Driver) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(middleware.Logger)
+	r.Use(middleware.RequestID)
+	r.Use(RequestLogger)
 	r.Use(middleware.Recoverer)
 	r.Use(MetricsMiddleware)
 
@@ -54,6 +56,7 @@ func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisi
 	))
 
 	r.Get("/health", HealthHandler)
+	r.Get("/ready", ReadyHandler(dbDriver))
 
 	// Prometheus metrics endpoint (exempt from JWT auth).
 	r.Handle("/metrics", promhttp.Handler())

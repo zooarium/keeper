@@ -9,6 +9,7 @@ import (
 	"keeper/pkg/config"
 	"keeper/pkg/render"
 
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -30,7 +31,7 @@ var allowedMethods = map[string]bool{
 // that protection — AUTH: false is rejected at config load. A per-listener
 // JWT_SECRET swaps the manager the entity routers verify with (e.g. the
 // guest secret). Swagger is not exposed; /health and /metrics are.
-func NewSecondaryRouter(cfg *config.Config, sec *config.SecondaryConfig, jwtManager *auth.JWTManager, mount func(r chi.Router, jm *auth.JWTManager)) (*chi.Mux, error) {
+func NewSecondaryRouter(cfg *config.Config, sec *config.SecondaryConfig, jwtManager *auth.JWTManager, mount func(r chi.Router, jm *auth.JWTManager), dbDriver *entsql.Driver) (*chi.Mux, error) {
 	allow, err := allowRoutes(sec.Routes)
 	if err != nil {
 		return nil, err
@@ -43,7 +44,8 @@ func NewSecondaryRouter(cfg *config.Config, sec *config.SecondaryConfig, jwtMana
 
 	r := chi.NewRouter()
 
-	r.Use(middleware.Logger)
+	r.Use(middleware.RequestID)
+	r.Use(RequestLogger)
 	r.Use(middleware.Recoverer)
 	r.Use(MetricsMiddleware)
 
@@ -60,6 +62,7 @@ func NewSecondaryRouter(cfg *config.Config, sec *config.SecondaryConfig, jwtMana
 	r.Use(httprate.LimitByIP(sec.RateLimit.Requests, sec.RateLimit.Window))
 
 	r.Get("/health", HealthHandler)
+	r.Get("/ready", ReadyHandler(dbDriver))
 
 	// Prometheus metrics endpoint, exempt from auth and the allow-list.
 	r.Handle("/metrics", promhttp.Handler())

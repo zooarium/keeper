@@ -32,7 +32,7 @@ DOCKER_GO := docker run --rm \
 	-e CGO_ENABLED=1 -e CGO_CFLAGS="-D_LARGEFILE64_SOURCE" \
 	$(DEV_IMAGE)
 
-.PHONY: all build up down restart refresh logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade health info release version
+.PHONY: all build up down restart refresh logs audit-logs ps test benchmark lint swag clean shell dev-shell help tidy vet generate vendor coverage coverage-view build-local build-prod sql backup restore run-script config-check deps-upgrade go-upgrade migrate-gen migrate-apply dev-image sync-tools docker-upgrade health info release version
 
 # Build the dev/CI toolchain image (cached by Docker layer cache).
 dev-image:
@@ -73,6 +73,9 @@ all: fmt vet lint test swag build up
 
 logs:
 	docker-compose logs -f
+
+audit-logs:
+	tail -f log/audit.log
 
 ps:
 	docker-compose ps
@@ -174,6 +177,24 @@ sql:
 	@if [ -z "$(query)" ]; then echo "Usage: make sql query=\"SQL_QUERY\""; exit 1; fi
 	sqlite3 data/keeper.db "$(query)"
 
+# Online-safe SQLite backup (sqlite3 .backup), 14-day retention
+backup:
+	mkdir -p data/backups
+	sqlite3 data/$(SERVICE).db ".backup data/backups/$(SERVICE)-$$(date +%Y%m%d-%H%M%S).db"
+	find data/backups -name '*.db' -mtime +14 -delete
+
+# Restore the database from a backup (use FILE=data/backups/xxx.db). Snapshots
+# the current live file before overwriting it.
+restore:
+	@if [ -z "$(FILE)" ]; then echo "Usage: make restore FILE=data/backups/xxx.db"; exit 1; fi
+	@if [ ! -f "$(FILE)" ]; then echo "File not found: $(FILE)"; exit 1; fi
+	@echo "WARNING: this overwrites data/$(SERVICE).db with $(FILE). Current DB will be snapshotted first."
+	docker-compose down
+	mkdir -p data/backups
+	cp data/$(SERVICE).db data/backups/$(SERVICE)-pre-restore-$$(date +%Y%m%d-%H%M%S).db
+	cp $(FILE) data/$(SERVICE).db
+	docker-compose up -d
+
 # Validate config/config.yaml (server, secondary listeners, route patterns) without starting servers
 config-check: dev-image
 	$(DOCKER_GO) go run ./cmd/api -check-config
@@ -212,6 +233,7 @@ help:
 	@echo "  restart       Restart services"
 	@echo "  refresh       Refresh the application (down, build, swag, up)"
 	@echo "  logs          Follow container logs"
+	@echo "  audit-logs    Follow audit trail log (log/audit.log)"
 	@echo "  ps            List running containers"
 	@echo "  test          Run unit tests"
 	@echo "  benchmark     Run benchmarks"
@@ -234,6 +256,8 @@ help:
 	@echo "  migrate-apply Apply migrations"
 	@echo "  run-script    Run script from scripts/ (use name=... args=...)"
 	@echo "  sql           Run SQL query (use query=...)"
+	@echo "  backup        Backup SQLite DB to data/backups/ (14-day retention)"
+	@echo "  restore       Restore SQLite DB from backup (use FILE=data/backups/xxx.db)"
 	@echo "  config-check  Validate config incl. secondary listeners"
 	@echo "  release        Release VERSION=x.y.z (rotate CHANGELOG, commit, tag)"
 	@echo "  version        Print current version (from CHANGELOG.md)"
