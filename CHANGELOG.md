@@ -6,6 +6,8 @@ Release with `make release VERSION=x.y.z` — rotates this file, commits, tags `
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-07-25
+
 ### Added
 - `pkg/s2s`: shared REST client for service-to-service calls (envelope decode, caller-owned retry/fail policy).
 - `pkg/cache`: shared in-memory TTL cache with lazy expiry, extracted for reuse across services.
