@@ -2,14 +2,14 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
+	"keeper/pkg/cache"
 	"keeper/pkg/render"
+	"keeper/pkg/s2s"
 )
 
 // RevocationChecker reports whether an impersonation session id is still active.
@@ -124,56 +124,23 @@ func ImpersonationAwareMiddleware(primary, imp *JWTManager, audience string, rev
 // short, so a keeper outage degrades to expiry-only enforcement rather than
 // taking the downstream service down. client must carry a non-zero timeout.
 func NewHTTPRevocationChecker(client *http.Client, keeperBaseURL string, ttl time.Duration) RevocationChecker {
-	type entry struct {
-		active  bool
-		expires time.Time
-	}
-	var (
-		mu    sync.RWMutex
-		cache = map[string]entry{}
-	)
-	base := strings.TrimRight(keeperBaseURL, "/")
+	rest := s2s.New(client, keeperBaseURL)
+	cached := cache.New(ttl)
 
 	return func(sessionID string) bool {
-		now := time.Now()
-
-		mu.RLock()
-		e, ok := cache[sessionID]
-		mu.RUnlock()
-		if ok && now.Before(e.expires) {
-			return e.active
+		if v, ok := cached.Get(sessionID); ok {
+			return v.(bool)
 		}
 
-		active := true // fail-open default
-		req, err := http.NewRequest(http.MethodGet, base+"/impersonations/active/"+sessionID, nil)
-		if err != nil {
-			slog.Warn("revocation check: build request failed", "error", err)
-			return true
+		var body struct {
+			Active bool `json:"active"`
 		}
-		resp, err := client.Do(req)
-		if err != nil {
-			slog.Warn("revocation check: request failed, failing open", "error", err)
-			return true
-		}
-		defer func() { _ = resp.Body.Close() }()
-
-		if resp.StatusCode == http.StatusOK {
-			var body struct {
-				Data struct {
-					Active bool `json:"active"`
-				} `json:"data"`
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&body); err == nil {
-				active = body.Data.Active
-			} else {
-				slog.Warn("revocation check: decode failed, failing open", "error", err)
-				return true
-			}
+		if err := rest.Get(context.Background(), "/impersonations/active/"+sessionID, &body); err != nil {
+			slog.Warn("revocation check: failed, failing open", "error", err)
+			return true // fail-open: signature already valid, expiry already short
 		}
 
-		mu.Lock()
-		cache[sessionID] = entry{active: active, expires: now.Add(ttl)}
-		mu.Unlock()
-		return active
+		cached.Set(sessionID, body.Active)
+		return body.Active
 	}
 }

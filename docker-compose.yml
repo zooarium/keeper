@@ -17,6 +17,13 @@ services:
       - DB_PATH=/app/data/keeper.db
       - LOG_DIR=/app/log
     restart: always
+    mem_limit: 256m
+    cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   atlas:
     image: arigaio/atlas
