@@ -58,6 +58,7 @@ type AppMutation struct {
 	contact_hours         *string
 	contact_social        *map[string]string
 	tax_number            *string
+	currency              *string
 	tax_percent           *float64
 	addtax_percent        *float64
 	status                *int8
@@ -71,6 +72,8 @@ type AppMutation struct {
 	divisions             map[int]struct{}
 	removeddivisions      map[int]struct{}
 	cleareddivisions      bool
+	manager               *int
+	clearedmanager        bool
 	done                  bool
 	oldValue              func(context.Context) (*App, error)
 	predicates            []predicate.App
@@ -994,6 +997,42 @@ func (m *AppMutation) ResetTaxNumber() {
 	delete(m.clearedFields, app.FieldTaxNumber)
 }
 
+// SetCurrency sets the "currency" field.
+func (m *AppMutation) SetCurrency(s string) {
+	m.currency = &s
+}
+
+// Currency returns the value of the "currency" field in the mutation.
+func (m *AppMutation) Currency() (r string, exists bool) {
+	v := m.currency
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCurrency returns the old "currency" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldCurrency(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCurrency is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCurrency requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCurrency: %w", err)
+	}
+	return oldValue.Currency, nil
+}
+
+// ResetCurrency resets all changes to the "currency" field.
+func (m *AppMutation) ResetCurrency() {
+	m.currency = nil
+}
+
 // SetTaxPercent sets the "tax_percent" field.
 func (m *AppMutation) SetTaxPercent(f float64) {
 	m.tax_percent = &f
@@ -1048,6 +1087,55 @@ func (m *AppMutation) AddedTaxPercent() (r float64, exists bool) {
 func (m *AppMutation) ResetTaxPercent() {
 	m.tax_percent = nil
 	m.addtax_percent = nil
+}
+
+// SetManagerID sets the "manager_id" field.
+func (m *AppMutation) SetManagerID(i int) {
+	m.manager = &i
+}
+
+// ManagerID returns the value of the "manager_id" field in the mutation.
+func (m *AppMutation) ManagerID() (r int, exists bool) {
+	v := m.manager
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldManagerID returns the old "manager_id" field's value of the App entity.
+// If the App object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppMutation) OldManagerID(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldManagerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldManagerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldManagerID: %w", err)
+	}
+	return oldValue.ManagerID, nil
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (m *AppMutation) ClearManagerID() {
+	m.manager = nil
+	m.clearedFields[app.FieldManagerID] = struct{}{}
+}
+
+// ManagerIDCleared returns if the "manager_id" field was cleared in this mutation.
+func (m *AppMutation) ManagerIDCleared() bool {
+	_, ok := m.clearedFields[app.FieldManagerID]
+	return ok
+}
+
+// ResetManagerID resets all changes to the "manager_id" field.
+func (m *AppMutation) ResetManagerID() {
+	m.manager = nil
+	delete(m.clearedFields, app.FieldManagerID)
 }
 
 // SetStatus sets the "status" field.
@@ -1286,6 +1374,33 @@ func (m *AppMutation) ResetDivisions() {
 	m.removeddivisions = nil
 }
 
+// ClearManager clears the "manager" edge to the User entity.
+func (m *AppMutation) ClearManager() {
+	m.clearedmanager = true
+	m.clearedFields[app.FieldManagerID] = struct{}{}
+}
+
+// ManagerCleared reports if the "manager" edge to the User entity was cleared.
+func (m *AppMutation) ManagerCleared() bool {
+	return m.ManagerIDCleared() || m.clearedmanager
+}
+
+// ManagerIDs returns the "manager" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ManagerID instead. It exists only for internal usage by the builders.
+func (m *AppMutation) ManagerIDs() (ids []int) {
+	if id := m.manager; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetManager resets all changes to the "manager" edge.
+func (m *AppMutation) ResetManager() {
+	m.manager = nil
+	m.clearedmanager = false
+}
+
 // Where appends a list predicates to the AppMutation builder.
 func (m *AppMutation) Where(ps ...predicate.App) {
 	m.predicates = append(m.predicates, ps...)
@@ -1320,7 +1435,7 @@ func (m *AppMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AppMutation) Fields() []string {
-	fields := make([]string, 0, 21)
+	fields := make([]string, 0, 23)
 	if m.name != nil {
 		fields = append(fields, app.FieldName)
 	}
@@ -1372,8 +1487,14 @@ func (m *AppMutation) Fields() []string {
 	if m.tax_number != nil {
 		fields = append(fields, app.FieldTaxNumber)
 	}
+	if m.currency != nil {
+		fields = append(fields, app.FieldCurrency)
+	}
 	if m.tax_percent != nil {
 		fields = append(fields, app.FieldTaxPercent)
+	}
+	if m.manager != nil {
+		fields = append(fields, app.FieldManagerID)
 	}
 	if m.status != nil {
 		fields = append(fields, app.FieldStatus)
@@ -1426,8 +1547,12 @@ func (m *AppMutation) Field(name string) (ent.Value, bool) {
 		return m.ContactSocial()
 	case app.FieldTaxNumber:
 		return m.TaxNumber()
+	case app.FieldCurrency:
+		return m.Currency()
 	case app.FieldTaxPercent:
 		return m.TaxPercent()
+	case app.FieldManagerID:
+		return m.ManagerID()
 	case app.FieldStatus:
 		return m.Status()
 	case app.FieldCreatedAt:
@@ -1477,8 +1602,12 @@ func (m *AppMutation) OldField(ctx context.Context, name string) (ent.Value, err
 		return m.OldContactSocial(ctx)
 	case app.FieldTaxNumber:
 		return m.OldTaxNumber(ctx)
+	case app.FieldCurrency:
+		return m.OldCurrency(ctx)
 	case app.FieldTaxPercent:
 		return m.OldTaxPercent(ctx)
+	case app.FieldManagerID:
+		return m.OldManagerID(ctx)
 	case app.FieldStatus:
 		return m.OldStatus(ctx)
 	case app.FieldCreatedAt:
@@ -1613,12 +1742,26 @@ func (m *AppMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTaxNumber(v)
 		return nil
+	case app.FieldCurrency:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCurrency(v)
+		return nil
 	case app.FieldTaxPercent:
 		v, ok := value.(float64)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTaxPercent(v)
+		return nil
+	case app.FieldManagerID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetManagerID(v)
 		return nil
 	case app.FieldStatus:
 		v, ok := value.(int8)
@@ -1746,6 +1889,9 @@ func (m *AppMutation) ClearedFields() []string {
 	if m.FieldCleared(app.FieldTaxNumber) {
 		fields = append(fields, app.FieldTaxNumber)
 	}
+	if m.FieldCleared(app.FieldManagerID) {
+		fields = append(fields, app.FieldManagerID)
+	}
 	return fields
 }
 
@@ -1808,6 +1954,9 @@ func (m *AppMutation) ClearField(name string) error {
 	case app.FieldTaxNumber:
 		m.ClearTaxNumber()
 		return nil
+	case app.FieldManagerID:
+		m.ClearManagerID()
+		return nil
 	}
 	return fmt.Errorf("unknown App nullable field %s", name)
 }
@@ -1867,8 +2016,14 @@ func (m *AppMutation) ResetField(name string) error {
 	case app.FieldTaxNumber:
 		m.ResetTaxNumber()
 		return nil
+	case app.FieldCurrency:
+		m.ResetCurrency()
+		return nil
 	case app.FieldTaxPercent:
 		m.ResetTaxPercent()
+		return nil
+	case app.FieldManagerID:
+		m.ResetManagerID()
 		return nil
 	case app.FieldStatus:
 		m.ResetStatus()
@@ -1885,12 +2040,15 @@ func (m *AppMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *AppMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.users != nil {
 		edges = append(edges, app.EdgeUsers)
 	}
 	if m.divisions != nil {
 		edges = append(edges, app.EdgeDivisions)
+	}
+	if m.manager != nil {
+		edges = append(edges, app.EdgeManager)
 	}
 	return edges
 }
@@ -1911,13 +2069,17 @@ func (m *AppMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case app.EdgeManager:
+		if id := m.manager; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *AppMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedusers != nil {
 		edges = append(edges, app.EdgeUsers)
 	}
@@ -1949,12 +2111,15 @@ func (m *AppMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *AppMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedusers {
 		edges = append(edges, app.EdgeUsers)
 	}
 	if m.cleareddivisions {
 		edges = append(edges, app.EdgeDivisions)
+	}
+	if m.clearedmanager {
+		edges = append(edges, app.EdgeManager)
 	}
 	return edges
 }
@@ -1967,6 +2132,8 @@ func (m *AppMutation) EdgeCleared(name string) bool {
 		return m.clearedusers
 	case app.EdgeDivisions:
 		return m.cleareddivisions
+	case app.EdgeManager:
+		return m.clearedmanager
 	}
 	return false
 }
@@ -1975,6 +2142,9 @@ func (m *AppMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *AppMutation) ClearEdge(name string) error {
 	switch name {
+	case app.EdgeManager:
+		m.ClearManager()
+		return nil
 	}
 	return fmt.Errorf("unknown App unique edge %s", name)
 }
@@ -1988,6 +2158,9 @@ func (m *AppMutation) ResetEdge(name string) error {
 		return nil
 	case app.EdgeDivisions:
 		m.ResetDivisions()
+		return nil
+	case app.EdgeManager:
+		m.ResetManager()
 		return nil
 	}
 	return fmt.Errorf("unknown App edge %s", name)

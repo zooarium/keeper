@@ -29,16 +29,33 @@ var (
 		{Name: "contact_hours", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "contact_social", Type: field.TypeJSON, Nullable: true},
 		{Name: "tax_number", Type: field.TypeString, Nullable: true},
+		{Name: "currency", Type: field.TypeString, Size: 3},
 		{Name: "tax_percent", Type: field.TypeFloat64, Default: 0},
 		{Name: "status", Type: field.TypeInt8, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "manager_id", Type: field.TypeInt, Nullable: true},
 	}
 	// KprAppTable holds the schema information for the "kpr_app" table.
 	KprAppTable = &schema.Table{
 		Name:       "kpr_app",
 		Columns:    KprAppColumns,
 		PrimaryKey: []*schema.Column{KprAppColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "kpr_app_kpr_user_manager",
+				Columns:    []*schema.Column{KprAppColumns[23]},
+				RefColumns: []*schema.Column{KprUserColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "app_manager_id",
+				Unique:  false,
+				Columns: []*schema.Column{KprAppColumns[23]},
+			},
+		},
 	}
 	// KprDivisionColumns holds the columns for the "kpr_division" table.
 	KprDivisionColumns = []*schema.Column{
@@ -191,6 +208,7 @@ var (
 )
 
 func init() {
+	KprAppTable.ForeignKeys[0].RefTable = KprUserTable
 	KprAppTable.Annotation = &entsql.Annotation{
 		Table: "kpr_app",
 	}

@@ -39,6 +39,8 @@ func (r *appRepository) Create(ctx context.Context, a App) (*App, error) {
 		SetContactSocial(a.Contact.Social).
 		SetTaxNumber(a.TaxNumber).
 		SetTaxPercent(a.TaxPercent).
+		SetCurrency(a.Currency).
+		SetNillableManagerID(a.ManagerID).
 		SetStatus(a.Status).
 		Save(ctx)
 	if err != nil {
@@ -49,7 +51,10 @@ func (r *appRepository) Create(ctx context.Context, a App) (*App, error) {
 }
 
 func (r *appRepository) GetByID(ctx context.Context, id int) (*App, error) {
-	a, err := r.client.App.Get(ctx, id)
+	a, err := r.client.App.Query().
+		Where(entapp.IDEQ(id)).
+		WithManager().
+		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			slog.Warn("app not found in database", "id", id)
@@ -66,6 +71,7 @@ func (r *appRepository) List(ctx context.Context, limit, offset int) ([]*App, er
 		Order(ent.Asc(entapp.FieldID)).
 		Limit(limit).
 		Offset(offset).
+		WithManager().
 		All(ctx)
 	if err != nil {
 		slog.Error("database error: failed to list apps", "error", err)
@@ -78,8 +84,33 @@ func (r *appRepository) List(ctx context.Context, limit, offset int) ([]*App, er
 	return result, nil
 }
 
+func (r *appRepository) ListByManager(ctx context.Context, managerID, limit, offset int) ([]*App, error) {
+	apps, err := r.client.App.Query().
+		Where(entapp.ManagerIDEQ(managerID)).
+		Order(ent.Asc(entapp.FieldID)).
+		Limit(limit).
+		Offset(offset).
+		WithManager().
+		All(ctx)
+	if err != nil {
+		slog.Error("database error: failed to list apps by manager", "manager_id", managerID, "error", err)
+		return nil, err
+	}
+	result := make([]*App, len(apps))
+	for i, a := range apps {
+		result[i] = r.mapToModel(a)
+	}
+	return result, nil
+}
+
 func (r *appRepository) Update(ctx context.Context, id int, a *App) (*App, error) {
-	updated, err := r.client.App.UpdateOneID(id).
+	uq := r.client.App.UpdateOneID(id)
+	if a.ManagerID != nil {
+		uq = uq.SetManagerID(*a.ManagerID)
+	} else {
+		uq = uq.ClearManagerID()
+	}
+	updated, err := uq.
 		SetName(a.Name).
 		SetTagline(a.Tagline).
 		SetLogoURL(a.LogoURL).
@@ -98,6 +129,7 @@ func (r *appRepository) Update(ctx context.Context, id int, a *App) (*App, error
 		SetContactSocial(a.Contact.Social).
 		SetTaxNumber(a.TaxNumber).
 		SetTaxPercent(a.TaxPercent).
+		SetCurrency(a.Currency).
 		SetStatus(a.Status).
 		Save(ctx)
 	if err != nil {
@@ -121,7 +153,7 @@ func (r *appRepository) Delete(ctx context.Context, id int) error {
 }
 
 func (r *appRepository) mapToModel(a *ent.App) *App {
-	return &App{
+	m := &App{
 		ID:      a.ID,
 		Name:    a.Name,
 		Tagline: a.Tagline,
@@ -147,8 +179,14 @@ func (r *appRepository) mapToModel(a *ent.App) *App {
 		},
 		TaxNumber:  a.TaxNumber,
 		TaxPercent: a.TaxPercent,
+		Currency:   a.Currency,
+		ManagerID:  a.ManagerID,
 		Status:     a.Status,
 		CreatedAt:  a.CreatedAt,
 		UpdatedAt:  a.UpdatedAt,
 	}
+	if a.Edges.Manager != nil {
+		m.ManagerName = a.Edges.Manager.Firstname + " " + a.Edges.Manager.Lastname
+	}
+	return m
 }

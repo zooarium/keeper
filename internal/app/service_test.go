@@ -22,7 +22,8 @@ func TestService_Create(t *testing.T) {
 
 	ctx := context.Background()
 	req := CreateAppRequest{
-		Name: "Test App",
+		Name:     "Test App",
+		Currency: "INR",
 	}
 
 	a, err := svc.Create(ctx, req)
@@ -30,6 +31,69 @@ func TestService_Create(t *testing.T) {
 	assert.NotNil(t, a)
 	assert.Equal(t, req.Name, a.Name)
 	assert.Equal(t, int8(1), a.Status)
+}
+
+func TestService_Update_ManagerID_SetAndClear(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:ent_app_manager?mode=memory&cache=shared&_fk=1")
+	defer func() {
+		err := client.Close()
+		assert.NoError(t, err)
+	}()
+
+	svc := NewAppService(NewAppRepository(client), nil)
+	ctx := context.Background()
+
+	a, err := svc.Create(ctx, CreateAppRequest{Name: "Managed App", Currency: "INR"})
+	assert.NoError(t, err)
+	assert.Nil(t, a.ManagerID)
+
+	div, err := client.Division.Create().SetAppID(a.ID).SetName("Root").SetPath("/1/").Save(ctx)
+	assert.NoError(t, err)
+	manager, err := client.User.Create().
+		SetAppID(a.ID).SetDivisionID(div.ID).
+		SetFirstname("Manny").SetLastname("Ager").
+		SetEmail("manager@example.com").SetPassword("hash").
+		Save(ctx)
+	assert.NoError(t, err)
+
+	updated, err := svc.Update(ctx, a.ID, UpdateAppRequest{ManagerID: &manager.ID})
+	assert.NoError(t, err)
+	if assert.NotNil(t, updated.ManagerID) {
+		assert.Equal(t, manager.ID, *updated.ManagerID)
+	}
+
+	cleared := 0
+	updated, err = svc.Update(ctx, a.ID, UpdateAppRequest{ManagerID: &cleared})
+	assert.NoError(t, err)
+	assert.Nil(t, updated.ManagerID)
+}
+
+func TestService_Create_WithManagerID(t *testing.T) {
+	client := enttest.Open(t, "sqlite3", "file:ent_app_create_manager?mode=memory&cache=shared&_fk=1")
+	defer func() {
+		err := client.Close()
+		assert.NoError(t, err)
+	}()
+
+	svc := NewAppService(NewAppRepository(client), nil)
+	ctx := context.Background()
+
+	homeApp, err := svc.Create(ctx, CreateAppRequest{Name: "Manager Home App", Currency: "INR"})
+	assert.NoError(t, err)
+	div, err := client.Division.Create().SetAppID(homeApp.ID).SetName("Root").SetPath("/1/").Save(ctx)
+	assert.NoError(t, err)
+	manager, err := client.User.Create().
+		SetAppID(homeApp.ID).SetDivisionID(div.ID).
+		SetFirstname("Manny").SetLastname("Ager").
+		SetEmail("manager@example.com").SetPassword("hash").
+		Save(ctx)
+	assert.NoError(t, err)
+
+	a, err := svc.Create(ctx, CreateAppRequest{Name: "Managed on create", Currency: "INR", ManagerID: &manager.ID})
+	assert.NoError(t, err)
+	if assert.NotNil(t, a.ManagerID) {
+		assert.Equal(t, manager.ID, *a.ManagerID)
+	}
 }
 
 func TestService_Create_FullProfile(t *testing.T) {
@@ -66,6 +130,7 @@ func TestService_Create_FullProfile(t *testing.T) {
 		},
 		TaxNumber:  "NL123456789B01",
 		TaxPercent: 21,
+		Currency:   "EUR",
 	}
 
 	a, err := svc.Create(ctx, req)
@@ -87,6 +152,7 @@ func TestService_Create_FullProfile(t *testing.T) {
 	assert.Len(t, got.Contact.Social, 2)
 	assert.Equal(t, "NL123456789B01", got.TaxNumber)
 	assert.Equal(t, float64(21), got.TaxPercent)
+	assert.Equal(t, "EUR", got.Currency)
 }
 
 func TestService_Create_InvalidSocialURL(t *testing.T) {
@@ -116,12 +182,13 @@ func TestService_Update_Profile(t *testing.T) {
 	svc := NewAppService(NewAppRepository(client), nil)
 	ctx := context.Background()
 
-	a, err := svc.Create(ctx, CreateAppRequest{Name: "Orig"})
+	a, err := svc.Create(ctx, CreateAppRequest{Name: "Orig", Currency: "INR"})
 	assert.NoError(t, err)
 
 	tagline := "New tagline"
 	taxNumber := "NL987654321B01"
 	taxPercent := 9.0
+	currency := "USD"
 	req := UpdateAppRequest{
 		Tagline: &tagline,
 		Contact: &ContactInput{
@@ -130,6 +197,7 @@ func TestService_Update_Profile(t *testing.T) {
 		},
 		TaxNumber:  &taxNumber,
 		TaxPercent: &taxPercent,
+		Currency:   &currency,
 	}
 	updated, err := svc.Update(ctx, a.ID, req)
 	assert.NoError(t, err)
@@ -138,12 +206,14 @@ func TestService_Update_Profile(t *testing.T) {
 	assert.Equal(t, "https://linkedin.com/in/me", updated.Contact.Social["linkedin"])
 	assert.Equal(t, "NL987654321B01", updated.TaxNumber)
 	assert.Equal(t, 9.0, updated.TaxPercent)
+	assert.Equal(t, "USD", updated.Currency)
 
-	// Absent tax fields leave existing values untouched.
+	// Absent tax/currency fields leave existing values untouched.
 	updated, err = svc.Update(ctx, a.ID, UpdateAppRequest{Tagline: &tagline})
 	assert.NoError(t, err)
 	assert.Equal(t, "NL987654321B01", updated.TaxNumber)
 	assert.Equal(t, 9.0, updated.TaxPercent)
+	assert.Equal(t, "USD", updated.Currency)
 }
 
 func TestService_Update(t *testing.T) {
@@ -158,7 +228,8 @@ func TestService_Update(t *testing.T) {
 
 	ctx := context.Background()
 	a, err := svc.Create(ctx, CreateAppRequest{
-		Name: "Original App",
+		Name:     "Original App",
+		Currency: "INR",
 	})
 	assert.NoError(t, err)
 
@@ -187,7 +258,8 @@ func TestService_Delete(t *testing.T) {
 
 	ctx := context.Background()
 	a, err := svc.Create(ctx, CreateAppRequest{
-		Name: "Delete App",
+		Name:     "Delete App",
+		Currency: "INR",
 	})
 	assert.NoError(t, err)
 
@@ -210,8 +282,8 @@ func TestService_List(t *testing.T) {
 	svc := NewAppService(repo, nil)
 
 	ctx := context.Background()
-	_, _ = svc.Create(ctx, CreateAppRequest{Name: "App 1"})
-	_, _ = svc.Create(ctx, CreateAppRequest{Name: "App 2"})
+	_, _ = svc.Create(ctx, CreateAppRequest{Name: "App 1", Currency: "INR"})
+	_, _ = svc.Create(ctx, CreateAppRequest{Name: "App 2", Currency: "INR"})
 
 	apps, err := svc.List(ctx, 50, 0)
 	assert.NoError(t, err)
@@ -236,7 +308,7 @@ func TestService_PublicBySiteKey_Active(t *testing.T) {
 
 	repo := NewAppRepository(client)
 	ctx := context.Background()
-	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Pub App", Tagline: "t", TaxNumber: "NL123456789B01", TaxPercent: 21})
+	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Pub App", Tagline: "t", TaxNumber: "NL123456789B01", TaxPercent: 21, Currency: "EUR"})
 	assert.NoError(t, err)
 
 	svc := NewAppService(repo, fakeResolver{appID: a.ID})
@@ -246,6 +318,7 @@ func TestService_PublicBySiteKey_Active(t *testing.T) {
 	assert.Equal(t, "Pub App", pub.Name)
 	assert.Equal(t, "NL123456789B01", pub.TaxNumber)
 	assert.Equal(t, float64(21), pub.TaxPercent)
+	assert.Equal(t, "EUR", pub.Currency)
 }
 
 func TestService_PublicBySiteKey_Inactive(t *testing.T) {
@@ -254,7 +327,7 @@ func TestService_PublicBySiteKey_Inactive(t *testing.T) {
 
 	repo := NewAppRepository(client)
 	ctx := context.Background()
-	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Off App"})
+	a, err := NewAppService(repo, nil).Create(ctx, CreateAppRequest{Name: "Off App", Currency: "INR"})
 	assert.NoError(t, err)
 	_, err = NewAppService(repo, nil).Update(ctx, a.ID, UpdateAppRequest{Status: int8Ptr(0)})
 	assert.NoError(t, err)

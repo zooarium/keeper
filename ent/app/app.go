@@ -48,8 +48,12 @@ const (
 	FieldContactSocial = "contact_social"
 	// FieldTaxNumber holds the string denoting the tax_number field in the database.
 	FieldTaxNumber = "tax_number"
+	// FieldCurrency holds the string denoting the currency field in the database.
+	FieldCurrency = "currency"
 	// FieldTaxPercent holds the string denoting the tax_percent field in the database.
 	FieldTaxPercent = "tax_percent"
+	// FieldManagerID holds the string denoting the manager_id field in the database.
+	FieldManagerID = "manager_id"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -60,6 +64,8 @@ const (
 	EdgeUsers = "users"
 	// EdgeDivisions holds the string denoting the divisions edge name in mutations.
 	EdgeDivisions = "divisions"
+	// EdgeManager holds the string denoting the manager edge name in mutations.
+	EdgeManager = "manager"
 	// Table holds the table name of the app in the database.
 	Table = "kpr_app"
 	// UsersTable is the table that holds the users relation/edge.
@@ -76,6 +82,13 @@ const (
 	DivisionsInverseTable = "kpr_division"
 	// DivisionsColumn is the table column denoting the divisions relation/edge.
 	DivisionsColumn = "app_id"
+	// ManagerTable is the table that holds the manager relation/edge.
+	ManagerTable = "kpr_app"
+	// ManagerInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	ManagerInverseTable = "kpr_user"
+	// ManagerColumn is the table column denoting the manager relation/edge.
+	ManagerColumn = "manager_id"
 )
 
 // Columns holds all SQL columns for app fields.
@@ -98,7 +111,9 @@ var Columns = []string{
 	FieldContactHours,
 	FieldContactSocial,
 	FieldTaxNumber,
+	FieldCurrency,
 	FieldTaxPercent,
+	FieldManagerID,
 	FieldStatus,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -115,6 +130,8 @@ func ValidColumn(column string) bool {
 }
 
 var (
+	// CurrencyValidator is a validator for the "currency" field. It is called by the builders before save.
+	CurrencyValidator func(string) error
 	// DefaultTaxPercent holds the default value on creation for the "tax_percent" field.
 	DefaultTaxPercent float64
 	// DefaultStatus holds the default value on creation for the "status" field.
@@ -215,9 +232,19 @@ func ByTaxNumber(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTaxNumber, opts...).ToFunc()
 }
 
+// ByCurrency orders the results by the currency field.
+func ByCurrency(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCurrency, opts...).ToFunc()
+}
+
 // ByTaxPercent orders the results by the tax_percent field.
 func ByTaxPercent(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTaxPercent, opts...).ToFunc()
+}
+
+// ByManagerID orders the results by the manager_id field.
+func ByManagerID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldManagerID, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.
@@ -262,6 +289,13 @@ func ByDivisions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newDivisionsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByManagerField orders the results by manager field.
+func ByManagerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newManagerStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newUsersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -274,5 +308,12 @@ func newDivisionsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(DivisionsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, DivisionsTable, DivisionsColumn),
+	)
+}
+func newManagerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ManagerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, ManagerTable, ManagerColumn),
 	)
 }

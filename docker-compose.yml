@@ -16,6 +16,9 @@ services:
       - GO_ENV=development
       - DB_PATH=/app/data/keeper.db
       - LOG_DIR=/app/log
+    networks:
+      - default
+      - falcon
     restart: always
     mem_limit: 256m
     cpus: "1.0"
@@ -31,5 +34,10 @@ services:
       - .:/app
       - ./data:/data
     working_dir: /app
+
+networks:
+  falcon:
+    external: true
+    name: falcon_default
 
 # No volumes section needed for bind mounts

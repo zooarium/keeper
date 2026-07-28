@@ -135,9 +135,19 @@ func TaxNumber(v string) predicate.App {
 	return predicate.App(sql.FieldEQ(FieldTaxNumber, v))
 }
 
+// Currency applies equality check predicate on the "currency" field. It's identical to CurrencyEQ.
+func Currency(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldCurrency, v))
+}
+
 // TaxPercent applies equality check predicate on the "tax_percent" field. It's identical to TaxPercentEQ.
 func TaxPercent(v float64) predicate.App {
 	return predicate.App(sql.FieldEQ(FieldTaxPercent, v))
+}
+
+// ManagerID applies equality check predicate on the "manager_id" field. It's identical to ManagerIDEQ.
+func ManagerID(v int) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldManagerID, v))
 }
 
 // Status applies equality check predicate on the "status" field. It's identical to StatusEQ.
@@ -1355,6 +1365,71 @@ func TaxNumberContainsFold(v string) predicate.App {
 	return predicate.App(sql.FieldContainsFold(FieldTaxNumber, v))
 }
 
+// CurrencyEQ applies the EQ predicate on the "currency" field.
+func CurrencyEQ(v string) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldCurrency, v))
+}
+
+// CurrencyNEQ applies the NEQ predicate on the "currency" field.
+func CurrencyNEQ(v string) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldCurrency, v))
+}
+
+// CurrencyIn applies the In predicate on the "currency" field.
+func CurrencyIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldIn(FieldCurrency, vs...))
+}
+
+// CurrencyNotIn applies the NotIn predicate on the "currency" field.
+func CurrencyNotIn(vs ...string) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldCurrency, vs...))
+}
+
+// CurrencyGT applies the GT predicate on the "currency" field.
+func CurrencyGT(v string) predicate.App {
+	return predicate.App(sql.FieldGT(FieldCurrency, v))
+}
+
+// CurrencyGTE applies the GTE predicate on the "currency" field.
+func CurrencyGTE(v string) predicate.App {
+	return predicate.App(sql.FieldGTE(FieldCurrency, v))
+}
+
+// CurrencyLT applies the LT predicate on the "currency" field.
+func CurrencyLT(v string) predicate.App {
+	return predicate.App(sql.FieldLT(FieldCurrency, v))
+}
+
+// CurrencyLTE applies the LTE predicate on the "currency" field.
+func CurrencyLTE(v string) predicate.App {
+	return predicate.App(sql.FieldLTE(FieldCurrency, v))
+}
+
+// CurrencyContains applies the Contains predicate on the "currency" field.
+func CurrencyContains(v string) predicate.App {
+	return predicate.App(sql.FieldContains(FieldCurrency, v))
+}
+
+// CurrencyHasPrefix applies the HasPrefix predicate on the "currency" field.
+func CurrencyHasPrefix(v string) predicate.App {
+	return predicate.App(sql.FieldHasPrefix(FieldCurrency, v))
+}
+
+// CurrencyHasSuffix applies the HasSuffix predicate on the "currency" field.
+func CurrencyHasSuffix(v string) predicate.App {
+	return predicate.App(sql.FieldHasSuffix(FieldCurrency, v))
+}
+
+// CurrencyEqualFold applies the EqualFold predicate on the "currency" field.
+func CurrencyEqualFold(v string) predicate.App {
+	return predicate.App(sql.FieldEqualFold(FieldCurrency, v))
+}
+
+// CurrencyContainsFold applies the ContainsFold predicate on the "currency" field.
+func CurrencyContainsFold(v string) predicate.App {
+	return predicate.App(sql.FieldContainsFold(FieldCurrency, v))
+}
+
 // TaxPercentEQ applies the EQ predicate on the "tax_percent" field.
 func TaxPercentEQ(v float64) predicate.App {
 	return predicate.App(sql.FieldEQ(FieldTaxPercent, v))
@@ -1393,6 +1468,36 @@ func TaxPercentLT(v float64) predicate.App {
 // TaxPercentLTE applies the LTE predicate on the "tax_percent" field.
 func TaxPercentLTE(v float64) predicate.App {
 	return predicate.App(sql.FieldLTE(FieldTaxPercent, v))
+}
+
+// ManagerIDEQ applies the EQ predicate on the "manager_id" field.
+func ManagerIDEQ(v int) predicate.App {
+	return predicate.App(sql.FieldEQ(FieldManagerID, v))
+}
+
+// ManagerIDNEQ applies the NEQ predicate on the "manager_id" field.
+func ManagerIDNEQ(v int) predicate.App {
+	return predicate.App(sql.FieldNEQ(FieldManagerID, v))
+}
+
+// ManagerIDIn applies the In predicate on the "manager_id" field.
+func ManagerIDIn(vs ...int) predicate.App {
+	return predicate.App(sql.FieldIn(FieldManagerID, vs...))
+}
+
+// ManagerIDNotIn applies the NotIn predicate on the "manager_id" field.
+func ManagerIDNotIn(vs ...int) predicate.App {
+	return predicate.App(sql.FieldNotIn(FieldManagerID, vs...))
+}
+
+// ManagerIDIsNil applies the IsNil predicate on the "manager_id" field.
+func ManagerIDIsNil() predicate.App {
+	return predicate.App(sql.FieldIsNull(FieldManagerID))
+}
+
+// ManagerIDNotNil applies the NotNil predicate on the "manager_id" field.
+func ManagerIDNotNil() predicate.App {
+	return predicate.App(sql.FieldNotNull(FieldManagerID))
 }
 
 // StatusEQ applies the EQ predicate on the "status" field.
@@ -1553,6 +1658,29 @@ func HasDivisions() predicate.App {
 func HasDivisionsWith(preds ...predicate.Division) predicate.App {
 	return predicate.App(func(s *sql.Selector) {
 		step := newDivisionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasManager applies the HasEdge predicate on the "manager" edge.
+func HasManager() predicate.App {
+	return predicate.App(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ManagerTable, ManagerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasManagerWith applies the HasEdge predicate on the "manager" edge with a given conditions (other predicates).
+func HasManagerWith(preds ...predicate.User) predicate.App {
+	return predicate.App(func(s *sql.Selector) {
+		step := newManagerStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -378,6 +378,22 @@ func (c *AppClient) QueryDivisions(_m *App) *DivisionQuery {
 	return query
 }
 
+// QueryManager queries the manager edge of a App.
+func (c *AppClient) QueryManager(_m *App) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(app.Table, app.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, app.ManagerTable, app.ManagerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *AppClient) Hooks() []Hook {
 	return c.hooks.App

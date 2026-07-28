@@ -22,6 +22,18 @@ AUTH:
 CORS:
   ALLOWED_ORIGINS:
     - "*"
+# Falcon resolves per-user roles at login (fail-closed: login is rejected if
+# falcon is unreachable). BASE_URL points at falcon's internal-s2s listener
+# (not its primary port) — keeper self-signs a short-lived token with its own
+# AUTH.JWT_SECRET to call it, since falcon verifies that listener against the
+# same shared secret. keeper joins falcon's compose network (docker-compose.yml
+# `networks: [default, falcon]`) and addresses it by container name, like ant's
+# ANT_KEEPER_BASE_URL — cross-project default networks don't reliably expose
+# service-name DNS, only the container name (falcon-api-1). Bare-metal: use
+# a private interface/hostname instead.
+FALCON:
+  BASE_URL: "http://falcon-api-1:9091"
+  TIMEOUT: 3s
 # Optional secondary listeners: extra ports in the same process, each
 # exposing only its allow-listed routes. Declare as many entries as needed.
 # Identity always comes from JWT; JWT_SECRET (optional) makes the listener

@@ -7,6 +7,7 @@ import (
 
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
+	"keeper/pkg/httpclient"
 	"keeper/pkg/render"
 
 	entsql "entgo.io/ent/dialect/sql"
@@ -61,8 +62,10 @@ func NewSecondaryRouter(cfg *config.Config, sec *config.SecondaryConfig, jwtMana
 
 	r.Use(httprate.LimitByIP(sec.RateLimit.Requests, sec.RateLimit.Window))
 
+	falconClient := httpclient.New(httpclient.Config{Timeout: falconTimeout(cfg), Name: "falcon-ready-" + sec.Name})
+
 	r.Get("/health", HealthHandler)
-	r.Get("/ready", ReadyHandler(dbDriver))
+	r.Get("/ready", ReadyHandler(dbDriver, falconClient, cfg.Falcon.BaseURL+"/health"))
 
 	// Prometheus metrics endpoint, exempt from auth and the allow-list.
 	r.Handle("/metrics", promhttp.Handler())

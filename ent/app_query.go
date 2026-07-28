@@ -27,6 +27,7 @@ type AppQuery struct {
 	predicates    []predicate.App
 	withUsers     *UserQuery
 	withDivisions *DivisionQuery
+	withManager   *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +101,28 @@ func (_q *AppQuery) QueryDivisions() *DivisionQuery {
 			sqlgraph.From(app.Table, app.FieldID, selector),
 			sqlgraph.To(division.Table, division.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, app.DivisionsTable, app.DivisionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryManager chains the current query on the "manager" edge.
+func (_q *AppQuery) QueryManager() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(app.Table, app.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, app.ManagerTable, app.ManagerColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -301,6 +324,7 @@ func (_q *AppQuery) Clone() *AppQuery {
 		predicates:    append([]predicate.App{}, _q.predicates...),
 		withUsers:     _q.withUsers.Clone(),
 		withDivisions: _q.withDivisions.Clone(),
+		withManager:   _q.withManager.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -326,6 +350,17 @@ func (_q *AppQuery) WithDivisions(opts ...func(*DivisionQuery)) *AppQuery {
 		opt(query)
 	}
 	_q.withDivisions = query
+	return _q
+}
+
+// WithManager tells the query-builder to eager-load the nodes that are connected to
+// the "manager" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *AppQuery) WithManager(opts ...func(*UserQuery)) *AppQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withManager = query
 	return _q
 }
 
@@ -407,9 +442,10 @@ func (_q *AppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*App, err
 	var (
 		nodes       = []*App{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			_q.withUsers != nil,
 			_q.withDivisions != nil,
+			_q.withManager != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -441,6 +477,12 @@ func (_q *AppQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*App, err
 		if err := _q.loadDivisions(ctx, query, nodes,
 			func(n *App) { n.Edges.Divisions = []*Division{} },
 			func(n *App, e *Division) { n.Edges.Divisions = append(n.Edges.Divisions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withManager; query != nil {
+		if err := _q.loadManager(ctx, query, nodes, nil,
+			func(n *App, e *User) { n.Edges.Manager = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -507,6 +549,38 @@ func (_q *AppQuery) loadDivisions(ctx context.Context, query *DivisionQuery, nod
 	}
 	return nil
 }
+func (_q *AppQuery) loadManager(ctx context.Context, query *UserQuery, nodes []*App, init func(*App), assign func(*App, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*App)
+	for i := range nodes {
+		if nodes[i].ManagerID == nil {
+			continue
+		}
+		fk := *nodes[i].ManagerID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "manager_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
 func (_q *AppQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
@@ -532,6 +606,9 @@ func (_q *AppQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != app.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withManager != nil {
+			_spec.Node.AddColumnOnce(app.FieldManagerID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {

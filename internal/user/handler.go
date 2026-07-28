@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -51,6 +52,16 @@ func (h *UserHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 	return r
 }
 
+// ManagerRoutes returns the chi router for the top-level /managers endpoint.
+// Mounted separately from Routes because managers span apps (via
+// kpr_app.manager_id) rather than belonging to the caller's own tenant.
+func (h *UserHandler) ManagerRoutes(jwtManager *auth.JWTManager) chi.Router {
+	r := chi.NewRouter()
+	r.Use(auth.Middleware(jwtManager))
+	r.Get("/", h.ListManagers)
+	return r
+}
+
 func (h *UserHandler) claims(r *http.Request) (*auth.UserClaims, bool) {
 	return auth.GetClaimsFromContext(r.Context())
 }
@@ -94,8 +105,8 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.IsSysAdmin() && req.Role == int8(RoleSysAdmin) {
-		slog.Warn("create user rejected: non-sysadmin cannot assign sysadmin role", "user_id", c.UserID)
+	if !c.IsSysAdmin() && (req.Role == int8(RoleSysAdmin) || req.Role == int8(RoleManager)) {
+		slog.Warn("create user rejected: non-sysadmin cannot assign sysadmin/manager role", "user_id", c.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -116,7 +127,9 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param limit query int false "Max results (default 50, max 500)"
 // @Param offset query int false "Result offset (default 0)"
+// @Param role query int false "Filter by role (0=user, 1=sysadmin, 3=manager)"
 // @Success 200 {object} render.Response{data=[]User}
+// @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
@@ -133,14 +146,60 @@ func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		appID = 0
 	}
 
+	role := int8(-1)
+	if rs := r.URL.Query().Get("role"); rs != "" {
+		v, err := strconv.ParseInt(rs, 10, 8)
+		if err != nil {
+			slog.Warn("invalid role filter in list users request", "role", rs)
+			render.Error(w, http.StatusBadRequest, "invalid role")
+			return
+		}
+		role = int8(v)
+	}
+
 	page := render.ParsePage(r)
-	users, err := h.svc.List(r.Context(), appID, page.Limit, page.Offset)
+	users, err := h.svc.List(r.Context(), appID, role, page.Limit, page.Offset)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
 	render.JSON(w, http.StatusOK, users)
+}
+
+// ListManagers godoc
+// @Summary List all managers
+// @Description Get a list of all users with the manager role, across all apps. Sysadmin only.
+// @Tags users
+// @Produce json
+// @Param limit query int false "Max results (default 50, max 500)"
+// @Param offset query int false "Result offset (default 0)"
+// @Success 200 {object} render.Response{data=[]User}
+// @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
+// @Failure 500 {object} render.Response
+// @Security Bearer
+// @Router /managers [get]
+func (h *UserHandler) ListManagers(w http.ResponseWriter, r *http.Request) {
+	c, ok := h.claims(r)
+	if !ok {
+		render.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	if !c.IsSysAdmin() {
+		slog.Warn("non-sysadmin attempted to list managers", "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
+	page := render.ParsePage(r)
+	managers, err := h.svc.List(r.Context(), 0, RoleManager, page.Limit, page.Offset)
+	if err != nil {
+		render.Error(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	render.JSON(w, http.StatusOK, managers)
 }
 
 // GetUserByID godoc
@@ -229,8 +288,8 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.IsSysAdmin() && req.Role != nil && *req.Role == RoleSysAdmin {
-		slog.Warn("update user rejected: non-sysadmin cannot assign sysadmin role", "user_id", c.UserID)
+	if !c.IsSysAdmin() && req.Role != nil && (*req.Role == RoleSysAdmin || *req.Role == RoleManager) {
+		slog.Warn("update user rejected: non-sysadmin cannot assign sysadmin/manager role", "user_id", c.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -300,6 +359,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} render.Response{data=AuthResponse}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 503 {object} render.Response
 // @Router /users/auth [post]
 func (h *UserHandler) AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
@@ -317,6 +377,10 @@ func (h *UserHandler) AuthenticateUser(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.svc.Authenticate(r.Context(), req)
 	if err != nil {
+		if errors.Is(err, ErrRoleServiceUnavailable) {
+			render.Error(w, http.StatusServiceUnavailable, "authentication temporarily unavailable")
+			return
+		}
 		render.Error(w, http.StatusUnauthorized, err.Error())
 		return
 	}

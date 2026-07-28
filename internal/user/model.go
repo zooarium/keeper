@@ -5,8 +5,9 @@ import (
 )
 
 const (
-	RoleUser     int8 = 0
+	RoleAdmin    int8 = 0
 	RoleSysAdmin int8 = 1
+	RoleManager  int8 = 3
 )
 
 // User represents the domain model for a user.

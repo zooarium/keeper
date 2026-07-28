@@ -11,9 +11,17 @@ import (
 	"keeper/pkg/auth"
 	"keeper/pkg/render"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+// withURLParam attaches a chi URL param (e.g. "id") to the request context.
+func withURLParam(req *http.Request, key, value string) *http.Request {
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add(key, value)
+	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
+}
 
 type mockAppService struct {
 	mock.Mock
@@ -37,6 +45,14 @@ func (m *mockAppService) GetByID(ctx context.Context, id int) (*App, error) {
 
 func (m *mockAppService) List(ctx context.Context, limit, offset int) ([]*App, error) {
 	args := m.Called(ctx, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*App), args.Error(1)
+}
+
+func (m *mockAppService) ListByManager(ctx context.Context, managerID, limit, offset int) ([]*App, error) {
+	args := m.Called(ctx, managerID, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -84,7 +100,8 @@ func TestHandler_Create_SysAdmin(t *testing.T) {
 	handler := NewAppHandler(svc)
 
 	reqBody := CreateAppRequest{
-		Name: "Test App",
+		Name:     "Test App",
+		Currency: "INR",
 	}
 
 	expectedApp := &App{
@@ -127,13 +144,28 @@ func TestHandler_Create_TaxPercentOutOfRange(t *testing.T) {
 	svc.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
+func TestHandler_Create_InvalidCurrency(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	body, _ := json.Marshal(CreateAppRequest{Name: "Test App", Currency: "ZZZ"})
+	req, _ := http.NewRequest("POST", "/apps", bytes.NewBuffer(body))
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin})
+	rr := httptest.NewRecorder()
+
+	handler.CreateApp(rr, req)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	svc.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+}
+
 func TestHandler_Create_NonSysAdmin_Forbidden(t *testing.T) {
 	svc := new(mockAppService)
 	handler := NewAppHandler(svc)
 
 	body, _ := json.Marshal(CreateAppRequest{Name: "Test App"})
 	req, _ := http.NewRequest("POST", "/apps", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleUser})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleAdmin})
 	rr := httptest.NewRecorder()
 
 	handler.CreateApp(rr, req)
@@ -191,7 +223,7 @@ func TestHandler_List_NonSysAdmin_OwnAppOnly(t *testing.T) {
 	svc.On("GetByID", mock.Anything, 7).Return(ownApp, nil)
 
 	req, _ := http.NewRequest("GET", "/apps", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 7, UserID: 2, Role: auth.RoleUser})
+	req = withClaims(req, &auth.UserClaims{AppID: 7, UserID: 2, Role: auth.RoleAdmin})
 	rr := httptest.NewRecorder()
 
 	handler.ListApps(rr, req)
@@ -206,6 +238,144 @@ func TestHandler_List_NonSysAdmin_OwnAppOnly(t *testing.T) {
 	dataList := resp.Data.([]interface{})
 	assert.Len(t, dataList, 1)
 	assert.Equal(t, "Own App", dataList[0].(map[string]interface{})["name"])
+}
+
+func TestHandler_List_Manager_AssignedAppsOnly(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	managedApp := &App{ID: 3, Name: "Managed App", Status: 1}
+	svc.On("ListByManager", mock.Anything, 9, 50, 0).Return([]*App{managedApp}, nil)
+
+	req, _ := http.NewRequest("GET", "/apps", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	rr := httptest.NewRecorder()
+
+	handler.ListApps(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	svc.AssertCalled(t, "ListByManager", mock.Anything, 9, 50, 0)
+}
+
+func TestHandler_GetAppByID_Manager_Assigned_Allowed(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	managerID := 9
+	expectedApp := &App{ID: 5, Name: "Managed", ManagerID: &managerID}
+	svc.On("GetByID", mock.Anything, 5).Return(expectedApp, nil)
+
+	req, _ := http.NewRequest("GET", "/apps/5", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	req = withURLParam(req, "id", "5")
+	rr := httptest.NewRecorder()
+
+	handler.GetAppByID(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+}
+
+func TestHandler_GetAppByID_Manager_NotAssigned_Forbidden(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	otherManagerID := 42
+	expectedApp := &App{ID: 5, Name: "Managed", ManagerID: &otherManagerID}
+	svc.On("GetByID", mock.Anything, 5).Return(expectedApp, nil)
+
+	req, _ := http.NewRequest("GET", "/apps/5", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	req = withURLParam(req, "id", "5")
+	rr := httptest.NewRecorder()
+
+	handler.GetAppByID(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+}
+
+func TestHandler_UpdateApp_Manager_CannotAssignManager(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	managerID := 9
+	expectedApp := &App{ID: 5, Name: "Managed", ManagerID: &managerID}
+	svc.On("GetByID", mock.Anything, 5).Return(expectedApp, nil)
+
+	newManager := 10
+	body, _ := json.Marshal(UpdateAppRequest{ManagerID: &newManager})
+	req, _ := http.NewRequest("PUT", "/apps/5", bytes.NewBuffer(body))
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	req = withURLParam(req, "id", "5")
+	rr := httptest.NewRecorder()
+
+	handler.UpdateApp(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestHandler_UpdateApp_OwnApp_CannotChangeStatus(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	expectedApp := &App{ID: 1, Name: "Own"}
+	svc.On("GetByID", mock.Anything, 1).Return(expectedApp, nil)
+
+	newStatus := int8(0)
+	body, _ := json.Marshal(UpdateAppRequest{Status: &newStatus})
+	req, _ := http.NewRequest("PUT", "/apps/1", bytes.NewBuffer(body))
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin})
+	req = withURLParam(req, "id", "1")
+	rr := httptest.NewRecorder()
+
+	handler.UpdateApp(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestHandler_UpdateApp_Manager_CannotChangeStatus(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	managerID := 9
+	expectedApp := &App{ID: 5, Name: "Managed", ManagerID: &managerID}
+	svc.On("GetByID", mock.Anything, 5).Return(expectedApp, nil)
+
+	newStatus := int8(0)
+	body, _ := json.Marshal(UpdateAppRequest{Status: &newStatus})
+	req, _ := http.NewRequest("PUT", "/apps/5", bytes.NewBuffer(body))
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	req = withURLParam(req, "id", "5")
+	rr := httptest.NewRecorder()
+
+	handler.UpdateApp(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestHandler_UpdateApp_SysAdmin_CanChangeStatus(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc)
+
+	expectedApp := &App{ID: 1, Name: "Any"}
+	svc.On("GetByID", mock.Anything, 1).Return(expectedApp, nil)
+
+	newStatus := int8(0)
+	updated := &App{ID: 1, Name: "Any", Status: 0}
+	svc.On("Update", mock.Anything, 1, mock.Anything).Return(updated, nil)
+
+	body, _ := json.Marshal(UpdateAppRequest{Status: &newStatus})
+	req, _ := http.NewRequest("PUT", "/apps/1", bytes.NewBuffer(body))
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin})
+	req = withURLParam(req, "id", "1")
+	rr := httptest.NewRecorder()
+
+	handler.UpdateApp(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	svc.AssertExpectations(t)
 }
 
 func TestHandler_List_NoClaims_Unauthorized(t *testing.T) {

@@ -85,10 +85,13 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, e
 	return r.mapToModel(u), nil
 }
 
-func (r *userRepository) List(ctx context.Context, appID, limit, offset int) ([]*User, error) {
+func (r *userRepository) List(ctx context.Context, appID int, role int8, limit, offset int) ([]*User, error) {
 	q := r.client.User.Query()
 	if appID != 0 {
 		q = q.Where(user.AppIDEQ(appID))
+	}
+	if role >= 0 {
+		q = q.Where(user.RoleEQ(role))
 	}
 	users, err := q.
 		Order(ent.Asc(user.FieldID)).

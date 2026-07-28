@@ -23,7 +23,7 @@ type mockUserService struct {
 	user.UserService
 }
 
-func (m *mockUserService) List(ctx context.Context, appID, limit, offset int) ([]*user.User, error) {
+func (m *mockUserService) List(ctx context.Context, appID int, role int8, limit, offset int) ([]*user.User, error) {
 	return []*user.User{}, nil
 }
 

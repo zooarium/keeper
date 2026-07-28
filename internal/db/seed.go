@@ -30,6 +30,7 @@ func Seed(ctx context.Context, client *ent.Client, cfg config.SeedConfig) error 
 
 	systemApp, err := client.App.Create().
 		SetName(systemAppName).
+		SetCurrency("INR").
 		SetStatus(1).
 		Save(ctx)
 	if err != nil {

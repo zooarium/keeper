@@ -452,17 +452,18 @@ By default, the services are available at:
 
 - `GET /health`: Check service health.
 - `POST /users`: Create a new user.
-- `GET /users`: List all users.
+- `GET /users`: List all users. Optional `?role=` filter (e.g. `role=3` for managers). Assigning `RoleSysAdmin`/`RoleManager` (create or update) is sysadmin only.
 - `POST /users/auth`: Authenticate and get JWT.
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
-- `GET /apps/lookup?site_key=...`: Resolve the public profile (name, tagline, logo, about, contact, tax_number, tax_percent) for the app bound to a publishable guest site key (**public**, no auth, 10 req/min per IP). Returns 404 for an unknown/inactive site key or inactive app, without distinguishing between them. Excludes status + timestamps.
+- `GET /managers`: List all users with the manager role, across all apps (**sysadmin only**; 403 otherwise).
+- `GET /apps/lookup?site_key=...`: Resolve the public profile (name, tagline, logo, about, contact, tax_number, tax_percent, currency) for the app bound to a publishable guest site key (**public**, no auth, 10 req/min per IP). Returns 404 for an unknown/inactive site key or inactive app, without distinguishing between them. Excludes status + timestamps.
 - `POST /apps`: Create a new app (**sysadmin only**; 403 otherwise).
-- `GET /apps`: List apps (sysadmins: all; other users: own app only).
-- `GET /apps/{id}`: Get app by ID (sysadmin or own app).
-- `PUT /apps/{id}`: Update app by ID (sysadmin or own app).
-- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app).
+- `GET /apps`: List apps (sysadmins: all; managers: apps they're assigned to via `manager_id`; other users: own app only).
+- `GET /apps/{id}`: Get app by ID (sysadmin, own app, or assigned manager).
+- `PUT /apps/{id}`: Update app by ID (sysadmin, own app, or assigned manager). Setting/clearing `manager_id` and changing `status` are **sysadmin only**.
+- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app — managers cannot delete).
 
 App carries profile fields editable by sysadmin (any app) or the tenant's own
 users (own app only): `tagline`, `logo_url` (URL, light `url` validation, no file
@@ -470,7 +471,8 @@ upload), nested `about` (`heading`, `body` — HTML allowed), and nested `contac
 (`address`: `line1`, `line2`, `city`, `state`, `country`, `postal_code`; `phone1`,
 `phone2`, `email`, `hours` — free text, `social` — arbitrary `platform→url` JSON
 map, each value validated as an http(s) URL), plus flat `tax_number` (free text,
-e.g. VAT/GST registration) and `tax_percent` (float, 0–100). All optional. On
+e.g. VAT/GST registration) and `tax_percent` (float, 0–100), both optional. `currency`
+(ISO 4217 code, e.g. `INR`) is **required** on create; NOT NULL in the DB. On
 update, the `about` and `contact` sections replace wholesale when present.
 
 - `POST /divisions`: Create a new division.

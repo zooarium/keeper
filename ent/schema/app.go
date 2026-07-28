@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 )
 
 // App holds the schema definition for the App entity.
@@ -42,7 +43,9 @@ func (App) Fields() []ent.Field {
 		field.Text("contact_hours").Optional(),
 		field.JSON("contact_social", map[string]string{}).Optional(),
 		field.String("tax_number").Optional(),
+		field.String("currency").NotEmpty().MaxLen(3),
 		field.Float("tax_percent").Default(0),
+		field.Int("manager_id").Optional().Nillable(),
 		field.Int8("status").Default(1),
 		field.Time("created_at").Default(time.Now),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
@@ -54,5 +57,18 @@ func (App) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("users", User.Type),
 		edge.To("divisions", Division.Type),
+		edge.To("manager", User.Type).
+			Unique().
+			Field("manager_id").
+			Annotations(
+				entsql.OnDelete(entsql.SetNull),
+			),
+	}
+}
+
+// Indexes of the App.
+func (App) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("manager_id"),
 	}
 }

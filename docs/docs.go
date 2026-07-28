@@ -156,7 +156,7 @@ const docTemplate = `{
         },
         "/apps/lookup": {
             "get": {
-                "description": "Resolve the public-safe profile (name, tagline, logo, about, contact) for the app bound to a publishable guest site key. Public (no auth) and hard rate-limited. Returns 404 for an unknown/inactive site key or an inactive app, without distinguishing between them.",
+                "description": "Resolve the public-safe profile (name, tagline, logo, about, contact, currency) for the app bound to a publishable guest site key. Public (no auth) and hard rate-limited. Returns 404 for an unknown/inactive site key or an inactive app, without distinguishing between them.",
                 "produces": [
                     "application/json"
                 ],
@@ -400,7 +400,7 @@ const docTemplate = `{
         },
         "/apps/{id}/public": {
             "get": {
-                "description": "Public-safe profile (name, tagline, logo, about, contact) for an active app. Public (no auth) and hard rate-limited; used by downstream services to enrich their responses. Returns 404 for an unknown or inactive app.",
+                "description": "Public-safe profile (name, tagline, logo, about, contact, currency) for an active app. Public (no auth) and hard rate-limited; used by downstream services to enrich their responses. Returns 404 for an unknown or inactive app.",
                 "produces": [
                     "application/json"
                 ],
@@ -1400,7 +1400,7 @@ const docTemplate = `{
         },
         "/health": {
             "get": {
-                "description": "Get the health status of the service",
+                "description": "Get the health status and version of the service",
                 "produces": [
                     "application/json"
                 ],
@@ -1900,21 +1900,21 @@ const docTemplate = `{
                 }
             }
         },
-        "/users": {
+        "/managers": {
             "get": {
                 "security": [
                     {
                         "Bearer": []
                     }
                 ],
-                "description": "Get a list of all users belonging to the caller's app",
+                "description": "Get a list of all users with the manager role, across all apps. Sysadmin only.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "users"
                 ],
-                "summary": "List all users",
+                "summary": "List all managers",
                 "parameters": [
                     {
                         "type": "integer",
@@ -1949,6 +1949,90 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get a list of all users belonging to the caller's app",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "List all users",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Max results (default 50, max 500)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Result offset (default 0)",
+                        "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by role (0=user, 1=sysadmin, 3=manager)",
+                        "name": "role",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/internal_user.User"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/keeper_pkg_render.Response"
                         }
                     },
                     "401": {
@@ -2377,10 +2461,19 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "currency": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
                 "logo_url": {
+                    "type": "string"
+                },
+                "manager_id": {
+                    "type": "integer"
+                },
+                "manager_name": {
                     "type": "string"
                 },
                 "name": {
@@ -2459,6 +2552,7 @@ const docTemplate = `{
         "internal_app.CreateAppRequest": {
             "type": "object",
             "required": [
+                "currency",
                 "name"
             ],
             "properties": {
@@ -2468,8 +2562,15 @@ const docTemplate = `{
                 "contact": {
                     "$ref": "#/definitions/internal_app.ContactInput"
                 },
+                "currency": {
+                    "type": "string"
+                },
                 "logo_url": {
                     "type": "string"
+                },
+                "manager_id": {
+                    "description": "ManagerID assigns the app's manager on creation. Sysadmin only.",
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -2498,6 +2599,9 @@ const docTemplate = `{
                 },
                 "contact": {
                     "$ref": "#/definitions/internal_app.Contact"
+                },
+                "currency": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -2528,8 +2632,15 @@ const docTemplate = `{
                 "contact": {
                     "$ref": "#/definitions/internal_app.ContactInput"
                 },
+                "currency": {
+                    "type": "string"
+                },
                 "logo_url": {
                     "type": "string"
+                },
+                "manager_id": {
+                    "description": "ManagerID assigns/reassigns the app's manager (0 clears it). Sysadmin only.",
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"

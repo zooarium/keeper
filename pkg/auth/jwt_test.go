@@ -12,7 +12,7 @@ func TestGenerateImpersonationCarriesClaims(t *testing.T) {
 		AppID:        3,
 		UserID:       42,
 		DivisionID:   7,
-		Role:         RoleUser,
+		Role:         RoleAdmin,
 		Impersonator: 1,
 		Audience:     "squirrel",
 		SessionID:    "sess-abc",
@@ -34,7 +34,7 @@ func TestGenerateImpersonationCarriesClaims(t *testing.T) {
 	if claims.UserID != 42 || claims.AppID != 3 || claims.DivisionID != 7 {
 		t.Errorf("impersonated identity not preserved: %+v", claims)
 	}
-	if claims.Role != RoleUser {
+	if claims.Role != RoleAdmin {
 		t.Errorf("expected impersonated user role preserved, got %d", claims.Role)
 	}
 	if claims.Impersonator != 1 {
@@ -54,7 +54,7 @@ func TestGenerateImpersonationCarriesClaims(t *testing.T) {
 func TestImpersonationTokenUselessWithOtherSecret(t *testing.T) {
 	imp := NewJWTManager("imp-secret", 10*time.Minute)
 	token, err := imp.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleUser,
+		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
 		Impersonator: 9, Audience: "ant", SessionID: "s", JTI: "j",
 	})
 	if err != nil {
@@ -70,7 +70,7 @@ func TestImpersonationTokenUselessWithOtherSecret(t *testing.T) {
 func TestVerifyWithAudienceRejectsMismatch(t *testing.T) {
 	mgr := NewJWTManager("imp-secret", 10*time.Minute)
 	token, err := mgr.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleUser,
+		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
 		Impersonator: 9, Audience: "squirrel", SessionID: "s", JTI: "j",
 	})
 	if err != nil {

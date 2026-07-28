@@ -24,6 +24,7 @@ import (
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
+	"keeper/pkg/httpclient"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -142,9 +143,14 @@ func main() {
 	// Auth setup
 	jwtManager := auth.NewJWTManager(cfg.Auth.JWTSecret, cfg.Auth.JWTExpiry)
 
+	// Login resolves each user's roles from falcon before minting the JWT
+	// (fail-closed if falcon is unreachable) — see internal/user.Service.Authenticate.
+	falconHTTPClient := httpclient.New(httpclient.Config{Timeout: cfg.Falcon.Timeout, Name: "falcon-s2s"})
+	roleResolver := user.NewFalconRoleResolver(falconHTTPClient, cfg.Falcon.BaseURL, jwtManager)
+
 	// Initialize components
 	userRepo := user.NewUserRepository(client)
-	userSvc := user.NewUserService(userRepo, jwtManager)
+	userSvc := user.NewUserService(userRepo, jwtManager, roleResolver)
 	userHandler := user.NewUserHandler(userSvc)
 
 	divisionRepo := division.NewDivisionRepository(client)
@@ -203,6 +209,7 @@ func main() {
 	// listener's manager (primary secret, or per-listener JWT_SECRET).
 	mount := func(r chi.Router, jm *auth.JWTManager) {
 		r.Mount("/users", userHandler.Routes(jm))
+		r.Mount("/managers", userHandler.ManagerRoutes(jm))
 		r.Mount("/apps", appHandler.Routes(jm))
 		r.Mount("/divisions", divisionHandler.Routes(jm))
 		r.Mount("/guest-keys", guestKeyHandler.Routes(jm))

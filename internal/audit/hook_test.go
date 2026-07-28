@@ -20,7 +20,7 @@ func TestHookLogsCreateAndUpdate(t *testing.T) {
 	client.Use(Hook(slog.New(slog.NewJSONHandler(&buf, nil))))
 
 	ctx := context.Background()
-	app, err := client.App.Create().SetName("acme").Save(ctx)
+	app, err := client.App.Create().SetName("acme").SetCurrency("INR").Save(ctx)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}

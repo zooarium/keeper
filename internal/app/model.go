@@ -32,17 +32,20 @@ type Contact struct {
 
 // App represents the domain model for an app.
 type App struct {
-	ID         int       `json:"id"`
-	Name       string    `json:"name"`
-	Tagline    string    `json:"tagline"`
-	LogoURL    string    `json:"logo_url"`
-	About      About     `json:"about"`
-	Contact    Contact   `json:"contact"`
-	TaxNumber  string    `json:"tax_number"`
-	TaxPercent float64   `json:"tax_percent"`
-	Status     int8      `json:"status"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Tagline     string    `json:"tagline"`
+	LogoURL     string    `json:"logo_url"`
+	About       About     `json:"about"`
+	Contact     Contact   `json:"contact"`
+	TaxNumber   string    `json:"tax_number"`
+	TaxPercent  float64   `json:"tax_percent"`
+	Currency    string    `json:"currency"`
+	ManagerID   *int      `json:"manager_id"`
+	ManagerName string    `json:"manager_name,omitempty"`
+	Status      int8      `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // PublicApp is the public-safe projection of an app returned by the
@@ -56,6 +59,7 @@ type PublicApp struct {
 	Contact    Contact `json:"contact"`
 	TaxNumber  string  `json:"tax_number"`
 	TaxPercent float64 `json:"tax_percent"`
+	Currency   string  `json:"currency"`
 }
 
 // AddressInput is the request payload for an app's address.
@@ -94,7 +98,10 @@ type CreateAppRequest struct {
 	Contact    ContactInput `json:"contact"`
 	TaxNumber  string       `json:"tax_number" validate:"omitempty"`
 	TaxPercent float64      `json:"tax_percent" validate:"omitempty,gte=0,lte=100"`
-	Status     int8         `json:"status" validate:"omitempty"`
+	Currency   string       `json:"currency" validate:"required,iso4217"`
+	// ManagerID assigns the app's manager on creation. Sysadmin only.
+	ManagerID *int `json:"manager_id" validate:"omitempty"`
+	Status    int8 `json:"status" validate:"omitempty"`
 }
 
 // UpdateAppRequest defines the payload for updating an app. Nested sections
@@ -107,5 +114,8 @@ type UpdateAppRequest struct {
 	Contact    *ContactInput `json:"contact" validate:"omitempty"`
 	TaxNumber  *string       `json:"tax_number" validate:"omitempty"`
 	TaxPercent *float64      `json:"tax_percent" validate:"omitempty,gte=0,lte=100"`
-	Status     *int8         `json:"status" validate:"omitempty"`
+	Currency   *string       `json:"currency" validate:"omitempty,iso4217"`
+	// ManagerID assigns/reassigns the app's manager (0 clears it). Sysadmin only.
+	ManagerID *int  `json:"manager_id" validate:"omitempty"`
+	Status    *int8 `json:"status" validate:"omitempty"`
 }

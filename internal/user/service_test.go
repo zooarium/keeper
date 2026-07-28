@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -13,6 +14,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// stubRoleResolver returns Roles for every call, or Err if set — a fake
+// falcon dependency so tests don't need a real HTTP server.
+type stubRoleResolver struct {
+	Roles []string
+	Err   error
+}
+
+func (s stubRoleResolver) ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]string, error) {
+	return s.Roles, s.Err
+}
+
 func TestService_Create(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	defer func() {
@@ -22,11 +34,11 @@ func TestService_Create(t *testing.T) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{})
 
 	ctx := context.Background()
 
-	a, err := client.App.Create().SetName("Test App").Save(ctx)
+	a, err := client.App.Create().SetName("Test App").SetCurrency("INR").Save(ctx)
 	assert.NoError(t, err)
 
 	div, err := client.Division.Create().
@@ -70,13 +82,13 @@ func TestService_Authenticate(t *testing.T) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{Roles: []string{"billing-admin"}})
 
 	ctx := context.Background()
 	email := "auth@example.com"
 	password := "password123"
 
-	a, err := client.App.Create().SetName("Auth App").Save(ctx)
+	a, err := client.App.Create().SetName("Auth App").SetCurrency("INR").Save(ctx)
 	assert.NoError(t, err)
 
 	div, err := client.Division.Create().
@@ -98,6 +110,17 @@ func TestService_Authenticate(t *testing.T) {
 		assert.NotEmpty(t, res.Token)
 		assert.Equal(t, email, res.User.Email)
 		assert.Equal(t, "Auth App", res.User.AppName)
+
+		claims, err := jwtManager.Verify(res.Token)
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"billing-admin"}, claims.Roles)
+	})
+
+	t.Run("RoleServiceUnavailable", func(t *testing.T) {
+		downSvc := NewUserService(repo, jwtManager, stubRoleResolver{Err: errors.New("falcon unreachable")})
+		res, err := downSvc.Authenticate(ctx, AuthRequest{Email: email, Password: password})
+		assert.Nil(t, res)
+		assert.ErrorIs(t, err, ErrRoleServiceUnavailable)
 	})
 
 	t.Run("InvalidPassword", func(t *testing.T) {
@@ -123,7 +146,7 @@ func TestService_Authenticate(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		users, err := svc.List(ctx, a.ID, 50, 0)
+		users, err := svc.List(ctx, a.ID, -1, 50, 0)
 		assert.NoError(t, err)
 		var inactiveID int
 		for _, usr := range users {
@@ -142,7 +165,7 @@ func TestService_Authenticate(t *testing.T) {
 	})
 
 	t.Run("InactiveApp", func(t *testing.T) {
-		inactiveApp, err := client.App.Create().SetName("Inactive App").SetStatus(0).Save(ctx)
+		inactiveApp, err := client.App.Create().SetName("Inactive App").SetCurrency("INR").SetStatus(0).Save(ctx)
 		assert.NoError(t, err)
 
 		inactiveDiv, err := client.Division.Create().
@@ -175,11 +198,11 @@ func TestService_Update(t *testing.T) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{})
 
 	ctx := context.Background()
 
-	a, err := client.App.Create().SetName("Update App").Save(ctx)
+	a, err := client.App.Create().SetName("Update App").SetCurrency("INR").Save(ctx)
 	assert.NoError(t, err)
 
 	div, err := client.Division.Create().
@@ -195,7 +218,7 @@ func TestService_Update(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	newApp, err := client.App.Create().SetName("New App").Save(ctx)
+	newApp, err := client.App.Create().SetName("New App").SetCurrency("INR").Save(ctx)
 	assert.NoError(t, err)
 
 	newName := "Updated"
@@ -223,12 +246,12 @@ func TestService_Update_CrossTenant(t *testing.T) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{})
 
 	ctx := context.Background()
 
-	app1, _ := client.App.Create().SetName("App 1").Save(ctx)
-	app2, _ := client.App.Create().SetName("App 2").Save(ctx)
+	app1, _ := client.App.Create().SetName("App 1").SetCurrency("INR").Save(ctx)
+	app2, _ := client.App.Create().SetName("App 2").SetCurrency("INR").Save(ctx)
 
 	div1, _ := client.Division.Create().
 		SetAppID(app1.ID).SetName("Root").SetPath("/0/").SetDepth(0).SetStatus(1).Save(ctx)
@@ -256,11 +279,11 @@ func TestService_Delete(t *testing.T) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{})
 
 	ctx := context.Background()
 
-	a, err := client.App.Create().SetName("Delete App").Save(ctx)
+	a, err := client.App.Create().SetName("Delete App").SetCurrency("INR").Save(ctx)
 	assert.NoError(t, err)
 
 	div, err := client.Division.Create().
@@ -292,12 +315,12 @@ func TestService_Delete_CrossTenant(t *testing.T) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{})
 
 	ctx := context.Background()
 
-	app1, _ := client.App.Create().SetName("App 1").Save(ctx)
-	app2, _ := client.App.Create().SetName("App 2").Save(ctx)
+	app1, _ := client.App.Create().SetName("App 1").SetCurrency("INR").Save(ctx)
+	app2, _ := client.App.Create().SetName("App 2").SetCurrency("INR").Save(ctx)
 
 	div1, _ := client.Division.Create().
 		SetAppID(app1.ID).SetName("Root").SetPath("/0/").SetDepth(0).SetStatus(1).Save(ctx)
@@ -321,10 +344,10 @@ func BenchmarkService_Create(b *testing.B) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{})
 
 	ctx := context.Background()
-	a, _ := client.App.Create().SetName("Bench App").Save(ctx)
+	a, _ := client.App.Create().SetName("Bench App").SetCurrency("INR").Save(ctx)
 	div, _ := client.Division.Create().
 		SetAppID(a.ID).SetName("Root").SetPath("/0/").SetDepth(0).SetStatus(1).Save(ctx)
 	div, _ = client.Division.UpdateOneID(div.ID).SetPath(fmt.Sprintf("/%d/", div.ID)).Save(ctx)
@@ -349,13 +372,13 @@ func BenchmarkService_Authenticate(b *testing.B) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager)
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{})
 
 	ctx := context.Background()
 	email := "bench_auth@example.com"
 	password := "password123"
 
-	a, _ := client.App.Create().SetName("Bench Auth App").Save(ctx)
+	a, _ := client.App.Create().SetName("Bench Auth App").SetCurrency("INR").Save(ctx)
 	div, _ := client.Division.Create().
 		SetAppID(a.ID).SetName("Root").SetPath("/0/").SetDepth(0).SetStatus(1).Save(ctx)
 	div, _ = client.Division.UpdateOneID(div.ID).SetPath(fmt.Sprintf("/%d/", div.ID)).Save(ctx)

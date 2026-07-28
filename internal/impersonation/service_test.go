@@ -96,7 +96,7 @@ func newService(repo *mockRepo) (ImpersonationService, *auth.JWTManager) {
 
 func TestStartRejectsUnregisteredAudience(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleUser}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin}
 	svc, _ := newService(repo)
 
 	_, err := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "ant"})
@@ -128,7 +128,7 @@ func TestStartRejectsMissingTarget(t *testing.T) {
 
 func TestStartExchangeMintsScopedToken(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleUser, Email: "u@x.com"}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin, Email: "u@x.com"}
 	svc, mgr := newService(repo)
 
 	start, err := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "squirrel", Reason: "support"})
@@ -162,7 +162,7 @@ func TestStartExchangeMintsScopedToken(t *testing.T) {
 
 func TestExchangeCodeIsSingleUse(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleUser}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin}
 	svc, _ := newService(repo)
 
 	start, _ := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "squirrel"})
@@ -176,7 +176,7 @@ func TestExchangeCodeIsSingleUse(t *testing.T) {
 
 func TestRevokeBlocksExchangeAndStatus(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleUser}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin}
 	svc, _ := newService(repo)
 
 	start, _ := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "squirrel"})

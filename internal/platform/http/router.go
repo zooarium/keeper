@@ -11,6 +11,7 @@ import (
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
+	"keeper/pkg/httpclient"
 
 	entsql "entgo.io/ent/dialect/sql"
 	"github.com/go-chi/chi/v5"
@@ -55,13 +56,16 @@ func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisi
 		httpSwagger.URL("/swagger/doc.json"), // The url pointing to API definition
 	))
 
+	falconClient := httpclient.New(httpclient.Config{Timeout: falconTimeout(cfg), Name: "falcon-ready"})
+
 	r.Get("/health", HealthHandler)
-	r.Get("/ready", ReadyHandler(dbDriver))
+	r.Get("/ready", ReadyHandler(dbDriver, falconClient, cfg.Falcon.BaseURL+"/health"))
 
 	// Prometheus metrics endpoint (exempt from JWT auth).
 	r.Handle("/metrics", promhttp.Handler())
 
 	r.Mount("/users", userHandler.Routes(jwtManager))
+	r.Mount("/managers", userHandler.ManagerRoutes(jwtManager))
 	r.Mount("/apps", appHandler.Routes(jwtManager))
 	r.Mount("/divisions", divisionHandler.Routes(jwtManager))
 	r.Mount("/guest-keys", guestKeyHandler.Routes(jwtManager))

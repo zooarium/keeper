@@ -244,6 +244,12 @@ func (_c *AppCreate) SetNillableTaxNumber(v *string) *AppCreate {
 	return _c
 }
 
+// SetCurrency sets the "currency" field.
+func (_c *AppCreate) SetCurrency(v string) *AppCreate {
+	_c.mutation.SetCurrency(v)
+	return _c
+}
+
 // SetTaxPercent sets the "tax_percent" field.
 func (_c *AppCreate) SetTaxPercent(v float64) *AppCreate {
 	_c.mutation.SetTaxPercent(v)
@@ -254,6 +260,20 @@ func (_c *AppCreate) SetTaxPercent(v float64) *AppCreate {
 func (_c *AppCreate) SetNillableTaxPercent(v *float64) *AppCreate {
 	if v != nil {
 		_c.SetTaxPercent(*v)
+	}
+	return _c
+}
+
+// SetManagerID sets the "manager_id" field.
+func (_c *AppCreate) SetManagerID(v int) *AppCreate {
+	_c.mutation.SetManagerID(v)
+	return _c
+}
+
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (_c *AppCreate) SetNillableManagerID(v *int) *AppCreate {
+	if v != nil {
+		_c.SetManagerID(*v)
 	}
 	return _c
 }
@@ -330,6 +350,11 @@ func (_c *AppCreate) AddDivisions(v ...*Division) *AppCreate {
 	return _c.AddDivisionIDs(ids...)
 }
 
+// SetManager sets the "manager" edge to the User entity.
+func (_c *AppCreate) SetManager(v *User) *AppCreate {
+	return _c.SetManagerID(v.ID)
+}
+
 // Mutation returns the AppMutation object of the builder.
 func (_c *AppCreate) Mutation() *AppMutation {
 	return _c.mutation
@@ -387,6 +412,14 @@ func (_c *AppCreate) defaults() {
 func (_c *AppCreate) check() error {
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "App.name"`)}
+	}
+	if _, ok := _c.mutation.Currency(); !ok {
+		return &ValidationError{Name: "currency", err: errors.New(`ent: missing required field "App.currency"`)}
+	}
+	if v, ok := _c.mutation.Currency(); ok {
+		if err := app.CurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "currency", err: fmt.Errorf(`ent: validator failed for field "App.currency": %w`, err)}
+		}
 	}
 	if _, ok := _c.mutation.TaxPercent(); !ok {
 		return &ValidationError{Name: "tax_percent", err: errors.New(`ent: missing required field "App.tax_percent"`)}
@@ -494,6 +527,10 @@ func (_c *AppCreate) createSpec() (*App, *sqlgraph.CreateSpec) {
 		_spec.SetField(app.FieldTaxNumber, field.TypeString, value)
 		_node.TaxNumber = value
 	}
+	if value, ok := _c.mutation.Currency(); ok {
+		_spec.SetField(app.FieldCurrency, field.TypeString, value)
+		_node.Currency = value
+	}
 	if value, ok := _c.mutation.TaxPercent(); ok {
 		_spec.SetField(app.FieldTaxPercent, field.TypeFloat64, value)
 		_node.TaxPercent = value
@@ -540,6 +577,23 @@ func (_c *AppCreate) createSpec() (*App, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ManagerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   app.ManagerTable,
+			Columns: []string{app.ManagerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.ManagerID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

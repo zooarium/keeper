@@ -18,20 +18,38 @@ import (
 func init() {
 	appFields := schema.App{}.Fields()
 	_ = appFields
+	// appDescCurrency is the schema descriptor for currency field.
+	appDescCurrency := appFields[17].Descriptor()
+	// app.CurrencyValidator is a validator for the "currency" field. It is called by the builders before save.
+	app.CurrencyValidator = func() func(string) error {
+		validators := appDescCurrency.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(currency string) error {
+			for _, fn := range fns {
+				if err := fn(currency); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// appDescTaxPercent is the schema descriptor for tax_percent field.
-	appDescTaxPercent := appFields[17].Descriptor()
+	appDescTaxPercent := appFields[18].Descriptor()
 	// app.DefaultTaxPercent holds the default value on creation for the tax_percent field.
 	app.DefaultTaxPercent = appDescTaxPercent.Default.(float64)
 	// appDescStatus is the schema descriptor for status field.
-	appDescStatus := appFields[18].Descriptor()
+	appDescStatus := appFields[20].Descriptor()
 	// app.DefaultStatus holds the default value on creation for the status field.
 	app.DefaultStatus = appDescStatus.Default.(int8)
 	// appDescCreatedAt is the schema descriptor for created_at field.
-	appDescCreatedAt := appFields[19].Descriptor()
+	appDescCreatedAt := appFields[21].Descriptor()
 	// app.DefaultCreatedAt holds the default value on creation for the created_at field.
 	app.DefaultCreatedAt = appDescCreatedAt.Default.(func() time.Time)
 	// appDescUpdatedAt is the schema descriptor for updated_at field.
-	appDescUpdatedAt := appFields[20].Descriptor()
+	appDescUpdatedAt := appFields[22].Descriptor()
 	// app.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	app.DefaultUpdatedAt = appDescUpdatedAt.Default.(func() time.Time)
 	// app.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -69,9 +70,23 @@ func (h *AppHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 	return r
 }
 
+// authorizeApp fetches the app and reports whether claims may access it:
+// sysadmin (any app), the caller's own tenant app, or a manager assigned to
+// it via app.manager_id.
+func (h *AppHandler) authorizeApp(ctx context.Context, claims *auth.UserClaims, id int) (*App, bool) {
+	a, err := h.svc.GetByID(ctx, id)
+	if err != nil {
+		return nil, false
+	}
+	if claims.IsSysAdmin() || id == claims.AppID {
+		return a, true
+	}
+	return a, claims.IsManager() && a.ManagerID != nil && *a.ManagerID == claims.UserID
+}
+
 // LookupApp godoc
 // @Summary Look up public app profile by site key
-// @Description Resolve the public-safe profile (name, tagline, logo, about, contact) for the app bound to a publishable guest site key. Public (no auth) and hard rate-limited. Returns 404 for an unknown/inactive site key or an inactive app, without distinguishing between them.
+// @Description Resolve the public-safe profile (name, tagline, logo, about, contact, currency) for the app bound to a publishable guest site key. Public (no auth) and hard rate-limited. Returns 404 for an unknown/inactive site key or an inactive app, without distinguishing between them.
 // @Tags apps
 // @Produce json
 // @Param site_key query string true "Publishable guest site key (gk_...)"
@@ -103,7 +118,7 @@ func (h *AppHandler) LookupApp(w http.ResponseWriter, r *http.Request) {
 
 // PublicAppByID godoc
 // @Summary Get public app profile by ID
-// @Description Public-safe profile (name, tagline, logo, about, contact) for an active app. Public (no auth) and hard rate-limited; used by downstream services to enrich their responses. Returns 404 for an unknown or inactive app.
+// @Description Public-safe profile (name, tagline, logo, about, contact, currency) for an active app. Public (no auth) and hard rate-limited; used by downstream services to enrich their responses. Returns 404 for an unknown or inactive app.
 // @Tags apps
 // @Produce json
 // @Param id path int true "App ID"
@@ -199,7 +214,19 @@ func (h *AppHandler) ListApps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Non-sysadmins may only see their own app.
+	// Managers see the apps they've been assigned to manage.
+	if claims.IsManager() {
+		page := render.ParsePage(r)
+		apps, err := h.svc.ListByManager(r.Context(), claims.UserID, page.Limit, page.Offset)
+		if err != nil {
+			render.Error(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		render.JSON(w, http.StatusOK, apps)
+		return
+	}
+
+	// Other non-sysadmins may only see their own app.
 	if !claims.IsSysAdmin() {
 		a, err := h.svc.GetByID(r.Context(), claims.AppID)
 		if err != nil {
@@ -247,15 +274,14 @@ func (h *AppHandler) GetAppByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !claims.IsSysAdmin() && id != claims.AppID {
-		render.Error(w, http.StatusForbidden, "access denied")
-		return
-	}
-
-	a, err := h.svc.GetByID(r.Context(), id)
-	if err != nil {
+	a, allowed := h.authorizeApp(r.Context(), claims, id)
+	if a == nil {
 		slog.Warn("app not found", "id", id)
 		render.Error(w, http.StatusNotFound, "app not found")
+		return
+	}
+	if !allowed {
+		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
 
@@ -291,7 +317,12 @@ func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !claims.IsSysAdmin() && id != claims.AppID {
+	existing, allowed := h.authorizeApp(r.Context(), claims, id)
+	if existing == nil {
+		render.Error(w, http.StatusNotFound, "app not found")
+		return
+	}
+	if !allowed {
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -306,6 +337,18 @@ func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 	if err := h.validate.Struct(req); err != nil {
 		slog.Warn("invalid update app request", "id", id, "error", err)
 		render.Error(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if req.ManagerID != nil && !claims.IsSysAdmin() {
+		slog.Warn("update app rejected: non-sysadmin cannot assign manager", "id", id, "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
+	if req.Status != nil && !claims.IsSysAdmin() {
+		slog.Warn("update app rejected: non-sysadmin cannot change status", "id", id, "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
 

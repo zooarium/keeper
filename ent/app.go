@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"keeper/ent/app"
+	"keeper/ent/user"
 	"strings"
 	"time"
 
@@ -52,8 +53,12 @@ type App struct {
 	ContactSocial map[string]string `json:"contact_social,omitempty"`
 	// TaxNumber holds the value of the "tax_number" field.
 	TaxNumber string `json:"tax_number,omitempty"`
+	// Currency holds the value of the "currency" field.
+	Currency string `json:"currency,omitempty"`
 	// TaxPercent holds the value of the "tax_percent" field.
 	TaxPercent float64 `json:"tax_percent,omitempty"`
+	// ManagerID holds the value of the "manager_id" field.
+	ManagerID *int `json:"manager_id,omitempty"`
 	// Status holds the value of the "status" field.
 	Status int8 `json:"status,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -72,9 +77,11 @@ type AppEdges struct {
 	Users []*User `json:"users,omitempty"`
 	// Divisions holds the value of the divisions edge.
 	Divisions []*Division `json:"divisions,omitempty"`
+	// Manager holds the value of the manager edge.
+	Manager *User `json:"manager,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // UsersOrErr returns the Users value or an error if the edge
@@ -95,6 +102,17 @@ func (e AppEdges) DivisionsOrErr() ([]*Division, error) {
 	return nil, &NotLoadedError{edge: "divisions"}
 }
 
+// ManagerOrErr returns the Manager value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AppEdges) ManagerOrErr() (*User, error) {
+	if e.Manager != nil {
+		return e.Manager, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "manager"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*App) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -104,9 +122,9 @@ func (*App) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case app.FieldTaxPercent:
 			values[i] = new(sql.NullFloat64)
-		case app.FieldID, app.FieldStatus:
+		case app.FieldID, app.FieldManagerID, app.FieldStatus:
 			values[i] = new(sql.NullInt64)
-		case app.FieldName, app.FieldTagline, app.FieldLogoURL, app.FieldAboutHeading, app.FieldAboutBody, app.FieldContactAddressLine1, app.FieldContactAddressLine2, app.FieldContactCity, app.FieldContactState, app.FieldContactCountry, app.FieldContactPostalCode, app.FieldContactPhone1, app.FieldContactPhone2, app.FieldContactEmail, app.FieldContactHours, app.FieldTaxNumber:
+		case app.FieldName, app.FieldTagline, app.FieldLogoURL, app.FieldAboutHeading, app.FieldAboutBody, app.FieldContactAddressLine1, app.FieldContactAddressLine2, app.FieldContactCity, app.FieldContactState, app.FieldContactCountry, app.FieldContactPostalCode, app.FieldContactPhone1, app.FieldContactPhone2, app.FieldContactEmail, app.FieldContactHours, app.FieldTaxNumber, app.FieldCurrency:
 			values[i] = new(sql.NullString)
 		case app.FieldCreatedAt, app.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -235,11 +253,24 @@ func (_m *App) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.TaxNumber = value.String
 			}
+		case app.FieldCurrency:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field currency", values[i])
+			} else if value.Valid {
+				_m.Currency = value.String
+			}
 		case app.FieldTaxPercent:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
 				return fmt.Errorf("unexpected type %T for field tax_percent", values[i])
 			} else if value.Valid {
 				_m.TaxPercent = value.Float64
+			}
+		case app.FieldManagerID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field manager_id", values[i])
+			} else if value.Valid {
+				_m.ManagerID = new(int)
+				*_m.ManagerID = int(value.Int64)
 			}
 		case app.FieldStatus:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -280,6 +311,11 @@ func (_m *App) QueryUsers() *UserQuery {
 // QueryDivisions queries the "divisions" edge of the App entity.
 func (_m *App) QueryDivisions() *DivisionQuery {
 	return NewAppClient(_m.config).QueryDivisions(_m)
+}
+
+// QueryManager queries the "manager" edge of the App entity.
+func (_m *App) QueryManager() *UserQuery {
+	return NewAppClient(_m.config).QueryManager(_m)
 }
 
 // Update returns a builder for updating this App.
@@ -356,8 +392,16 @@ func (_m *App) String() string {
 	builder.WriteString("tax_number=")
 	builder.WriteString(_m.TaxNumber)
 	builder.WriteString(", ")
+	builder.WriteString("currency=")
+	builder.WriteString(_m.Currency)
+	builder.WriteString(", ")
 	builder.WriteString("tax_percent=")
 	builder.WriteString(fmt.Sprintf("%v", _m.TaxPercent))
+	builder.WriteString(", ")
+	if v := _m.ManagerID; v != nil {
+		builder.WriteString("manager_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

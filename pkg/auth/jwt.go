@@ -32,6 +32,9 @@ type UserClaims struct {
 	UserID     int `json:"user_id"`
 	DivisionID int `json:"division_id"`
 	Role       int `json:"role"`
+	// Roles carries fine-grained role names resolved from falcon at login
+	// time (empty on impersonation/guest tokens, which don't resolve them).
+	Roles []string `json:"roles,omitempty"`
 
 	// Imp marks this token as an impersonation token. When true, UserID is the
 	// impersonated user and Impersonator is the acting sysadmin.
@@ -48,17 +51,25 @@ type UserClaims struct {
 }
 
 // Role values carried in JWT claims. Mirrors keeper's user roles
-// (RoleUser=0, RoleSysAdmin=1); RoleGuest marks short-lived tenant-scoped
-// guest tokens minted from a publishable site key.
+// (RoleAdmin=0, RoleSysAdmin=1); RoleGuest marks short-lived tenant-scoped
+// guest tokens minted from a publishable site key. RoleManager marks a user
+// granted access to one or more apps via kpr_app.manager_id, independent of
+// their own tenant (app_id).
 const (
-	RoleUser     = 0
+	RoleAdmin    = 0
 	RoleSysAdmin = 1
 	RoleGuest    = 2
+	RoleManager  = 3
 )
 
 // IsSysAdmin returns true when the claims carry sysadmin role.
 func (c *UserClaims) IsSysAdmin() bool {
 	return c.Role == RoleSysAdmin
+}
+
+// IsManager returns true when the claims carry the manager role.
+func (c *UserClaims) IsManager() bool {
+	return c.Role == RoleManager
 }
 
 // IsGuest returns true when the claims belong to a guest (site-key) token.
@@ -83,8 +94,10 @@ func (c *UserClaims) HasAudience(aud string) bool {
 	return false
 }
 
-// Generate generates and signs a new token for a user.
-func (manager *JWTManager) Generate(appID, userID, divisionID, role int) (string, error) {
+// Generate generates and signs a new token for a user. roles is optional —
+// pass falcon-resolved role names for a full login token, or omit it for
+// self-signed s2s/guest tokens that don't carry them.
+func (manager *JWTManager) Generate(appID, userID, divisionID, role int, roles ...string) (string, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(manager.tokenDuration)),
@@ -93,6 +106,7 @@ func (manager *JWTManager) Generate(appID, userID, divisionID, role int) (string
 		UserID:     userID,
 		DivisionID: divisionID,
 		Role:       role,
+		Roles:      roles,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

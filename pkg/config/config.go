@@ -20,6 +20,15 @@ type Config struct {
 	CORS        CORSConfig
 	Secondary   []SecondaryConfig `mapstructure:"SECONDARY"`
 	Services    []ServiceEntry    `mapstructure:"SERVICES"`
+	Falcon      FalconConfig      `mapstructure:"FALCON"`
+}
+
+// FalconConfig points login's role resolution at falcon's internal-s2s
+// listener. Falcon's uptime is a hard dependency of login (fail-closed) —
+// see internal/user.Service.Authenticate.
+type FalconConfig struct {
+	BaseURL string        `mapstructure:"BASE_URL"`
+	Timeout time.Duration `mapstructure:"TIMEOUT"`
 }
 
 // ServiceEntry registers a downstream service that can be impersonated into.
@@ -136,6 +145,8 @@ func Load() (*Config, error) {
 	v.SetDefault("SEED.ADMIN_EMAIL", "admin@admin.com")
 	v.SetDefault("SEED.ADMIN_PASSWORD", "admin")
 	v.SetDefault("CORS.ALLOWED_ORIGINS", []string{"*"})
+	v.SetDefault("FALCON.BASE_URL", "http://falcon:9091")
+	v.SetDefault("FALCON.TIMEOUT", 3*time.Second)
 
 	// Environment variables
 	v.SetEnvPrefix("KEEPER")

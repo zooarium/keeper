@@ -356,6 +356,20 @@ func (_u *AppUpdate) ClearTaxNumber() *AppUpdate {
 	return _u
 }
 
+// SetCurrency sets the "currency" field.
+func (_u *AppUpdate) SetCurrency(v string) *AppUpdate {
+	_u.mutation.SetCurrency(v)
+	return _u
+}
+
+// SetNillableCurrency sets the "currency" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableCurrency(v *string) *AppUpdate {
+	if v != nil {
+		_u.SetCurrency(*v)
+	}
+	return _u
+}
+
 // SetTaxPercent sets the "tax_percent" field.
 func (_u *AppUpdate) SetTaxPercent(v float64) *AppUpdate {
 	_u.mutation.ResetTaxPercent()
@@ -374,6 +388,26 @@ func (_u *AppUpdate) SetNillableTaxPercent(v *float64) *AppUpdate {
 // AddTaxPercent adds value to the "tax_percent" field.
 func (_u *AppUpdate) AddTaxPercent(v float64) *AppUpdate {
 	_u.mutation.AddTaxPercent(v)
+	return _u
+}
+
+// SetManagerID sets the "manager_id" field.
+func (_u *AppUpdate) SetManagerID(v int) *AppUpdate {
+	_u.mutation.SetManagerID(v)
+	return _u
+}
+
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (_u *AppUpdate) SetNillableManagerID(v *int) *AppUpdate {
+	if v != nil {
+		_u.SetManagerID(*v)
+	}
+	return _u
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (_u *AppUpdate) ClearManagerID() *AppUpdate {
+	_u.mutation.ClearManagerID()
 	return _u
 }
 
@@ -448,6 +482,11 @@ func (_u *AppUpdate) AddDivisions(v ...*Division) *AppUpdate {
 	return _u.AddDivisionIDs(ids...)
 }
 
+// SetManager sets the "manager" edge to the User entity.
+func (_u *AppUpdate) SetManager(v *User) *AppUpdate {
+	return _u.SetManagerID(v.ID)
+}
+
 // Mutation returns the AppMutation object of the builder.
 func (_u *AppUpdate) Mutation() *AppMutation {
 	return _u.mutation
@@ -495,6 +534,12 @@ func (_u *AppUpdate) RemoveDivisions(v ...*Division) *AppUpdate {
 	return _u.RemoveDivisionIDs(ids...)
 }
 
+// ClearManager clears the "manager" edge to the User entity.
+func (_u *AppUpdate) ClearManager() *AppUpdate {
+	_u.mutation.ClearManager()
+	return _u
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (_u *AppUpdate) Save(ctx context.Context) (int, error) {
 	_u.defaults()
@@ -531,7 +576,20 @@ func (_u *AppUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *AppUpdate) check() error {
+	if v, ok := _u.mutation.Currency(); ok {
+		if err := app.CurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "currency", err: fmt.Errorf(`ent: validator failed for field "App.currency": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *AppUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(app.Table, app.Columns, sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt))
 	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -639,6 +697,9 @@ func (_u *AppUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.TaxNumberCleared() {
 		_spec.ClearField(app.FieldTaxNumber, field.TypeString)
 	}
+	if value, ok := _u.mutation.Currency(); ok {
+		_spec.SetField(app.FieldCurrency, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.TaxPercent(); ok {
 		_spec.SetField(app.FieldTaxPercent, field.TypeFloat64, value)
 	}
@@ -740,6 +801,35 @@ func (_u *AppUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ManagerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   app.ManagerTable,
+			Columns: []string{app.ManagerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ManagerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   app.ManagerTable,
+			Columns: []string{app.ManagerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1093,6 +1183,20 @@ func (_u *AppUpdateOne) ClearTaxNumber() *AppUpdateOne {
 	return _u
 }
 
+// SetCurrency sets the "currency" field.
+func (_u *AppUpdateOne) SetCurrency(v string) *AppUpdateOne {
+	_u.mutation.SetCurrency(v)
+	return _u
+}
+
+// SetNillableCurrency sets the "currency" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableCurrency(v *string) *AppUpdateOne {
+	if v != nil {
+		_u.SetCurrency(*v)
+	}
+	return _u
+}
+
 // SetTaxPercent sets the "tax_percent" field.
 func (_u *AppUpdateOne) SetTaxPercent(v float64) *AppUpdateOne {
 	_u.mutation.ResetTaxPercent()
@@ -1111,6 +1215,26 @@ func (_u *AppUpdateOne) SetNillableTaxPercent(v *float64) *AppUpdateOne {
 // AddTaxPercent adds value to the "tax_percent" field.
 func (_u *AppUpdateOne) AddTaxPercent(v float64) *AppUpdateOne {
 	_u.mutation.AddTaxPercent(v)
+	return _u
+}
+
+// SetManagerID sets the "manager_id" field.
+func (_u *AppUpdateOne) SetManagerID(v int) *AppUpdateOne {
+	_u.mutation.SetManagerID(v)
+	return _u
+}
+
+// SetNillableManagerID sets the "manager_id" field if the given value is not nil.
+func (_u *AppUpdateOne) SetNillableManagerID(v *int) *AppUpdateOne {
+	if v != nil {
+		_u.SetManagerID(*v)
+	}
+	return _u
+}
+
+// ClearManagerID clears the value of the "manager_id" field.
+func (_u *AppUpdateOne) ClearManagerID() *AppUpdateOne {
+	_u.mutation.ClearManagerID()
 	return _u
 }
 
@@ -1185,6 +1309,11 @@ func (_u *AppUpdateOne) AddDivisions(v ...*Division) *AppUpdateOne {
 	return _u.AddDivisionIDs(ids...)
 }
 
+// SetManager sets the "manager" edge to the User entity.
+func (_u *AppUpdateOne) SetManager(v *User) *AppUpdateOne {
+	return _u.SetManagerID(v.ID)
+}
+
 // Mutation returns the AppMutation object of the builder.
 func (_u *AppUpdateOne) Mutation() *AppMutation {
 	return _u.mutation
@@ -1230,6 +1359,12 @@ func (_u *AppUpdateOne) RemoveDivisions(v ...*Division) *AppUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveDivisionIDs(ids...)
+}
+
+// ClearManager clears the "manager" edge to the User entity.
+func (_u *AppUpdateOne) ClearManager() *AppUpdateOne {
+	_u.mutation.ClearManager()
+	return _u
 }
 
 // Where appends a list predicates to the AppUpdate builder.
@@ -1281,7 +1416,20 @@ func (_u *AppUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (_u *AppUpdateOne) check() error {
+	if v, ok := _u.mutation.Currency(); ok {
+		if err := app.CurrencyValidator(v); err != nil {
+			return &ValidationError{Name: "currency", err: fmt.Errorf(`ent: validator failed for field "App.currency": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (_u *AppUpdateOne) sqlSave(ctx context.Context) (_node *App, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(app.Table, app.Columns, sqlgraph.NewFieldSpec(app.FieldID, field.TypeInt))
 	id, ok := _u.mutation.ID()
 	if !ok {
@@ -1406,6 +1554,9 @@ func (_u *AppUpdateOne) sqlSave(ctx context.Context) (_node *App, err error) {
 	if _u.mutation.TaxNumberCleared() {
 		_spec.ClearField(app.FieldTaxNumber, field.TypeString)
 	}
+	if value, ok := _u.mutation.Currency(); ok {
+		_spec.SetField(app.FieldCurrency, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.TaxPercent(); ok {
 		_spec.SetField(app.FieldTaxPercent, field.TypeFloat64, value)
 	}
@@ -1507,6 +1658,35 @@ func (_u *AppUpdateOne) sqlSave(ctx context.Context) (_node *App, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(division.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ManagerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   app.ManagerTable,
+			Columns: []string{app.ManagerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ManagerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   app.ManagerTable,
+			Columns: []string{app.ManagerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -69,6 +69,7 @@ func toPublicApp(a *App) *PublicApp {
 		Contact:    a.Contact,
 		TaxNumber:  a.TaxNumber,
 		TaxPercent: a.TaxPercent,
+		Currency:   a.Currency,
 	}
 }
 
@@ -84,6 +85,7 @@ type AppRepository interface {
 	Create(ctx context.Context, a App) (*App, error)
 	GetByID(ctx context.Context, id int) (*App, error)
 	List(ctx context.Context, limit, offset int) ([]*App, error)
+	ListByManager(ctx context.Context, managerID, limit, offset int) ([]*App, error)
 	Update(ctx context.Context, id int, a *App) (*App, error)
 	Delete(ctx context.Context, id int) error
 }
@@ -93,6 +95,7 @@ type AppService interface {
 	Create(ctx context.Context, req CreateAppRequest) (*App, error)
 	GetByID(ctx context.Context, id int) (*App, error)
 	List(ctx context.Context, limit, offset int) ([]*App, error)
+	ListByManager(ctx context.Context, managerID, limit, offset int) ([]*App, error)
 	Update(ctx context.Context, id int, req UpdateAppRequest) (*App, error)
 	Delete(ctx context.Context, id int) error
 	PublicBySiteKey(ctx context.Context, siteKey string) (*PublicApp, error)
@@ -131,6 +134,8 @@ func (s *appService) Create(ctx context.Context, req CreateAppRequest) (*App, er
 		Contact:    toContact(req.Contact),
 		TaxNumber:  req.TaxNumber,
 		TaxPercent: req.TaxPercent,
+		Currency:   req.Currency,
+		ManagerID:  req.ManagerID,
 		Status:     status,
 	})
 	if err != nil {
@@ -149,6 +154,11 @@ func (s *appService) GetByID(ctx context.Context, id int) (*App, error) {
 func (s *appService) List(ctx context.Context, limit, offset int) ([]*App, error) {
 	slog.Info("listing apps", "limit", limit, "offset", offset)
 	return s.repo.List(ctx, limit, offset)
+}
+
+func (s *appService) ListByManager(ctx context.Context, managerID, limit, offset int) ([]*App, error) {
+	slog.Info("listing apps by manager", "manager_id", managerID, "limit", limit, "offset", offset)
+	return s.repo.ListByManager(ctx, managerID, limit, offset)
 }
 
 func (s *appService) Update(ctx context.Context, id int, req UpdateAppRequest) (*App, error) {
@@ -182,6 +192,16 @@ func (s *appService) Update(ctx context.Context, id int, req UpdateAppRequest) (
 	}
 	if req.TaxPercent != nil {
 		existing.TaxPercent = *req.TaxPercent
+	}
+	if req.Currency != nil {
+		existing.Currency = *req.Currency
+	}
+	if req.ManagerID != nil {
+		if *req.ManagerID == 0 {
+			existing.ManagerID = nil
+		} else {
+			existing.ManagerID = req.ManagerID
+		}
 	}
 	if req.Status != nil {
 		existing.Status = *req.Status

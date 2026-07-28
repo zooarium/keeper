@@ -15,7 +15,7 @@ func TestDivisionService_Create_Root(t *testing.T) {
 	defer func() { _ = client.Close() }()
 
 	// Need an app first
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -40,7 +40,7 @@ func TestDivisionService_Create_Child(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_child?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -67,7 +67,7 @@ func TestDivisionService_Create_InvalidParent(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_invalid_parent?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -87,7 +87,7 @@ func TestDivisionService_GetByID(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_get?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -106,7 +106,7 @@ func TestDivisionService_List(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_list?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -125,7 +125,7 @@ func TestDivisionService_Descendants(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_desc?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -146,7 +146,7 @@ func TestDivisionService_Update(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_update?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -171,7 +171,7 @@ func TestDivisionService_Move(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_move?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -193,7 +193,7 @@ func TestDivisionService_Move_CycleDetected(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_cycle?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -212,7 +212,7 @@ func TestDivisionService_Delete_WithChildren(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_del_children?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)
@@ -231,7 +231,7 @@ func TestDivisionService_Delete_OK(t *testing.T) {
 	client := enttest.Open(t, "sqlite3", "file:ent_div_del_ok?mode=memory&cache=shared&_fk=1")
 	defer func() { _ = client.Close() }()
 
-	app, err := client.App.Create().SetName("Test App").SetStatus(1).Save(context.Background())
+	app, err := client.App.Create().SetName("Test App").SetCurrency("INR").SetStatus(1).Save(context.Background())
 	assert.NoError(t, err)
 
 	repo := NewDivisionRepository(client)

@@ -34,9 +34,23 @@ func New(httpClient *http.Client, baseURL string) *Client {
 // caching, retries, and fail-open/closed policy — this only does the request
 // and envelope unwrap.
 func (c *Client) Get(ctx context.Context, path string, out interface{}) error {
+	return c.get(ctx, path, "", out)
+}
+
+// GetAuth is Get with a bearer token attached — for calling a JWT-protected
+// route before the caller has (or instead of forwarding) an incoming token,
+// e.g. a self-signed s2s credential.
+func (c *Client) GetAuth(ctx context.Context, path, bearerToken string, out interface{}) error {
+	return c.get(ctx, path, bearerToken, out)
+}
+
+func (c *Client) get(ctx context.Context, path, bearerToken string, out interface{}) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.base+path, nil)
 	if err != nil {
 		return fmt.Errorf("s2s: build request: %w", err)
+	}
+	if bearerToken != "" {
+		req.Header.Set("Authorization", "Bearer "+bearerToken)
 	}
 
 	resp, err := c.http.Do(req)

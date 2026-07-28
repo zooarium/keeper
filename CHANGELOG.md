@@ -6,6 +6,24 @@ Release with `make release VERSION=x.y.z` — rotates this file, commits, tags `
 
 ## [Unreleased]
 
+### Changed
+- `internal/db/client.go` SQLite DSN: enabled WAL journal mode and 5s busy timeout (`_journal_mode=WAL&_busy_timeout=5000`) for better write concurrency.
+- Renamed `RoleUser` to `RoleAdmin` (`pkg/auth`, `internal/user`) — value unchanged (`0`), no JWT/DB impact. Re-vendored `keeper/pkg/auth` into squirrel, ant, camel.
+- `POST /users/auth` login now resolves the user's roles from falcon (`GET /user-roles` on falcon's `internal-s2s` listener) before minting the JWT, and embeds them as `roles` (`pkg/auth.UserClaims.Roles`, omitted when empty). Fails closed: if falcon is unreachable or errors, login is rejected with `503` (`ErrRoleServiceUnavailable`) and never falls back to a stale/cached role set — falcon is now as critical a dependency as keeper's own DB. Keeper has no incoming JWT to forward at login time, so it self-signs a short-lived token with its own `AUTH.JWT_SECRET` (shared with falcon's) to call falcon. New `FALCON.BASE_URL`/`FALCON.TIMEOUT` config. `GET /ready` now also checks falcon reachability (was DB-only).
+- `pkg/auth.JWTManager.Generate` takes optional trailing `roles ...string` — existing callers (guest tokens, impersonation) are unaffected.
+- falcon: `internal-s2s` listener's `ROUTES` allow-list gained `GET /user-roles`, for the login role-resolution call above.
+
+### Added
+- `RoleManager` role (`pkg/auth`, `internal/user`): a user granted access to one or more apps via `kpr_app.manager_id`, independent of their own tenant `app_id`. Sysadmin-only to assign (create/update user, and set/clear `manager_id` on `PUT /apps/{id}`).
+- `kpr_app.manager_id` (nullable FK to `kpr_user`, indexed, `SetNull` on manager deletion): one manager per app, one manager may be assigned to many apps.
+- `GET /apps/{id}` / `PUT /apps/{id}`: managers may access apps they're assigned to (in addition to sysadmin/own-tenant). `DELETE /apps/{id}` remains sysadmin/own-tenant only.
+- `GET /apps`: managers see only their assigned apps (`AppService.ListByManager`).
+- `GET /users?role=`: optional role filter, so a sysadmin can list `RoleManager` users to assign to an app.
+- `POST /apps`: accepts `manager_id` to assign a manager at creation time (previously only settable via `PUT /apps/{id}`); create is already sysadmin-only so no extra gate needed.
+- `kpr_app.currency` (required, NOT NULL, ISO 4217 code e.g. `INR`, max 3 chars, validated via `iso4217`): included in `App`/`PublicApp` responses and `POST`/`PUT /apps` payloads.
+- `GET /managers` (`internal/user`): lists all users with the manager role across all apps, sysadmin only. Mounted top-level (not under `/users`) since managers span tenants; reuses `UserService.List`, wired into both the primary router and the secondary-listener mount hook.
+- `PUT /apps/{id}`: changing `status` is now sysadmin only (same guard as `manager_id`), closing a gap where own-tenant users and assigned managers could activate/deactivate an app.
+
 ## [0.0.4] - 2026-07-25
 
 ### Added
