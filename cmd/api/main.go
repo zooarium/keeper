@@ -21,6 +21,7 @@ import (
 	"keeper/internal/guestkey"
 	"keeper/internal/impersonation"
 	platformhttp "keeper/internal/platform/http"
+	"keeper/internal/policy"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
@@ -147,6 +148,17 @@ func main() {
 	// (fail-closed if falcon is unreachable) — see internal/user.Service.Authenticate.
 	falconHTTPClient := httpclient.New(httpclient.Config{Timeout: cfg.Falcon.Timeout, Name: "falcon-s2s"})
 	roleResolver := user.NewFalconRoleResolver(falconHTTPClient, cfg.Falcon.BaseURL, jwtManager)
+
+	// Tier 1 (coarse CRUD) authorization cache: role->permission map pulled
+	// from falcon and refreshed on a TTL. Warm it eagerly so the first request
+	// after boot isn't served against an empty (fail-closed) map; a warm
+	// failure only means falcon isn't reachable yet, not that keeper can't
+	// boot, so it's logged rather than fatal.
+	policyFetcher := policy.NewFetcher(falconHTTPClient, cfg.Falcon.BaseURL, cfg.Falcon.ServiceID, jwtManager)
+	policyStore := policy.NewStore(policyFetcher, cfg.Cache.PolicyTTL)
+	if err := policyStore.Warm(context.Background()); err != nil {
+		slog.Warn("policy cache: startup warm failed, serving fail-closed until falcon is reachable", "error", err)
+	}
 
 	// Initialize components
 	userRepo := user.NewUserRepository(client)

@@ -14,6 +14,7 @@ Release with `make release VERSION=x.y.z` — rotates this file, commits, tags `
 - falcon: `internal-s2s` listener's `ROUTES` allow-list gained `GET /user-roles`, for the login role-resolution call above.
 
 ### Added
+- `internal/policy`: Tier 1 (coarse CRUD) authorization cache — pulls falcon's role->permission export (`GET /services/{id}/permissions/map` on falcon's `internal-s2s` listener), compiles it into `map[roleName]RolePolicy`, and serves it from an in-memory TTL cache (`CACHE.POLICY_TTL`, default 60s), refreshing lazily on read past expiry. New `FALCON.SERVICE_ID` config (keeper's own id in falcon's `fal_service` table). Warmed eagerly at startup (non-fatal on failure); fails closed (empty map) if falcon is unreachable past the TTL. Enforcement (checking a request against this map) is a separate step.
 - `RoleManager` role (`pkg/auth`, `internal/user`): a user granted access to one or more apps via `kpr_app.manager_id`, independent of their own tenant `app_id`. Sysadmin-only to assign (create/update user, and set/clear `manager_id` on `PUT /apps/{id}`).
 - `kpr_app.manager_id` (nullable FK to `kpr_user`, indexed, `SetNull` on manager deletion): one manager per app, one manager may be assigned to many apps.
 - `GET /apps/{id}` / `PUT /apps/{id}`: managers may access apps they're assigned to (in addition to sysadmin/own-tenant). `DELETE /apps/{id}` remains sysadmin/own-tenant only.

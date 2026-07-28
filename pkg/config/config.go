@@ -18,17 +18,30 @@ type Config struct {
 	Auth        AuthConfig
 	Seed        SeedConfig
 	CORS        CORSConfig
+	Cache       CacheConfig       `mapstructure:"CACHE"`
 	Secondary   []SecondaryConfig `mapstructure:"SECONDARY"`
 	Services    []ServiceEntry    `mapstructure:"SERVICES"`
 	Falcon      FalconConfig      `mapstructure:"FALCON"`
 }
 
-// FalconConfig points login's role resolution at falcon's internal-s2s
-// listener. Falcon's uptime is a hard dependency of login (fail-closed) —
-// see internal/user.Service.Authenticate.
+// FalconConfig points login's role resolution and the local policy cache
+// (internal/policy) at falcon's internal-s2s listener. Falcon's uptime is a
+// hard dependency of login (fail-closed) — see internal/user.Service.Authenticate.
+// ServiceID is keeper's own numeric id in falcon's fal_service table (set once
+// keeper is registered there via POST /services); it selects which service's
+// role-permission map GET /services/{id}/permissions/map returns.
 type FalconConfig struct {
-	BaseURL string        `mapstructure:"BASE_URL"`
-	Timeout time.Duration `mapstructure:"TIMEOUT"`
+	BaseURL   string        `mapstructure:"BASE_URL"`
+	Timeout   time.Duration `mapstructure:"TIMEOUT"`
+	ServiceID int           `mapstructure:"SERVICE_ID"`
+}
+
+// CacheConfig holds in-memory cache configuration.
+type CacheConfig struct {
+	// PolicyTTL is how long internal/policy's compiled role->permission map is
+	// served from cache before the next request past expiry refreshes it from
+	// falcon (lazy, on-read — see keeper/pkg/cache).
+	PolicyTTL time.Duration `mapstructure:"POLICY_TTL"`
 }
 
 // ServiceEntry registers a downstream service that can be impersonated into.
@@ -147,6 +160,8 @@ func Load() (*Config, error) {
 	v.SetDefault("CORS.ALLOWED_ORIGINS", []string{"*"})
 	v.SetDefault("FALCON.BASE_URL", "http://falcon:9091")
 	v.SetDefault("FALCON.TIMEOUT", 3*time.Second)
+	v.SetDefault("FALCON.SERVICE_ID", 0)
+	v.SetDefault("CACHE.POLICY_TTL", 60*time.Second)
 
 	// Environment variables
 	v.SetEnvPrefix("KEEPER")
