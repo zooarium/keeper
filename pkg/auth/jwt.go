@@ -32,9 +32,13 @@ type UserClaims struct {
 	UserID     int `json:"user_id"`
 	DivisionID int `json:"division_id"`
 	Role       int `json:"role"`
-	// Roles carries fine-grained role names resolved from falcon at login
-	// time (empty on impersonation/guest tokens, which don't resolve them).
-	Roles []string `json:"roles,omitempty"`
+	// Roles carries fine-grained role assignments resolved from falcon at
+	// login time (empty on impersonation/guest tokens, which don't resolve
+	// them). ServiceID/AppID travel per-assignment because sudo's tenant
+	// scope (fal_user_role.app_id) is a property of the assignment, not the
+	// role — Can() needs it at check time, and it can't be recomputed from
+	// just a role name.
+	Roles []RoleAssignment `json:"roles,omitempty"`
 
 	// Imp marks this token as an impersonation token. When true, UserID is the
 	// impersonated user and Impersonator is the acting sysadmin.
@@ -48,6 +52,16 @@ type UserClaims struct {
 	// SessionID ties all per-audience tokens minted from one "login as" action
 	// together so a single revoke kills every one of them server-side.
 	SessionID string `json:"sid,omitempty"`
+}
+
+// RoleAssignment is one falcon-resolved role grant carried in a login JWT.
+// ServiceID/AppID mirror fal_user_role's denormalized scope columns: AppID
+// nil means the assignment (if sudo) spans every tenant, set means it's
+// scoped to that one app.
+type RoleAssignment struct {
+	Name      string `json:"name"`
+	ServiceID int    `json:"service_id"`
+	AppID     *int   `json:"app_id,omitempty"`
 }
 
 // Role values carried in JWT claims. Mirrors keeper's user roles
@@ -95,9 +109,9 @@ func (c *UserClaims) HasAudience(aud string) bool {
 }
 
 // Generate generates and signs a new token for a user. roles is optional —
-// pass falcon-resolved role names for a full login token, or omit it for
-// self-signed s2s/guest tokens that don't carry them.
-func (manager *JWTManager) Generate(appID, userID, divisionID, role int, roles ...string) (string, error) {
+// pass falcon-resolved role assignments for a full login token, or omit it
+// for self-signed s2s/guest tokens that don't carry them.
+func (manager *JWTManager) Generate(appID, userID, divisionID, role int, roles ...RoleAssignment) (string, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(manager.tokenDuration)),

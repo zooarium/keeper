@@ -34,10 +34,11 @@ CORS:
 FALCON:
   BASE_URL: "http://falcon-api-1:9091"
   TIMEOUT: 3s
-  # keeper's own numeric id in falcon's fal_service table (register keeper via
-  # POST /services on falcon first, then set this). Selects which service's
-  # map GET /services/{id}/permissions/map returns for internal/policy's cache.
-  SERVICE_ID: 0
+  # keeper's own numeric id in falcon's fal_service table, seeded fixed
+  # across all envs by falcon's fal_service migration fixture. Selects
+  # which service's map GET /services/{id}/permissions/map returns for
+  # internal/policy's cache.
+  SERVICE_ID: 1
 # Frequently-read, rarely-changing data cached in-memory with a short TTL.
 CACHE:
   # internal/policy's compiled role->permission map, pulled from falcon.

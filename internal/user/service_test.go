@@ -17,11 +17,11 @@ import (
 // stubRoleResolver returns Roles for every call, or Err if set — a fake
 // falcon dependency so tests don't need a real HTTP server.
 type stubRoleResolver struct {
-	Roles []string
+	Roles []auth.RoleAssignment
 	Err   error
 }
 
-func (s stubRoleResolver) ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]string, error) {
+func (s stubRoleResolver) ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]auth.RoleAssignment, error) {
 	return s.Roles, s.Err
 }
 
@@ -82,7 +82,7 @@ func TestService_Authenticate(t *testing.T) {
 
 	repo := NewUserRepository(client)
 	jwtManager := auth.NewJWTManager("secret", time.Hour)
-	svc := NewUserService(repo, jwtManager, stubRoleResolver{Roles: []string{"billing-admin"}})
+	svc := NewUserService(repo, jwtManager, stubRoleResolver{Roles: []auth.RoleAssignment{{Name: "billing-admin", ServiceID: 1}}})
 
 	ctx := context.Background()
 	email := "auth@example.com"
@@ -113,7 +113,7 @@ func TestService_Authenticate(t *testing.T) {
 
 		claims, err := jwtManager.Verify(res.Token)
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"billing-admin"}, claims.Roles)
+		assert.Equal(t, []auth.RoleAssignment{{Name: "billing-admin", ServiceID: 1}}, claims.Roles)
 	})
 
 	t.Run("RoleServiceUnavailable", func(t *testing.T) {

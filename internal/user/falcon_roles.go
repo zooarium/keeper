@@ -9,10 +9,10 @@ import (
 	"keeper/pkg/s2s"
 )
 
-// RoleResolver resolves a user's falcon-assigned role names at login time.
-// Login fails closed on any error — see Service.Authenticate.
+// RoleResolver resolves a user's falcon-assigned role assignments at login
+// time. Login fails closed on any error — see Service.Authenticate.
 type RoleResolver interface {
-	ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]string, error)
+	ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]auth.RoleAssignment, error)
 }
 
 // falconRoleResolver calls falcon's internal-s2s /user-roles endpoint. It has
@@ -31,10 +31,12 @@ func NewFalconRoleResolver(httpClient *http.Client, falconBaseURL string, jwt *a
 }
 
 type falconUserRole struct {
-	RoleName string `json:"role_name"`
+	RoleName  string `json:"role_name"`
+	ServiceID int    `json:"service_id"`
+	AppID     *int   `json:"app_id"`
 }
 
-func (f *falconRoleResolver) ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]string, error) {
+func (f *falconRoleResolver) ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]auth.RoleAssignment, error) {
 	token, err := f.jwt.Generate(appID, userID, divisionID, role)
 	if err != nil {
 		return nil, fmt.Errorf("sign s2s token: %w", err)
@@ -45,9 +47,9 @@ func (f *falconRoleResolver) ResolveRoles(ctx context.Context, appID, userID, di
 		return nil, fmt.Errorf("falcon user-roles: %w", err)
 	}
 
-	roles := make([]string, len(assignments))
+	roles := make([]auth.RoleAssignment, len(assignments))
 	for i, a := range assignments {
-		roles[i] = a.RoleName
+		roles[i] = auth.RoleAssignment{Name: a.RoleName, ServiceID: a.ServiceID, AppID: a.AppID}
 	}
 	return roles, nil
 }
