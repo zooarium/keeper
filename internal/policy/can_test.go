@@ -160,3 +160,39 @@ func TestCan_WorkedExample(t *testing.T) {
 		})
 	}
 }
+
+// TestCan_Tier2FieldRestriction covers the "admin updates their own app,
+// except status/manager_id" requirement (rbac-plan.md Worked Example #3):
+// admin (role id 2) only has permission 10 (app.update, base fields, no
+// Field set) — not 11 (app.update.status) or 12 (app.update.manager_id).
+func TestCan_Tier2FieldRestriction(t *testing.T) {
+	store := newTestStore(t, workedExampleRows)
+	ctx := context.Background()
+	adminClaims := &auth.UserClaims{Roles: []auth.RoleAssignment{{Name: "admin"}}} // user 502
+
+	tests := []struct {
+		name  string
+		field string
+		want  bool
+	}{
+		{"base app.update passes (field-less Tier 1 check)", "", true},
+		{"status field rejected: no matching permission row", "status", false},
+		{"manager_id field rejected: no matching permission row", "manager_id", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Can(ctx, store, adminClaims, 1, "app", "update", tt.field)
+			if got != tt.want {
+				t.Fatalf("Can(field=%q) = %v, want %v", tt.field, got, tt.want)
+			}
+		})
+	}
+
+	t.Run("sudo still bypasses field restriction", func(t *testing.T) {
+		sysadminClaims := &auth.UserClaims{Roles: []auth.RoleAssignment{{Name: "sysadmin"}}}
+		if !Can(ctx, store, sysadminClaims, 1, "app", "update", "status") {
+			t.Fatal("Can() = false, want true (sudo bypasses Tier 2 too)")
+		}
+	})
+}

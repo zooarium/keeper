@@ -59,10 +59,10 @@ func TestRouterAuthentication(t *testing.T) {
 	jwtManager := auth.NewJWTManager("secret", 1*time.Hour)
 
 	userSvc := &mockUserService{}
-	userHandler := user.NewUserHandler(userSvc)
+	userHandler := user.NewUserHandler(userSvc, nil)
 
 	appSvc := &mockAppService{}
-	appHandler := app.NewAppHandler(appSvc)
+	appHandler := app.NewAppHandler(appSvc, nil)
 
 	divSvc := &mockDivisionService{}
 	divHandler := division.NewDivisionHandler(divSvc)
@@ -118,10 +118,10 @@ func TestRouterAuthentication_ValidToken(t *testing.T) {
 	jwtManager := auth.NewJWTManager("secret", 1*time.Hour)
 
 	userSvc := &mockUserService{}
-	userHandler := user.NewUserHandler(userSvc)
+	userHandler := user.NewUserHandler(userSvc, nil)
 
 	appSvc := &mockAppService{}
-	appHandler := app.NewAppHandler(appSvc)
+	appHandler := app.NewAppHandler(appSvc, nil)
 
 	divSvc := &mockDivisionService{}
 	divHandler := division.NewDivisionHandler(divSvc)

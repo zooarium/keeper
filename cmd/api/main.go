@@ -163,7 +163,7 @@ func main() {
 	// Initialize components
 	userRepo := user.NewUserRepository(client)
 	userSvc := user.NewUserService(userRepo, jwtManager, roleResolver)
-	userHandler := user.NewUserHandler(userSvc)
+	userHandler := user.NewUserHandler(userSvc, policyStore)
 
 	divisionRepo := division.NewDivisionRepository(client)
 	divisionSvc := division.NewDivisionService(divisionRepo)
@@ -180,7 +180,7 @@ func main() {
 	// for the public /apps/lookup profile endpoint.
 	appRepo := app.NewAppRepository(client)
 	appSvc := app.NewAppService(appRepo, guestKeySvc)
-	appHandler := app.NewAppHandler(appSvc)
+	appHandler := app.NewAppHandler(appSvc, policyStore)
 
 	// Impersonation tokens are signed with their own dedicated secret so they
 	// only verify on services explicitly configured with it (and never on

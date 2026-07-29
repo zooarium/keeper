@@ -27,6 +27,16 @@ func NewStore(fetcher *Fetcher, ttl time.Duration) *Store {
 	return &Store{fetcher: fetcher, cache: cache.New(ttl)}
 }
 
+// NewStoreFromPolicies builds a Store pre-populated with policies and no
+// fetcher, for consumer-package tests that need a *Store without spinning up
+// an httptest falcon stand-in. Never refreshes — the seeded map is served
+// for the life of the Store.
+func NewStoreFromPolicies(policies map[string]RolePolicy) *Store {
+	s := &Store{cache: cache.New(time.Hour)}
+	s.cache.Set(cacheKey, policies)
+	return s
+}
+
 // Warm eagerly populates the cache so the first request after boot isn't
 // unguarded or slow. A failure here is logged but non-fatal — keeper must
 // still be able to boot while falcon is unreachable; Policies falls back to

@@ -31,13 +31,18 @@ func userRoleAssignments(claims *auth.UserClaims, policies map[string]RolePolicy
 }
 
 // hasPermission reports whether any permission grants resource+action.
-// Tier 1 (coarse CRUD) ignores field/scope — a field-restricted permission
-// (e.g. admin's app.update on base fields only) still grants the coarse
-// action here; the specific field/ownership check is layered on by Tier 2/3
-// (steps 7.2/7.3), reusing this same Can() call.
-func hasPermission(perms []Permission, resource, action string) bool {
+// field == "" is the Tier 1 coarse check: it ignores the permission's own
+// Field, so a field-restricted permission (e.g. admin's app.update on base
+// fields only) still grants the coarse action. field != "" is the Tier 2
+// check (step 7.2): it additionally requires an exact Field match — a
+// permission scoped to one field never grants a different field, and a
+// field-less (base) permission never grants a restricted field.
+func hasPermission(perms []Permission, resource, action, field string) bool {
 	for _, p := range perms {
-		if p.Resource == resource && p.Action == action {
+		if p.Resource != resource || p.Action != action {
+			continue
+		}
+		if field == "" || p.Field == field {
 			return true
 		}
 	}
@@ -47,15 +52,14 @@ func hasPermission(perms []Permission, resource, action string) bool {
 // Can reports whether the user identified by claims is authorized for
 // action on resource, scoped to appID (the target record's tenant — usually
 // but not always claims.AppID, e.g. a sysadmin acting on another tenant).
-// field is accepted but unused until Tier 2 (step 7.2) lands, so call sites
-// don't need to change signature when field-level checks are added.
+// Pass field == "" for the Tier 1 base-action check; pass a restricted
+// field name (e.g. "status") for the Tier 2 field-level check (step 7.2) —
+// sudo still bypasses both, since it never consults the permission map.
 //
 // Tenant isolation and the sudo bypass are orthogonal gates and both must
 // pass: a sudo assignment scoped to one app (AppID set) only bypasses the
 // permission check for that app, never across tenants.
 func Can(ctx context.Context, store *Store, claims *auth.UserClaims, appID int, resource, action, field string) bool {
-	_ = field // reserved for Tier 2 field-level enforcement
-
 	assignments := userRoleAssignments(claims, store.Policies(ctx))
 
 	for _, a := range assignments {
@@ -67,7 +71,7 @@ func Can(ctx context.Context, store *Store, claims *auth.UserClaims, appID int, 
 		}
 	}
 	for _, a := range assignments {
-		if hasPermission(a.Permissions, resource, action) {
+		if hasPermission(a.Permissions, resource, action, field) {
 			return true
 		}
 	}

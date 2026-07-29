@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"keeper/internal/policy"
 	"keeper/pkg/auth"
 	"keeper/pkg/render"
 
@@ -17,13 +18,15 @@ import (
 // UserHandler handles HTTP requests for users.
 type UserHandler struct {
 	svc      UserService
+	policy   *policy.Store
 	validate *validator.Validate
 }
 
 // NewUserHandler creates a new user handler.
-func NewUserHandler(svc UserService) *UserHandler {
+func NewUserHandler(svc UserService, policyStore *policy.Store) *UserHandler {
 	return &UserHandler{
 		svc:      svc,
+		policy:   policyStore,
 		validate: validator.New(),
 	}
 }
@@ -105,10 +108,18 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.IsSysAdmin() && (req.Role == int8(RoleSysAdmin) || req.Role == int8(RoleManager)) {
-		slog.Warn("create user rejected: non-sysadmin cannot assign sysadmin/manager role", "user_id", c.UserID)
+	if !policy.Can(r.Context(), h.policy, c, req.AppID, "user", "create", "") {
+		slog.Warn("create user rejected: caller lacks user.create permission", "user_id", c.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
+	}
+
+	if req.Role == int8(RoleSysAdmin) || req.Role == int8(RoleManager) {
+		if !policy.Can(r.Context(), h.policy, c, req.AppID, "user", "create", "role") {
+			slog.Warn("create user rejected: caller lacks user.create.role permission", "user_id", c.UserID)
+			render.Error(w, http.StatusForbidden, "access denied")
+			return
+		}
 	}
 
 	u, err := h.svc.Create(r.Context(), req)
@@ -288,10 +299,18 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !c.IsSysAdmin() && req.Role != nil && (*req.Role == RoleSysAdmin || *req.Role == RoleManager) {
-		slog.Warn("update user rejected: non-sysadmin cannot assign sysadmin/manager role", "user_id", c.UserID)
+	if !policy.Can(r.Context(), h.policy, c, c.AppID, "user", "update", "") {
+		slog.Warn("update user rejected: caller lacks user.update permission", "id", id, "user_id", c.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
+	}
+
+	if req.Role != nil && (*req.Role == RoleSysAdmin || *req.Role == RoleManager) {
+		if !policy.Can(r.Context(), h.policy, c, c.AppID, "user", "update", "role") {
+			slog.Warn("update user rejected: caller lacks user.update.role permission", "id", id, "user_id", c.UserID)
+			render.Error(w, http.StatusForbidden, "access denied")
+			return
+		}
 	}
 
 	appID := c.AppID

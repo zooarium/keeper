@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"keeper/internal/policy"
 	"keeper/pkg/auth"
 	"keeper/pkg/render"
 
@@ -20,11 +21,12 @@ import (
 // AppHandler handles HTTP requests for apps.
 type AppHandler struct {
 	svc      AppService
+	policy   *policy.Store
 	validate *validator.Validate
 }
 
 // NewAppHandler creates a new app handler.
-func NewAppHandler(svc AppService) *AppHandler {
+func NewAppHandler(svc AppService, policyStore *policy.Store) *AppHandler {
 	v := validator.New()
 	// httpurl accepts an empty value (optional field) or a valid http(s) URL.
 	// Needed because validator's omitempty does not skip a non-nil *string
@@ -34,6 +36,7 @@ func NewAppHandler(svc AppService) *AppHandler {
 	})
 	return &AppHandler{
 		svc:      svc,
+		policy:   policyStore,
 		validate: v,
 	}
 }
@@ -71,17 +74,17 @@ func (h *AppHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 }
 
 // authorizeApp fetches the app and reports whether claims may access it:
-// sysadmin (any app), the caller's own tenant app, or a manager assigned to
-// it via app.manager_id.
+// sudo (any app), the caller's own tenant app, or a manager assigned to it
+// via app.manager_id (ownership fallback — outside Can(), Tier 3 territory).
 func (h *AppHandler) authorizeApp(ctx context.Context, claims *auth.UserClaims, id int) (*App, bool) {
 	a, err := h.svc.GetByID(ctx, id)
 	if err != nil {
 		return nil, false
 	}
-	if claims.IsSysAdmin() || id == claims.AppID {
+	if id == claims.AppID || policy.Can(ctx, h.policy, claims, id, "app", "read", "") {
 		return a, true
 	}
-	return a, claims.IsManager() && a.ManagerID != nil && *a.ManagerID == claims.UserID
+	return a, a.ManagerID != nil && *a.ManagerID == claims.UserID
 }
 
 // LookupApp godoc
@@ -167,8 +170,8 @@ func (h *AppHandler) CreateApp(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
-	if !claims.IsSysAdmin() {
-		slog.Warn("non-sysadmin attempted to create app", "app_id", claims.AppID, "user_id", claims.UserID)
+	if !policy.Can(r.Context(), h.policy, claims, claims.AppID, "app", "create", "") {
+		slog.Warn("create app rejected: caller lacks app.create permission", "app_id", claims.AppID, "user_id", claims.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -340,14 +343,20 @@ func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.ManagerID != nil && !claims.IsSysAdmin() {
-		slog.Warn("update app rejected: non-sysadmin cannot assign manager", "id", id, "user_id", claims.UserID)
+	if !policy.Can(r.Context(), h.policy, claims, id, "app", "update", "") {
+		slog.Warn("update app rejected: caller lacks app.update permission", "id", id, "user_id", claims.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
 
-	if req.Status != nil && !claims.IsSysAdmin() {
-		slog.Warn("update app rejected: non-sysadmin cannot change status", "id", id, "user_id", claims.UserID)
+	if req.ManagerID != nil && !policy.Can(r.Context(), h.policy, claims, id, "app", "update", "manager_id") {
+		slog.Warn("update app rejected: caller lacks app.update.manager_id permission", "id", id, "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
+	if req.Status != nil && !policy.Can(r.Context(), h.policy, claims, id, "app", "update", "status") {
+		slog.Warn("update app rejected: caller lacks app.update.status permission", "id", id, "user_id", claims.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
