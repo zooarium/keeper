@@ -74,14 +74,19 @@ func (h *AppHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 }
 
 // authorizeApp fetches the app and reports whether claims may access it:
-// sudo (any app), the caller's own tenant app, or a manager assigned to it
-// via app.manager_id (ownership fallback — outside Can(), Tier 3 territory).
+// "any" scope (sysadmin/cross-tenant grant), the caller's own tenant app, or
+// a manager assigned to it via app.manager_id (ownership fallback — outside
+// Scope(), Tier 3 territory). A merely-granted but "own"-scoped app.read
+// permission never crosses the tenant boundary — only "any" does.
 func (h *AppHandler) authorizeApp(ctx context.Context, claims *auth.UserClaims, id int) (*App, bool) {
 	a, err := h.svc.GetByID(ctx, id)
 	if err != nil {
 		return nil, false
 	}
-	if id == claims.AppID || policy.Can(ctx, h.policy, claims, id, "app", "read", "") {
+	if id == claims.AppID {
+		return a, true
+	}
+	if scope, ok := policy.Scope(ctx, h.policy, claims, "app", "read"); ok && scope == "any" {
 		return a, true
 	}
 	return a, a.ManagerID != nil && *a.ManagerID == claims.UserID
@@ -217,30 +222,40 @@ func (h *AppHandler) ListApps(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Managers see the apps they've been assigned to manage.
-	if claims.IsManager() {
-		page := render.ParsePage(r)
-		apps, err := h.svc.ListByManager(r.Context(), claims.UserID, page.Limit, page.Offset)
+	scope, ok := policy.Scope(r.Context(), h.policy, claims, "app", "read")
+	if !ok {
+		slog.Warn("list apps rejected: caller lacks app.read permission", "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+
+	page := render.ParsePage(r)
+
+	// "own" scope: app is the tenant boundary itself, so the caller's own
+	// row is always included, plus any apps this user manages via
+	// app.manager_id (Tier 3 fallback — same relationship authorizeApp
+	// checks for single-record access, merged in here for the list).
+	if scope == "own" {
+		apps := []*App{}
+		if page.Offset == 0 {
+			if a, err := h.svc.GetByID(r.Context(), claims.AppID); err == nil {
+				apps = append(apps, a)
+			}
+		}
+		managed, err := h.svc.ListByManager(r.Context(), claims.UserID, page.Limit, page.Offset)
 		if err != nil {
 			render.Error(w, http.StatusInternalServerError, err.Error())
 			return
+		}
+		for _, a := range managed {
+			if a.ID != claims.AppID {
+				apps = append(apps, a)
+			}
 		}
 		render.JSON(w, http.StatusOK, apps)
 		return
 	}
 
-	// Other non-sysadmins may only see their own app.
-	if !claims.IsSysAdmin() {
-		a, err := h.svc.GetByID(r.Context(), claims.AppID)
-		if err != nil {
-			render.JSON(w, http.StatusOK, []*App{})
-			return
-		}
-		render.JSON(w, http.StatusOK, []*App{a})
-		return
-	}
-
-	page := render.ParsePage(r)
 	apps, err := h.svc.List(r.Context(), page.Limit, page.Offset)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, err.Error())
@@ -379,6 +394,7 @@ func (h *AppHandler) UpdateApp(w http.ResponseWriter, r *http.Request) {
 // @Success 204 "No Content"
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /apps/{id} [delete]
@@ -397,7 +413,16 @@ func (h *AppHandler) DeleteApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !claims.IsSysAdmin() && id != claims.AppID {
+	// Sysadmin (or any "any"-scoped grant) or own-tenant with app.delete; no
+	// manager fallback (managers cannot delete apps).
+	if id != claims.AppID {
+		if scope, ok := policy.Scope(r.Context(), h.policy, claims, "app", "read"); !ok || scope != "any" {
+			render.Error(w, http.StatusForbidden, "access denied")
+			return
+		}
+	}
+	if !policy.Can(r.Context(), h.policy, claims, id, "app", "delete", "") {
+		slog.Warn("delete app rejected: caller lacks app.delete permission", "id", id, "user_id", claims.UserID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}

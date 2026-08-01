@@ -32,22 +32,22 @@ var ErrSiteKeyNotFound = errors.New("no site key found for the given url")
 // GuestKeyRepository defines the data access contract for guest keys.
 type GuestKeyRepository interface {
 	Create(ctx context.Context, k GuestKey) (*GuestKey, error)
-	GetByID(ctx context.Context, id int) (*GuestKey, error)
+	GetByID(ctx context.Context, appID, id int) (*GuestKey, error)
 	GetActiveBySiteKey(ctx context.Context, siteKey string) (*GuestKey, error)
 	GetActiveByDomain(ctx context.Context, domain string) (*GuestKey, error)
 	List(ctx context.Context, appID, limit, offset int) ([]*GuestKey, error)
-	Update(ctx context.Context, id int, k *GuestKey) (*GuestKey, error)
-	Delete(ctx context.Context, id int) error
+	Update(ctx context.Context, appID, id int, k *GuestKey) (*GuestKey, error)
+	Delete(ctx context.Context, appID, id int) error
 	UserBelongsTo(ctx context.Context, userID, appID, divisionID int) (bool, error)
 }
 
 // GuestKeyService defines the business logic for guest keys.
 type GuestKeyService interface {
 	Create(ctx context.Context, req CreateGuestKeyRequest) (*GuestKey, error)
-	GetByID(ctx context.Context, id int) (*GuestKey, error)
+	GetByID(ctx context.Context, appID, id int) (*GuestKey, error)
 	List(ctx context.Context, appID, limit, offset int) ([]*GuestKey, error)
-	Update(ctx context.Context, id int, req UpdateGuestKeyRequest) (*GuestKey, error)
-	Delete(ctx context.Context, id int) error
+	Update(ctx context.Context, appID, id int, req UpdateGuestKeyRequest) (*GuestKey, error)
+	Delete(ctx context.Context, appID, id int) error
 	Authenticate(ctx context.Context, req GuestAuthRequest) (*GuestAuthResponse, error)
 	LookupSiteKey(ctx context.Context, rawURL string) (*SiteKeyLookupResponse, error)
 	AppIDBySiteKey(ctx context.Context, siteKey string) (int, error)
@@ -109,9 +109,9 @@ func (s *guestKeyService) Create(ctx context.Context, req CreateGuestKeyRequest)
 	return created, nil
 }
 
-func (s *guestKeyService) GetByID(ctx context.Context, id int) (*GuestKey, error) {
-	slog.Info("getting guest key by id", "id", id)
-	return s.repo.GetByID(ctx, id)
+func (s *guestKeyService) GetByID(ctx context.Context, appID, id int) (*GuestKey, error) {
+	slog.Info("getting guest key by id", "id", id, "app_id", appID)
+	return s.repo.GetByID(ctx, appID, id)
 }
 
 func (s *guestKeyService) List(ctx context.Context, appID, limit, offset int) ([]*GuestKey, error) {
@@ -119,9 +119,9 @@ func (s *guestKeyService) List(ctx context.Context, appID, limit, offset int) ([
 	return s.repo.List(ctx, appID, limit, offset)
 }
 
-func (s *guestKeyService) Update(ctx context.Context, id int, req UpdateGuestKeyRequest) (*GuestKey, error) {
-	slog.Info("updating guest key", "id", id)
-	existing, err := s.repo.GetByID(ctx, id)
+func (s *guestKeyService) Update(ctx context.Context, appID, id int, req UpdateGuestKeyRequest) (*GuestKey, error) {
+	slog.Info("updating guest key", "id", id, "app_id", appID)
+	existing, err := s.repo.GetByID(ctx, appID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +133,7 @@ func (s *guestKeyService) Update(ctx context.Context, id int, req UpdateGuestKey
 		existing.Status = *req.Status
 	}
 
-	updated, err := s.repo.Update(ctx, id, existing)
+	updated, err := s.repo.Update(ctx, appID, id, existing)
 	if err != nil {
 		return nil, err
 	}
@@ -142,9 +142,9 @@ func (s *guestKeyService) Update(ctx context.Context, id int, req UpdateGuestKey
 	return updated, nil
 }
 
-func (s *guestKeyService) Delete(ctx context.Context, id int) error {
-	slog.Info("deleting guest key", "id", id)
-	err := s.repo.Delete(ctx, id)
+func (s *guestKeyService) Delete(ctx context.Context, appID, id int) error {
+	slog.Info("deleting guest key", "id", id, "app_id", appID)
+	err := s.repo.Delete(ctx, appID, id)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (s *guestKeyService) Authenticate(ctx context.Context, req GuestAuthRequest
 		return nil, ErrInvalidSiteKey
 	}
 
-	token, err := s.guestJWT.Generate(k.AppID, k.UserID, k.DivisionID, auth.RoleGuest)
+	token, err := s.guestJWT.Generate(k.AppID, k.UserID, k.DivisionID)
 	if err != nil {
 		slog.Error("failed to generate guest token", "guest_key_id", k.ID, "error", err)
 		return nil, fmt.Errorf("generate guest token: %w", err)

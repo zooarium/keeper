@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"keeper/internal/policy"
 	"keeper/pkg/auth"
 	"keeper/pkg/render"
 
@@ -19,13 +20,15 @@ import (
 // ImpersonationHandler handles HTTP requests for impersonation.
 type ImpersonationHandler struct {
 	svc      ImpersonationService
+	policy   *policy.Store
 	validate *validator.Validate
 }
 
 // NewImpersonationHandler creates a new impersonation handler.
-func NewImpersonationHandler(svc ImpersonationService) *ImpersonationHandler {
+func NewImpersonationHandler(svc ImpersonationService, policyStore *policy.Store) *ImpersonationHandler {
 	return &ImpersonationHandler{
 		svc:      svc,
+		policy:   policyStore,
 		validate: validator.New(),
 	}
 }
@@ -45,7 +48,8 @@ func (h *ImpersonationHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 		r.Get("/active/{session_id}", h.SessionActive)
 	})
 
-	// Management surfaces — sysadmin only (enforced per handler).
+	// Management surfaces — impersonation.create/impersonation.read gated per
+	// handler (falcon-resolved, see requirePermission).
 	r.Group(func(r chi.Router) {
 		r.Use(auth.Middleware(jwtManager))
 		r.Post("/", h.Start)
@@ -62,7 +66,7 @@ func (h *ImpersonationHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 
 // Start godoc
 // @Summary Start an impersonation session
-// @Description Sysadmin-only. Mints a one-time handoff code for logging in as another user on a registered downstream service. The code is exchanged (cross-origin) for the actual token. Refuses to target a sysadmin.
+// @Description Requires impersonation.create (falcon-resolved). Mints a one-time handoff code for logging in as another user on a registered downstream service. The code is exchanged (cross-origin) for the actual token. Refuses to target a sysadmin.
 // @Tags impersonation
 // @Accept json
 // @Produce json
@@ -75,13 +79,8 @@ func (h *ImpersonationHandler) Routes(jwtManager *auth.JWTManager) chi.Router {
 // @Security Bearer
 // @Router /impersonations [post]
 func (h *ImpersonationHandler) Start(w http.ResponseWriter, r *http.Request) {
-	claims, ok := auth.GetClaimsFromContext(r.Context())
+	claims, ok := h.requirePermission(w, r, "create")
 	if !ok {
-		render.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	if !claims.IsSysAdmin() {
-		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
 
@@ -104,7 +103,8 @@ func (h *ImpersonationHandler) Start(w http.ResponseWriter, r *http.Request) {
 			render.Error(w, http.StatusBadRequest, err.Error())
 		case errors.Is(err, ErrTargetNotFound):
 			render.Error(w, http.StatusNotFound, err.Error())
-		case errors.Is(err, ErrCannotImpersonateSysAdmin):
+		case errors.Is(err, ErrPrivilegeEscalation):
+			slog.Warn("impersonation start rejected: privilege escalation", "impersonator", claims.UserID, "target_user_id", req.TargetUserID)
 			render.Error(w, http.StatusForbidden, err.Error())
 		default:
 			render.Error(w, http.StatusInternalServerError, err.Error())
@@ -212,7 +212,7 @@ func (h *ImpersonationHandler) SessionActive(w http.ResponseWriter, r *http.Requ
 
 // ListSessions godoc
 // @Summary List active impersonation sessions
-// @Description Sysadmin-only. Lists active impersonation sessions for audit.
+// @Description Requires impersonation.read (falcon-resolved). Lists active impersonation sessions for audit.
 // @Tags impersonation
 // @Produce json
 // @Param limit query int false "Max results (default 50, max 500)"
@@ -224,13 +224,7 @@ func (h *ImpersonationHandler) SessionActive(w http.ResponseWriter, r *http.Requ
 // @Security Bearer
 // @Router /impersonations [get]
 func (h *ImpersonationHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
-	claims, ok := auth.GetClaimsFromContext(r.Context())
-	if !ok {
-		render.Error(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	if !claims.IsSysAdmin() {
-		render.Error(w, http.StatusForbidden, "access denied")
+	if _, ok := h.requirePermission(w, r, "read"); !ok {
 		return
 	}
 
@@ -246,7 +240,7 @@ func (h *ImpersonationHandler) ListSessions(w http.ResponseWriter, r *http.Reque
 
 // ListServices godoc
 // @Summary List registered impersonation target services
-// @Description Sysadmin-only. Returns the services a sysadmin can impersonate a user into, for the UI service picker.
+// @Description Requires impersonation.read (falcon-resolved). Returns the registered services a caller can impersonate a user into, for the UI service picker.
 // @Tags impersonation
 // @Produce json
 // @Success 200 {object} render.Response{data=[]ServiceInfo}
@@ -255,7 +249,7 @@ func (h *ImpersonationHandler) ListSessions(w http.ResponseWriter, r *http.Reque
 // @Security Bearer
 // @Router /impersonations/services [get]
 func (h *ImpersonationHandler) ListServices(w http.ResponseWriter, r *http.Request) {
-	if !h.requireSysAdmin(w, r) {
+	if _, ok := h.requirePermission(w, r, "read"); !ok {
 		return
 	}
 	render.JSON(w, http.StatusOK, h.svc.Services())
@@ -263,7 +257,7 @@ func (h *ImpersonationHandler) ListServices(w http.ResponseWriter, r *http.Reque
 
 // GetSession godoc
 // @Summary Get an impersonation session by ID
-// @Description Sysadmin-only.
+// @Description Requires impersonation.read (falcon-resolved).
 // @Tags impersonation
 // @Produce json
 // @Param id path int true "Session ID"
@@ -274,7 +268,7 @@ func (h *ImpersonationHandler) ListServices(w http.ResponseWriter, r *http.Reque
 // @Security Bearer
 // @Router /impersonations/{id} [get]
 func (h *ImpersonationHandler) GetSession(w http.ResponseWriter, r *http.Request) {
-	if !h.requireSysAdmin(w, r) {
+	if _, ok := h.requirePermission(w, r, "read"); !ok {
 		return
 	}
 
@@ -295,7 +289,7 @@ func (h *ImpersonationHandler) GetSession(w http.ResponseWriter, r *http.Request
 
 // RevokeSession godoc
 // @Summary Revoke an impersonation session by ID
-// @Description Sysadmin-only. Revokes a session server-side; downstream services reject its token on next request.
+// @Description Requires impersonation.create (falcon-resolved). Revokes a session server-side; downstream services reject its token on next request.
 // @Tags impersonation
 // @Produce json
 // @Param id path int true "Session ID"
@@ -306,7 +300,7 @@ func (h *ImpersonationHandler) GetSession(w http.ResponseWriter, r *http.Request
 // @Security Bearer
 // @Router /impersonations/{id}/revoke [post]
 func (h *ImpersonationHandler) RevokeSession(w http.ResponseWriter, r *http.Request) {
-	if !h.requireSysAdmin(w, r) {
+	if _, ok := h.requirePermission(w, r, "create"); !ok {
 		return
 	}
 
@@ -325,16 +319,20 @@ func (h *ImpersonationHandler) RevokeSession(w http.ResponseWriter, r *http.Requ
 	render.JSON(w, http.StatusOK, sess)
 }
 
-// requireSysAdmin enforces sysadmin role, writing the error response when not.
-func (h *ImpersonationHandler) requireSysAdmin(w http.ResponseWriter, r *http.Request) bool {
+// requirePermission enforces authentication plus a coarse impersonation.<action>
+// grant. Impersonation has no per-record ownership (Tier 3 scoping doesn't
+// apply here) — this is a Tier 1 gate only, checked against the caller's own
+// tenant. action is "create" for the mutating endpoints (start, revoke) and
+// "read" for the audit/listing endpoints.
+func (h *ImpersonationHandler) requirePermission(w http.ResponseWriter, r *http.Request, action string) (*auth.UserClaims, bool) {
 	claims, ok := auth.GetClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(w, http.StatusUnauthorized, "unauthorized")
-		return false
+		return nil, false
 	}
-	if !claims.IsSysAdmin() {
+	if !policy.Can(r.Context(), h.policy, claims, claims.AppID, "impersonation", action, "") {
 		render.Error(w, http.StatusForbidden, "access denied")
-		return false
+		return nil, false
 	}
-	return true
+	return claims, true
 }

@@ -31,7 +31,7 @@ type ServiceInfo struct {
 }
 
 // TargetUser is the minimal snapshot of the impersonated user needed to mint a
-// token and populate the UI's stored user object (for role gating).
+// token and populate the UI's stored user object.
 type TargetUser struct {
 	ID         int    `json:"id"`
 	AppID      int    `json:"app_id"`
@@ -39,7 +39,6 @@ type TargetUser struct {
 	Firstname  string `json:"firstname"`
 	Lastname   string `json:"lastname"`
 	Email      string `json:"email"`
-	Role       int    `json:"role"`
 	Status     int8   `json:"status"`
 }
 

@@ -16,7 +16,7 @@ type UserRepository interface {
 	Create(ctx context.Context, u User) (*User, error)
 	GetByID(ctx context.Context, appID, id int) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
-	List(ctx context.Context, appID int, role int8, limit, offset int) ([]*User, error)
+	List(ctx context.Context, appID, limit, offset int) ([]*User, error)
 	Update(ctx context.Context, appID, id int, u *User) (*User, error)
 	Delete(ctx context.Context, appID, id int) error
 }
@@ -25,7 +25,7 @@ type UserRepository interface {
 type UserService interface {
 	Create(ctx context.Context, req CreateUserRequest) (*User, error)
 	GetByID(ctx context.Context, appID, id int) (*User, error)
-	List(ctx context.Context, appID int, role int8, limit, offset int) ([]*User, error)
+	List(ctx context.Context, appID, limit, offset int) ([]*User, error)
 	Update(ctx context.Context, appID, id int, req UpdateUserRequest) (*User, error)
 	Delete(ctx context.Context, appID, id int) error
 	Authenticate(ctx context.Context, req AuthRequest) (*AuthResponse, error)
@@ -63,7 +63,6 @@ func (s *userService) Create(ctx context.Context, req CreateUserRequest) (*User,
 		Lastname:   req.Lastname,
 		Email:      req.Email,
 		Password:   string(hashedPassword),
-		Role:       req.Role,
 		Status:     1,
 	})
 	if err != nil {
@@ -80,8 +79,8 @@ func (s *userService) GetByID(ctx context.Context, appID, id int) (*User, error)
 	return s.repo.GetByID(ctx, appID, id)
 }
 
-func (s *userService) List(ctx context.Context, appID int, role int8, limit, offset int) ([]*User, error) {
-	users, err := s.repo.List(ctx, appID, role, limit, offset)
+func (s *userService) List(ctx context.Context, appID, limit, offset int) ([]*User, error) {
+	users, err := s.repo.List(ctx, appID, limit, offset)
 	if err != nil {
 		slog.Error("failed to list users", "error", err)
 		return nil, err
@@ -119,9 +118,6 @@ func (s *userService) Update(ctx context.Context, appID, id int, req UpdateUserR
 			return nil, fmt.Errorf("hash password: %w", err)
 		}
 		existing.Password = string(hashedPassword)
-	}
-	if req.Role != nil {
-		existing.Role = *req.Role
 	}
 	if req.Status != nil {
 		existing.Status = *req.Status
@@ -172,13 +168,13 @@ func (s *userService) Authenticate(ctx context.Context, req AuthRequest) (*AuthR
 		return nil, errors.New("invalid credentials")
 	}
 
-	roles, err := s.roleResolver.ResolveRoles(ctx, u.AppID, u.ID, u.DivisionID, int(u.Role))
+	roles, err := s.roleResolver.ResolveRoles(ctx, u.AppID, u.ID, u.DivisionID)
 	if err != nil {
 		slog.Error("authentication failed: role resolution unavailable", "id", u.ID, "email", u.Email, "error", err)
 		return nil, ErrRoleServiceUnavailable
 	}
 
-	token, err := s.jwt.Generate(u.AppID, u.ID, u.DivisionID, int(u.Role), roles...)
+	token, err := s.jwt.Generate(u.AppID, u.ID, u.DivisionID, roles...)
 	if err != nil {
 		slog.Error("failed to generate JWT token", "id", u.ID, "error", err)
 		return nil, fmt.Errorf("generate token: %w", err)

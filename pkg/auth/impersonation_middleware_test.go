@@ -28,7 +28,7 @@ func TestImpMiddlewareAcceptsPrimaryToken(t *testing.T) {
 	imp := NewJWTManager("imp", time.Hour)
 	mw := ImpersonationAwareMiddleware(primary, imp, "squirrel", nil)(okHandler())
 
-	tok, _ := primary.Generate(1, 2, 3, RoleAdmin)
+	tok, _ := primary.Generate(1, 2, 3)
 	if code := doReq(mw, http.MethodGet, tok); code != http.StatusOK {
 		t.Errorf("expected 200 for primary token, got %d", code)
 	}
@@ -40,7 +40,7 @@ func TestImpMiddlewareAcceptsImpTokenForOwnAudience(t *testing.T) {
 	mw := ImpersonationAwareMiddleware(primary, imp, "squirrel", nil)(okHandler())
 
 	tok, _ := imp.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
+		AppID: 1, UserID: 2, DivisionID: 3,
 		Impersonator: 9, Audience: "squirrel", SessionID: "s", JTI: "j",
 	})
 	if code := doReq(mw, http.MethodPost, tok); code != http.StatusOK {
@@ -54,7 +54,7 @@ func TestImpMiddlewareRejectsForeignAudience(t *testing.T) {
 	mw := ImpersonationAwareMiddleware(primary, imp, "ant", nil)(okHandler())
 
 	tok, _ := imp.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
+		AppID: 1, UserID: 2, DivisionID: 3,
 		Impersonator: 9, Audience: "squirrel", SessionID: "s", JTI: "j",
 	})
 	if code := doReq(mw, http.MethodGet, tok); code != http.StatusUnauthorized {
@@ -68,7 +68,7 @@ func TestImpMiddlewareReadOnlyBlocksMutation(t *testing.T) {
 	mw := ImpersonationAwareMiddleware(primary, imp, "squirrel", nil)(okHandler())
 
 	tok, _ := imp.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
+		AppID: 1, UserID: 2, DivisionID: 3,
 		Impersonator: 9, Audience: "squirrel", SessionID: "s", JTI: "j", ReadOnly: true,
 	})
 	if code := doReq(mw, http.MethodGet, tok); code != http.StatusOK {
@@ -86,7 +86,7 @@ func TestImpMiddlewareRevocationRejects(t *testing.T) {
 	mw := ImpersonationAwareMiddleware(primary, imp, "squirrel", revoked)(okHandler())
 
 	tok, _ := imp.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
+		AppID: 1, UserID: 2, DivisionID: 3,
 		Impersonator: 9, Audience: "squirrel", SessionID: "s", JTI: "j",
 	})
 	if code := doReq(mw, http.MethodGet, tok); code != http.StatusUnauthorized {

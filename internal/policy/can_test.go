@@ -196,3 +196,79 @@ func TestCan_Tier2FieldRestriction(t *testing.T) {
 		}
 	})
 }
+
+// scopeRows carries one own-scoped and one any-scoped permission on the same
+// resource+action, plus a tenant-scoped sudo, to exercise every Scope()
+// branch.
+var scopeRows = []Row{
+	{Role: "sysadmin", IsSudo: true},
+	{Role: "tenant_sudo", IsSudo: true},
+	{Role: "member", Resource: strPtr("user"), Action: strPtr("read"), Scope: strPtr("own")},
+	{Role: "auditor", Resource: strPtr("user"), Action: strPtr("read"), Scope: strPtr("any")},
+	{Role: "legacy", Resource: strPtr("user"), Action: strPtr("read")}, // no Scope set
+}
+
+func TestScope(t *testing.T) {
+	store := newTestStore(t, scopeRows)
+	ctx := context.Background()
+
+	tests := []struct {
+		name      string
+		roles     []auth.RoleAssignment
+		wantScope string
+		wantOK    bool
+	}{
+		{
+			name:      "global sudo grants any regardless of resource",
+			roles:     []auth.RoleAssignment{{Name: "sysadmin"}},
+			wantScope: "any",
+			wantOK:    true,
+		},
+		{
+			name:      "tenant-scoped sudo grants own",
+			roles:     []auth.RoleAssignment{{Name: "tenant_sudo", AppID: appIDPtr(1)}},
+			wantScope: "own",
+			wantOK:    true,
+		},
+		{
+			name:      "own-scoped permission grants own",
+			roles:     []auth.RoleAssignment{{Name: "member"}},
+			wantScope: "own",
+			wantOK:    true,
+		},
+		{
+			name:      "any-scoped permission grants any",
+			roles:     []auth.RoleAssignment{{Name: "auditor"}},
+			wantScope: "any",
+			wantOK:    true,
+		},
+		{
+			name:      "unset scope defaults to any",
+			roles:     []auth.RoleAssignment{{Name: "legacy"}},
+			wantScope: "any",
+			wantOK:    true,
+		},
+		{
+			name:      "own and any across roles: any wins",
+			roles:     []auth.RoleAssignment{{Name: "member"}, {Name: "auditor"}},
+			wantScope: "any",
+			wantOK:    true,
+		},
+		{
+			name:      "no matching permission denies",
+			roles:     []auth.RoleAssignment{{Name: "unknown_role"}},
+			wantScope: "",
+			wantOK:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			claims := &auth.UserClaims{Roles: tt.roles}
+			gotScope, gotOK := Scope(ctx, store, claims, "user", "read")
+			if gotScope != tt.wantScope || gotOK != tt.wantOK {
+				t.Fatalf("Scope() = (%q, %v), want (%q, %v)", gotScope, gotOK, tt.wantScope, tt.wantOK)
+			}
+		})
+	}
+}

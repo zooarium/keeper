@@ -389,8 +389,8 @@ Properties:
 Keeper lets a **sysadmin** open a session as another user on a downstream
 service UI, with full parity of that user's rights, while keeping the admin's
 own session alive. Authorization is claims-based, so the minted token simply
-carries the impersonated user's identity (`app_id`, `user_id`, `division_id`,
-`role`); extra claims (`impersonator`, `imp`, `imp_ro`, `sid`, `aud`) add
+carries the impersonated user's identity (`app_id`, `user_id`, `division_id`);
+extra claims (`impersonator`, `imp`, `imp_ro`, `sid`, `aud`) add
 audit, scoping and revocation without reducing rights.
 
 ```
@@ -418,7 +418,7 @@ Properties:
   (privilege-escalation guard).
 - **Short expiry + revocation**: `AUTH.IMPERSONATION_JWT_EXPIRY` (default
   `10m`); revoke a session server-side via `POST /impersonations/{id}/revoke`
-  (sysadmin) or `POST /impersonations/logout` (self, by `session_id`).
+  (`impersonation.create`) or `POST /impersonations/logout` (self, by `session_id`).
   Downstream services optionally check `GET /impersonations/active/{sid}`
   (cached) so a revoked session dies before its expiry.
 - **One-time code handoff**: the JWT never travels in a URL — only a single-use,
@@ -451,19 +451,18 @@ By default, the services are available at:
 > **Note**: Every API endpoint requires authentication via a valid JWT token passed in the `Authorization` header as a Bearer token.
 
 - `GET /health`: Check service health.
-- `POST /users`: Create a new user.
-- `GET /users`: List all users. Optional `?role=` filter (e.g. `role=3` for managers). Assigning `RoleSysAdmin`/`RoleManager` (create or update) is sysadmin only.
+- `POST /users`: Create a new user. Requires `user.create`; `own` scope rejects a target `app_id` other than the caller's own (falcon-resolved; see RBAC below).
+- `GET /users`: List users, scoped by `user.read` (`own` returns just the caller's own app; `any`, e.g. sysadmin, returns every app).
 - `POST /users/auth`: Authenticate and get JWT.
-- `GET /users/{id}`: Get user by ID.
-- `PUT /users/{id}`: Update user by ID.
-- `DELETE /users/{id}`: Delete user by ID.
-- `GET /managers`: List all users with the manager role, across all apps (**sysadmin only**; 403 otherwise).
+- `GET /users/{id}`: Get user by ID. Requires `user.read`, scoped as above.
+- `PUT /users/{id}`: Update user by ID. Requires `user.update`, scoped as above.
+- `DELETE /users/{id}`: Delete user by ID. Requires `user.delete`, scoped as above (falcon-resolved; see RBAC below).
 - `GET /apps/lookup?site_key=...`: Resolve the public profile (name, tagline, logo, about, contact, tax_number, tax_percent, currency) for the app bound to a publishable guest site key (**public**, no auth, 10 req/min per IP). Returns 404 for an unknown/inactive site key or inactive app, without distinguishing between them. Excludes status + timestamps.
-- `POST /apps`: Create a new app (**sysadmin only**; 403 otherwise).
-- `GET /apps`: List apps (sysadmins: all; managers: apps they're assigned to via `manager_id`; other users: own app only).
-- `GET /apps/{id}`: Get app by ID (sysadmin, own app, or assigned manager).
-- `PUT /apps/{id}`: Update app by ID (sysadmin, own app, or assigned manager). Setting/clearing `manager_id` and changing `status` are **sysadmin only**.
-- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app — managers cannot delete).
+- `POST /apps`: Create a new app. Requires `app.create` permission (falcon-resolved; see RBAC below).
+- `GET /apps`: List apps, scoped by `app.read` (`own` returns the caller's own app plus any apps they manage via `manager_id`; `any`, e.g. sysadmin, returns every app).
+- `GET /apps/{id}`: Get app by ID (sysadmin, own app, or assigned manager via `manager_id`).
+- `PUT /apps/{id}`: Update app by ID (sysadmin, own app, or assigned manager). Setting/clearing `manager_id` and changing `status` require the corresponding `app.update.<field>` permission (falcon-resolved).
+- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app — no manager fallback). Requires `app.delete` permission (falcon-resolved).
 
 App carries profile fields editable by sysadmin (any app) or the tenant's own
 users (own app only): `tagline`, `logo_url` (URL, light `url` validation, no file
@@ -489,14 +488,14 @@ update, the `about` and `contact` sections replace wholesale when present.
 - `GET /guest-keys/{id}`: Get guest key by ID.
 - `PUT /guest-keys/{id}`: Update guest key name/status (tenant binding and site key immutable).
 - `DELETE /guest-keys/{id}`: Delete (revoke) a guest key.
-- `POST /impersonations`: Start an impersonation session; returns a one-time handoff code (sysadmin only; refuses sysadmin targets).
+- `POST /impersonations`: Start an impersonation session; returns a one-time handoff code. Requires `impersonation.create` (falcon-resolved; coarse gate, no ownership scoping); refuses any target holding a sudo (sysadmin-tier) role.
 - `POST /impersonations/exchange`: Exchange a one-time code for an impersonation token + user (public, 10 req/min per IP).
 - `POST /impersonations/logout`: Self-revoke a session by `session_id` (public, 10 req/min per IP).
 - `GET /impersonations/active/{session_id}`: Report whether a session is active — boolean only (public, 10 req/min per IP; for downstream revocation checks).
-- `GET /impersonations`: List active impersonation sessions (sysadmin only).
-- `GET /impersonations/services`: List registered impersonation target services for the UI picker (sysadmin only).
-- `GET /impersonations/{id}`: Get an impersonation session by ID (sysadmin only).
-- `POST /impersonations/{id}/revoke`: Revoke an impersonation session by ID (sysadmin only).
+- `GET /impersonations`: List active impersonation sessions. Requires `impersonation.read` (falcon-resolved).
+- `GET /impersonations/services`: List registered impersonation target services for the UI picker. Requires `impersonation.read` (falcon-resolved).
+- `GET /impersonations/{id}`: Get an impersonation session by ID. Requires `impersonation.read` (falcon-resolved).
+- `POST /impersonations/{id}/revoke`: Revoke an impersonation session by ID. Requires `impersonation.create` (falcon-resolved).
 - `GET /swagger/*`: Swagger UI.
 
 ## Rate Limiting

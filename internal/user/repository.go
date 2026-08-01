@@ -41,7 +41,6 @@ func (r *userRepository) Create(ctx context.Context, u User) (*User, error) {
 		SetLastname(u.Lastname).
 		SetEmail(u.Email).
 		SetPassword(u.Password).
-		SetRole(u.Role).
 		SetStatus(u.Status).
 		Save(ctx)
 	if err != nil {
@@ -85,13 +84,10 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*User, e
 	return r.mapToModel(u), nil
 }
 
-func (r *userRepository) List(ctx context.Context, appID int, role int8, limit, offset int) ([]*User, error) {
+func (r *userRepository) List(ctx context.Context, appID, limit, offset int) ([]*User, error) {
 	q := r.client.User.Query()
 	if appID != 0 {
 		q = q.Where(user.AppIDEQ(appID))
-	}
-	if role >= 0 {
-		q = q.Where(user.RoleEQ(role))
 	}
 	users, err := q.
 		Order(ent.Asc(user.FieldID)).
@@ -123,7 +119,6 @@ func (r *userRepository) Update(ctx context.Context, appID, id int, u *User) (*U
 		SetLastname(u.Lastname).
 		SetEmail(u.Email).
 		SetPassword(u.Password).
-		SetRole(u.Role).
 		SetStatus(u.Status).
 		Save(ctx)
 	if err != nil {
@@ -163,7 +158,6 @@ func (r *userRepository) mapToModel(u *ent.User) *User {
 		Lastname:   u.Lastname,
 		Email:      u.Email,
 		Password:   u.Password,
-		Role:       u.Role,
 		Status:     u.Status,
 		CreatedAt:  u.CreatedAt,
 		UpdatedAt:  u.UpdatedAt,

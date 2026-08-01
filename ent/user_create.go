@@ -58,20 +58,6 @@ func (_c *UserCreate) SetPassword(v string) *UserCreate {
 	return _c
 }
 
-// SetRole sets the "role" field.
-func (_c *UserCreate) SetRole(v int8) *UserCreate {
-	_c.mutation.SetRole(v)
-	return _c
-}
-
-// SetNillableRole sets the "role" field if the given value is not nil.
-func (_c *UserCreate) SetNillableRole(v *int8) *UserCreate {
-	if v != nil {
-		_c.SetRole(*v)
-	}
-	return _c
-}
-
 // SetStatus sets the "status" field.
 func (_c *UserCreate) SetStatus(v int8) *UserCreate {
 	_c.mutation.SetStatus(v)
@@ -159,10 +145,6 @@ func (_c *UserCreate) ExecX(ctx context.Context) {
 
 // defaults sets the default values of the builder before save.
 func (_c *UserCreate) defaults() {
-	if _, ok := _c.mutation.Role(); !ok {
-		v := user.DefaultRole
-		_c.mutation.SetRole(v)
-	}
 	if _, ok := _c.mutation.Status(); !ok {
 		v := user.DefaultStatus
 		_c.mutation.SetStatus(v)
@@ -196,9 +178,6 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
-	}
-	if _, ok := _c.mutation.Role(); !ok {
-		return &ValidationError{Name: "role", err: errors.New(`ent: missing required field "User.role"`)}
 	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "User.status"`)}
@@ -256,10 +235,6 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
-	}
-	if value, ok := _c.mutation.Role(); ok {
-		_spec.SetField(user.FieldRole, field.TypeInt8, value)
-		_node.Role = value
 	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(user.FieldStatus, field.TypeInt8, value)

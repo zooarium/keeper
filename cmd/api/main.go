@@ -167,14 +167,14 @@ func main() {
 
 	divisionRepo := division.NewDivisionRepository(client)
 	divisionSvc := division.NewDivisionService(divisionRepo)
-	divisionHandler := division.NewDivisionHandler(divisionSvc)
+	divisionHandler := division.NewDivisionHandler(divisionSvc, policyStore)
 
 	// Guest tokens are signed with a dedicated secret so they only work on
 	// surfaces that explicitly verify with it (e.g. ant's order-intake).
 	guestJWTManager := auth.NewJWTManager(cfg.Auth.GuestJWTSecret, cfg.Auth.GuestJWTExpiry)
 	guestKeyRepo := guestkey.NewGuestKeyRepository(client)
 	guestKeySvc := guestkey.NewGuestKeyService(guestKeyRepo, guestJWTManager, cfg.Auth.GuestJWTExpiry)
-	guestKeyHandler := guestkey.NewGuestKeyHandler(guestKeySvc)
+	guestKeyHandler := guestkey.NewGuestKeyHandler(guestKeySvc, policyStore)
 
 	// appSvc depends on guestKeySvc to resolve publishable site keys to app IDs
 	// for the public /apps/lookup profile endpoint.
@@ -195,8 +195,8 @@ func main() {
 		}
 	}
 	impersonationRepo := impersonation.NewImpersonationRepository(client)
-	impersonationSvc := impersonation.NewImpersonationService(impersonationRepo, impJWTManager, cfg.Auth.ImpersonationJWTExpiry, impersonationCodeTTL, impServices)
-	impersonationHandler := impersonation.NewImpersonationHandler(impersonationSvc)
+	impersonationSvc := impersonation.NewImpersonationService(impersonationRepo, roleResolver, policyStore, impJWTManager, cfg.Auth.ImpersonationJWTExpiry, impersonationCodeTTL, impServices)
+	impersonationHandler := impersonation.NewImpersonationHandler(impersonationSvc, policyStore)
 
 	router := platformhttp.NewRouter(userHandler, appHandler, divisionHandler, guestKeyHandler, impersonationHandler, jwtManager, cfg, dbDriver)
 
@@ -221,7 +221,6 @@ func main() {
 	// listener's manager (primary secret, or per-listener JWT_SECRET).
 	mount := func(r chi.Router, jm *auth.JWTManager) {
 		r.Mount("/users", userHandler.Routes(jm))
-		r.Mount("/managers", userHandler.ManagerRoutes(jm))
 		r.Mount("/apps", appHandler.Routes(jm))
 		r.Mount("/divisions", divisionHandler.Routes(jm))
 		r.Mount("/guest-keys", guestKeyHandler.Routes(jm))

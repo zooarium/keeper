@@ -31,8 +31,6 @@ type User struct {
 	Email string `json:"email,omitempty"`
 	// Password holds the value of the "password" field.
 	Password string `json:"-"`
-	// Role holds the value of the "role" field.
-	Role int8 `json:"role,omitempty"`
 	// Status holds the value of the "status" field.
 	Status int8 `json:"status,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -83,7 +81,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID, user.FieldAppID, user.FieldDivisionID, user.FieldRole, user.FieldStatus:
+		case user.FieldID, user.FieldAppID, user.FieldDivisionID, user.FieldStatus:
 			values[i] = new(sql.NullInt64)
 		case user.FieldFirstname, user.FieldLastname, user.FieldEmail, user.FieldPassword:
 			values[i] = new(sql.NullString)
@@ -145,12 +143,6 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field password", values[i])
 			} else if value.Valid {
 				_m.Password = value.String
-			}
-		case user.FieldRole:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field role", values[i])
-			} else if value.Valid {
-				_m.Role = int8(value.Int64)
 			}
 		case user.FieldStatus:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -232,9 +224,6 @@ func (_m *User) String() string {
 	builder.WriteString(_m.Email)
 	builder.WriteString(", ")
 	builder.WriteString("password=<sensitive>")
-	builder.WriteString(", ")
-	builder.WriteString("role=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Role))
 	builder.WriteString(", ")
 	builder.WriteString("status=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Status))

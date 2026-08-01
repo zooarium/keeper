@@ -24,16 +24,17 @@ func withURLParam(req *http.Request, key, value string) *http.Request {
 	return req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 }
 
-func strPtr(s string) *string { return &s }
-
-// testPolicyStore mirrors rbac-plan.md's Worked Example admin permission:
-// sysadmin sudo bypasses everything; admin holds user.create/user.update on
-// base fields only, never the "role" field (elevating to sysadmin/manager).
+// testPolicyStore mirrors falcon's exported policy: sysadmin sudo bypasses
+// everything; admin holds user CRUD scoped to its own tenant (Scope "own").
 var testPolicyStore = policy.NewStoreFromPolicies(policy.Compile([]policy.Row{
 	{Role: "sysadmin", IsSudo: true},
-	{Role: "admin", Resource: strPtr("user"), Action: strPtr("create")},
-	{Role: "admin", Resource: strPtr("user"), Action: strPtr("update")},
+	{Role: "admin", Resource: strPtr("user"), Action: strPtr("create"), Scope: strPtr("own")},
+	{Role: "admin", Resource: strPtr("user"), Action: strPtr("read"), Scope: strPtr("own")},
+	{Role: "admin", Resource: strPtr("user"), Action: strPtr("update"), Scope: strPtr("own")},
+	{Role: "admin", Resource: strPtr("user"), Action: strPtr("delete"), Scope: strPtr("own")},
 }))
+
+func strPtr(s string) *string { return &s }
 
 // withClaims returns a request carrying the given user claims in context,
 // mirroring how auth middleware injects them.
@@ -62,8 +63,8 @@ func (m *mockService) GetByID(ctx context.Context, appID, id int) (*User, error)
 	return args.Get(0).(*User), args.Error(1)
 }
 
-func (m *mockService) List(ctx context.Context, appID int, role int8, limit, offset int) ([]*User, error) {
-	args := m.Called(ctx, appID, role, limit, offset)
+func (m *mockService) List(ctx context.Context, appID, limit, offset int) ([]*User, error) {
+	args := m.Called(ctx, appID, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -124,49 +125,6 @@ func TestHandler_Create(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rr.Code)
 }
 
-func TestHandler_ListManagers_SysAdmin(t *testing.T) {
-	svc := new(mockService)
-	handler := NewUserHandler(svc, testPolicyStore)
-
-	managers := []*User{{ID: 2, Role: RoleManager}}
-	svc.On("List", mock.Anything, 0, RoleManager, 50, 0).Return(managers, nil)
-
-	req, _ := http.NewRequest("GET", "/managers", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin})
-	rr := httptest.NewRecorder()
-
-	handler.ListManagers(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-	svc.AssertExpectations(t)
-}
-
-func TestHandler_ListManagers_NonSysAdmin_Forbidden(t *testing.T) {
-	svc := new(mockService)
-	handler := NewUserHandler(svc, testPolicyStore)
-
-	req, _ := http.NewRequest("GET", "/managers", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin})
-	rr := httptest.NewRecorder()
-
-	handler.ListManagers(rr, req)
-
-	assert.Equal(t, http.StatusForbidden, rr.Code)
-	svc.AssertNotCalled(t, "List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
-}
-
-func TestHandler_ListManagers_NoClaims_Unauthorized(t *testing.T) {
-	svc := new(mockService)
-	handler := NewUserHandler(svc, testPolicyStore)
-
-	req, _ := http.NewRequest("GET", "/managers", nil)
-	rr := httptest.NewRecorder()
-
-	handler.ListManagers(rr, req)
-
-	assert.Equal(t, http.StatusUnauthorized, rr.Code)
-}
-
 func TestHandler_Authenticate(t *testing.T) {
 	svc := new(mockService)
 	handler := NewUserHandler(svc, testPolicyStore)
@@ -202,7 +160,7 @@ func TestHandler_Authenticate(t *testing.T) {
 	assert.Equal(t, expectedResp.Token, dataMap["token"])
 }
 
-func TestHandler_CreateUser_Admin_CanCreateNormalUser(t *testing.T) {
+func TestHandler_CreateUser_Admin_CanCreateUser(t *testing.T) {
 	svc := new(mockService)
 	handler := NewUserHandler(svc, testPolicyStore)
 
@@ -219,59 +177,7 @@ func TestHandler_CreateUser_Admin_CanCreateNormalUser(t *testing.T) {
 
 	body, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
-	rr := httptest.NewRecorder()
-
-	handler.CreateUser(rr, req)
-
-	assert.Equal(t, http.StatusCreated, rr.Code)
-	svc.AssertExpectations(t)
-}
-
-func TestHandler_CreateUser_Admin_CannotAssignManagerRole(t *testing.T) {
-	svc := new(mockService)
-	handler := NewUserHandler(svc, testPolicyStore)
-
-	reqBody := CreateUserRequest{
-		AppID:      1,
-		DivisionID: 1,
-		Firstname:  "New",
-		Lastname:   "Manager",
-		Email:      "newmanager@example.com",
-		Password:   "password123",
-		Role:       RoleManager,
-	}
-
-	body, _ := json.Marshal(reqBody)
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
-	rr := httptest.NewRecorder()
-
-	handler.CreateUser(rr, req)
-
-	assert.Equal(t, http.StatusForbidden, rr.Code)
-	svc.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
-}
-
-func TestHandler_CreateUser_SysAdmin_CanAssignManagerRole(t *testing.T) {
-	svc := new(mockService)
-	handler := NewUserHandler(svc, testPolicyStore)
-
-	reqBody := CreateUserRequest{
-		AppID:      1,
-		DivisionID: 1,
-		Firstname:  "New",
-		Lastname:   "Manager",
-		Email:      "newmanager2@example.com",
-		Password:   "password123",
-		Role:       RoleManager,
-	}
-	expectedUser := &User{ID: 3, AppID: 1, Role: RoleManager}
-	svc.On("Create", mock.Anything, reqBody).Return(expectedUser, nil)
-
-	body, _ := json.Marshal(reqBody)
-	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.CreateUser(rr, req)
@@ -295,7 +201,7 @@ func TestHandler_CreateUser_NoPermission_Forbidden(t *testing.T) {
 
 	body, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 5, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "unknown_role"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 5, Roles: []auth.RoleAssignment{{Name: "unknown_role"}}})
 	rr := httptest.NewRecorder()
 
 	handler.CreateUser(rr, req)
@@ -304,7 +210,7 @@ func TestHandler_CreateUser_NoPermission_Forbidden(t *testing.T) {
 	svc.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
 }
 
-func TestHandler_UpdateUser_Admin_CanUpdateBaseFields(t *testing.T) {
+func TestHandler_UpdateUser_Admin_CanUpdateUser(t *testing.T) {
 	svc := new(mockService)
 	handler := NewUserHandler(svc, testPolicyStore)
 
@@ -315,7 +221,7 @@ func TestHandler_UpdateUser_Admin_CanUpdateBaseFields(t *testing.T) {
 
 	body, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("PUT", "/users/4", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	req = withURLParam(req, "id", "4")
 	rr := httptest.NewRecorder()
 
@@ -325,16 +231,16 @@ func TestHandler_UpdateUser_Admin_CanUpdateBaseFields(t *testing.T) {
 	svc.AssertExpectations(t)
 }
 
-func TestHandler_UpdateUser_Admin_CannotAssignManagerRole(t *testing.T) {
+func TestHandler_UpdateUser_NoPermission_Forbidden(t *testing.T) {
 	svc := new(mockService)
 	handler := NewUserHandler(svc, testPolicyStore)
 
-	newRole := RoleManager
-	reqBody := UpdateUserRequest{Role: &newRole}
+	newFirstname := "Updated"
+	reqBody := UpdateUserRequest{Firstname: &newFirstname}
 
 	body, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("PUT", "/users/4", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 5, Roles: []auth.RoleAssignment{{Name: "unknown_role"}}})
 	req = withURLParam(req, "id", "4")
 	rr := httptest.NewRecorder()
 
@@ -344,23 +250,115 @@ func TestHandler_UpdateUser_Admin_CannotAssignManagerRole(t *testing.T) {
 	svc.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
-func TestHandler_UpdateUser_SysAdmin_CanAssignManagerRole(t *testing.T) {
+func TestHandler_DeleteUser_Admin_CanDeleteUser(t *testing.T) {
 	svc := new(mockService)
 	handler := NewUserHandler(svc, testPolicyStore)
 
-	newRole := RoleManager
-	reqBody := UpdateUserRequest{Role: &newRole}
-	updatedUser := &User{ID: 4, AppID: 1, Role: RoleManager}
-	svc.On("Update", mock.Anything, 0, 4, reqBody).Return(updatedUser, nil)
+	svc.On("Delete", mock.Anything, 1, 4).Return(nil)
 
-	body, _ := json.Marshal(reqBody)
-	req, _ := http.NewRequest("PUT", "/users/4", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req, _ := http.NewRequest("DELETE", "/users/4", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	req = withURLParam(req, "id", "4")
 	rr := httptest.NewRecorder()
 
-	handler.UpdateUser(rr, req)
+	handler.DeleteUser(rr, req)
+
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestHandler_DeleteUser_NoPermission_Forbidden(t *testing.T) {
+	svc := new(mockService)
+	handler := NewUserHandler(svc, testPolicyStore)
+
+	req, _ := http.NewRequest("DELETE", "/users/4", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 5, Roles: []auth.RoleAssignment{{Name: "unknown_role"}}})
+	req = withURLParam(req, "id", "4")
+	rr := httptest.NewRecorder()
+
+	handler.DeleteUser(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestHandler_ListUsers_OwnScope_ScopedToCallerApp(t *testing.T) {
+	svc := new(mockService)
+	handler := NewUserHandler(svc, testPolicyStore)
+
+	expectedUsers := []*User{{ID: 1, AppID: 1}}
+	svc.On("List", mock.Anything, 1, 50, 0).Return(expectedUsers, nil)
+
+	req, _ := http.NewRequest("GET", "/users", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	rr := httptest.NewRecorder()
+
+	handler.ListUsers(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
 	svc.AssertExpectations(t)
+}
+
+func TestHandler_ListUsers_AnyScope_Unrestricted(t *testing.T) {
+	svc := new(mockService)
+	handler := NewUserHandler(svc, testPolicyStore)
+
+	expectedUsers := []*User{{ID: 1, AppID: 1}, {ID: 2, AppID: 2}}
+	svc.On("List", mock.Anything, 0, 50, 0).Return(expectedUsers, nil)
+
+	req, _ := http.NewRequest("GET", "/users", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	rr := httptest.NewRecorder()
+
+	handler.ListUsers(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestHandler_ListUsers_NoPermission_Forbidden(t *testing.T) {
+	svc := new(mockService)
+	handler := NewUserHandler(svc, testPolicyStore)
+
+	req, _ := http.NewRequest("GET", "/users", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 5, Roles: []auth.RoleAssignment{{Name: "unknown_role"}}})
+	rr := httptest.NewRecorder()
+
+	handler.ListUsers(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "List", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestHandler_GetUserByID_AnyScope_Unrestricted(t *testing.T) {
+	svc := new(mockService)
+	handler := NewUserHandler(svc, testPolicyStore)
+
+	expectedUser := &User{ID: 4, AppID: 2}
+	svc.On("GetByID", mock.Anything, 0, 4).Return(expectedUser, nil)
+
+	req, _ := http.NewRequest("GET", "/users/4", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req = withURLParam(req, "id", "4")
+	rr := httptest.NewRecorder()
+
+	handler.GetUserByID(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestHandler_GetUserByID_NoPermission_Forbidden(t *testing.T) {
+	svc := new(mockService)
+	handler := NewUserHandler(svc, testPolicyStore)
+
+	req, _ := http.NewRequest("GET", "/users/4", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 5, Roles: []auth.RoleAssignment{{Name: "unknown_role"}}})
+	req = withURLParam(req, "id", "4")
+	rr := httptest.NewRecorder()
+
+	handler.GetUserByID(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything, mock.Anything)
 }

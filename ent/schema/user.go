@@ -32,7 +32,6 @@ func (User) Fields() []ent.Field {
 		field.String("lastname"),
 		field.String("email").Unique(),
 		field.String("password").Sensitive(),
-		field.Int8("role").Default(0),
 		field.Int8("status").Default(1),
 		field.Time("created_at").Default(time.Now),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),

@@ -72,7 +72,6 @@ func Seed(ctx context.Context, client *ent.Client, cfg config.SeedConfig) error 
 		SetLastname("Admin").
 		SetEmail(cfg.AdminEmail).
 		SetPassword(string(hashed)).
-		SetRole(1).
 		SetStatus(1).
 		Save(ctx)
 	if err != nil {

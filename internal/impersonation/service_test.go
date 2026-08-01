@@ -7,8 +7,19 @@ import (
 	"testing"
 	"time"
 
+	"keeper/internal/policy"
 	"keeper/pkg/auth"
 )
+
+// mockRoleResolver returns pre-seeded roles per user id; missing ids resolve
+// to no roles (ordinary user).
+type mockRoleResolver struct {
+	roles map[int][]auth.RoleAssignment
+}
+
+func (m *mockRoleResolver) ResolveRoles(_ context.Context, _, userID, _ int) ([]auth.RoleAssignment, error) {
+	return m.roles[userID], nil
+}
 
 // mockRepo is an in-memory ImpersonationRepository for tests.
 type mockRepo struct {
@@ -88,31 +99,34 @@ func (m *mockRepo) GetUser(_ context.Context, id int) (*TargetUser, error) {
 	return nil, errors.New("user not found")
 }
 
+// testPolicyStore compiles a "sysadmin" sudo role, mirroring falcon's export
+// shape, for the privilege-escalation guard to check target roles against.
+var testPolicyStore = policy.NewStoreFromPolicies(policy.Compile([]policy.Row{
+	{Role: "sysadmin", IsSudo: true},
+}))
+
 func newService(repo *mockRepo) (ImpersonationService, *auth.JWTManager) {
+	return newServiceWithRoles(repo, nil)
+}
+
+// newServiceWithRoles builds a service whose roleResolver resolves the given
+// target-user-id -> roles map (empty/nil means every target is an ordinary,
+// non-sudo user).
+func newServiceWithRoles(repo *mockRepo, roles map[int][]auth.RoleAssignment) (ImpersonationService, *auth.JWTManager) {
 	mgr := auth.NewJWTManager("imp-secret", 10*time.Minute)
-	svc := NewImpersonationService(repo, mgr, 10*time.Minute, time.Minute, []ServiceInfo{{Key: "squirrel", Audience: "squirrel", UIExchangeURL: "http://localhost/x"}})
+	resolver := &mockRoleResolver{roles: roles}
+	svc := NewImpersonationService(repo, resolver, testPolicyStore, mgr, 10*time.Minute, time.Minute, []ServiceInfo{{Key: "squirrel", Audience: "squirrel", UIExchangeURL: "http://localhost/x"}})
 	return svc, mgr
 }
 
 func TestStartRejectsUnregisteredAudience(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7}
 	svc, _ := newService(repo)
 
 	_, err := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "ant"})
 	if !errors.Is(err, ErrServiceNotRegistered) {
 		t.Fatalf("expected ErrServiceNotRegistered, got %v", err)
-	}
-}
-
-func TestStartRejectsSysAdminTarget(t *testing.T) {
-	repo := newMockRepo()
-	repo.users[99] = &TargetUser{ID: 99, AppID: 3, DivisionID: 7, Role: auth.RoleSysAdmin}
-	svc, _ := newService(repo)
-
-	_, err := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 99, Audience: "squirrel"})
-	if !errors.Is(err, ErrCannotImpersonateSysAdmin) {
-		t.Fatalf("expected ErrCannotImpersonateSysAdmin, got %v", err)
 	}
 }
 
@@ -126,9 +140,20 @@ func TestStartRejectsMissingTarget(t *testing.T) {
 	}
 }
 
+func TestStartRefusesSysadminTarget(t *testing.T) {
+	repo := newMockRepo()
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7}
+	svc, _ := newServiceWithRoles(repo, map[int][]auth.RoleAssignment{42: {{Name: "sysadmin"}}})
+
+	_, err := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "squirrel"})
+	if !errors.Is(err, ErrPrivilegeEscalation) {
+		t.Fatalf("expected ErrPrivilegeEscalation, got %v", err)
+	}
+}
+
 func TestStartExchangeMintsScopedToken(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin, Email: "u@x.com"}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Email: "u@x.com"}
 	svc, mgr := newService(repo)
 
 	start, err := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "squirrel", Reason: "support"})
@@ -162,7 +187,7 @@ func TestStartExchangeMintsScopedToken(t *testing.T) {
 
 func TestExchangeCodeIsSingleUse(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7}
 	svc, _ := newService(repo)
 
 	start, _ := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "squirrel"})
@@ -176,7 +201,7 @@ func TestExchangeCodeIsSingleUse(t *testing.T) {
 
 func TestRevokeBlocksExchangeAndStatus(t *testing.T) {
 	repo := newMockRepo()
-	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7, Role: auth.RoleAdmin}
+	repo.users[42] = &TargetUser{ID: 42, AppID: 3, DivisionID: 7}
 	svc, _ := newService(repo)
 
 	start, _ := svc.Start(context.Background(), 1, StartImpersonationRequest{TargetUserID: 42, Audience: "squirrel"})

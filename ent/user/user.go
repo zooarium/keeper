@@ -26,8 +26,6 @@ const (
 	FieldEmail = "email"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
-	// FieldRole holds the string denoting the role field in the database.
-	FieldRole = "role"
 	// FieldStatus holds the string denoting the status field in the database.
 	FieldStatus = "status"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -65,7 +63,6 @@ var Columns = []string{
 	FieldLastname,
 	FieldEmail,
 	FieldPassword,
-	FieldRole,
 	FieldStatus,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -82,8 +79,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// DefaultRole holds the default value on creation for the "role" field.
-	DefaultRole int8
 	// DefaultStatus holds the default value on creation for the "status" field.
 	DefaultStatus int8
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -130,11 +125,6 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 // ByPassword orders the results by the password field.
 func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPassword, opts...).ToFunc()
-}
-
-// ByRole orders the results by the role field.
-func ByRole(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldRole, opts...).ToFunc()
 }
 
 // ByStatus orders the results by the status field.

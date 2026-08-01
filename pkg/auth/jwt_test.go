@@ -12,7 +12,6 @@ func TestGenerateImpersonationCarriesClaims(t *testing.T) {
 		AppID:        3,
 		UserID:       42,
 		DivisionID:   7,
-		Role:         RoleAdmin,
 		Impersonator: 1,
 		Audience:     "squirrel",
 		SessionID:    "sess-abc",
@@ -34,9 +33,6 @@ func TestGenerateImpersonationCarriesClaims(t *testing.T) {
 	if claims.UserID != 42 || claims.AppID != 3 || claims.DivisionID != 7 {
 		t.Errorf("impersonated identity not preserved: %+v", claims)
 	}
-	if claims.Role != RoleAdmin {
-		t.Errorf("expected impersonated user role preserved, got %d", claims.Role)
-	}
 	if claims.Impersonator != 1 {
 		t.Errorf("expected impersonator 1, got %d", claims.Impersonator)
 	}
@@ -54,7 +50,7 @@ func TestGenerateImpersonationCarriesClaims(t *testing.T) {
 func TestImpersonationTokenUselessWithOtherSecret(t *testing.T) {
 	imp := NewJWTManager("imp-secret", 10*time.Minute)
 	token, err := imp.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
+		AppID: 1, UserID: 2, DivisionID: 3,
 		Impersonator: 9, Audience: "ant", SessionID: "s", JTI: "j",
 	})
 	if err != nil {
@@ -70,7 +66,7 @@ func TestImpersonationTokenUselessWithOtherSecret(t *testing.T) {
 func TestVerifyWithAudienceRejectsMismatch(t *testing.T) {
 	mgr := NewJWTManager("imp-secret", 10*time.Minute)
 	token, err := mgr.GenerateImpersonation(ImpersonationParams{
-		AppID: 1, UserID: 2, DivisionID: 3, Role: RoleAdmin,
+		AppID: 1, UserID: 2, DivisionID: 3,
 		Impersonator: 9, Audience: "squirrel", SessionID: "s", JTI: "j",
 	})
 	if err != nil {
@@ -88,7 +84,7 @@ func TestVerifyWithAudienceRejectsMismatch(t *testing.T) {
 
 func TestStandardTokenIsNotImpersonating(t *testing.T) {
 	mgr := NewJWTManager("primary", time.Hour)
-	token, err := mgr.Generate(1, 2, 3, RoleSysAdmin)
+	token, err := mgr.Generate(1, 2, 3)
 	if err != nil {
 		t.Fatalf("generate: %v", err)
 	}
@@ -98,8 +94,5 @@ func TestStandardTokenIsNotImpersonating(t *testing.T) {
 	}
 	if claims.IsImpersonating() {
 		t.Error("standard token must not be flagged impersonating")
-	}
-	if !claims.IsSysAdmin() {
-		t.Error("expected sysadmin")
 	}
 }

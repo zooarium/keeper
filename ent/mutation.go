@@ -5261,8 +5261,6 @@ type UserMutation struct {
 	lastname        *string
 	email           *string
 	password        *string
-	role            *int8
-	addrole         *int8
 	status          *int8
 	addstatus       *int8
 	created_at      *time.Time
@@ -5591,62 +5589,6 @@ func (m *UserMutation) ResetPassword() {
 	m.password = nil
 }
 
-// SetRole sets the "role" field.
-func (m *UserMutation) SetRole(i int8) {
-	m.role = &i
-	m.addrole = nil
-}
-
-// Role returns the value of the "role" field in the mutation.
-func (m *UserMutation) Role() (r int8, exists bool) {
-	v := m.role
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldRole returns the old "role" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldRole(ctx context.Context) (v int8, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldRole is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldRole requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldRole: %w", err)
-	}
-	return oldValue.Role, nil
-}
-
-// AddRole adds i to the "role" field.
-func (m *UserMutation) AddRole(i int8) {
-	if m.addrole != nil {
-		*m.addrole += i
-	} else {
-		m.addrole = &i
-	}
-}
-
-// AddedRole returns the value that was added to the "role" field in this mutation.
-func (m *UserMutation) AddedRole() (r int8, exists bool) {
-	v := m.addrole
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetRole resets all changes to the "role" field.
-func (m *UserMutation) ResetRole() {
-	m.role = nil
-	m.addrole = nil
-}
-
 // SetStatus sets the "status" field.
 func (m *UserMutation) SetStatus(i int8) {
 	m.status = &i
@@ -5863,7 +5805,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 9)
 	if m.app != nil {
 		fields = append(fields, user.FieldAppID)
 	}
@@ -5881,9 +5823,6 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.password != nil {
 		fields = append(fields, user.FieldPassword)
-	}
-	if m.role != nil {
-		fields = append(fields, user.FieldRole)
 	}
 	if m.status != nil {
 		fields = append(fields, user.FieldStatus)
@@ -5914,8 +5853,6 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Email()
 	case user.FieldPassword:
 		return m.Password()
-	case user.FieldRole:
-		return m.Role()
 	case user.FieldStatus:
 		return m.Status()
 	case user.FieldCreatedAt:
@@ -5943,8 +5880,6 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldEmail(ctx)
 	case user.FieldPassword:
 		return m.OldPassword(ctx)
-	case user.FieldRole:
-		return m.OldRole(ctx)
 	case user.FieldStatus:
 		return m.OldStatus(ctx)
 	case user.FieldCreatedAt:
@@ -6002,13 +5937,6 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPassword(v)
 		return nil
-	case user.FieldRole:
-		v, ok := value.(int8)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetRole(v)
-		return nil
 	case user.FieldStatus:
 		v, ok := value.(int8)
 		if !ok {
@@ -6038,9 +5966,6 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
 	var fields []string
-	if m.addrole != nil {
-		fields = append(fields, user.FieldRole)
-	}
 	if m.addstatus != nil {
 		fields = append(fields, user.FieldStatus)
 	}
@@ -6052,8 +5977,6 @@ func (m *UserMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case user.FieldRole:
-		return m.AddedRole()
 	case user.FieldStatus:
 		return m.AddedStatus()
 	}
@@ -6065,13 +5988,6 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case user.FieldRole:
-		v, ok := value.(int8)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddRole(v)
-		return nil
 	case user.FieldStatus:
 		v, ok := value.(int8)
 		if !ok {
@@ -6123,9 +6039,6 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldPassword:
 		m.ResetPassword()
-		return nil
-	case user.FieldRole:
-		m.ResetRole()
 		return nil
 	case user.FieldStatus:
 		m.ResetStatus()

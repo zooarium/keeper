@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"keeper/internal/policy"
 	"keeper/pkg/auth"
 )
 
@@ -20,16 +21,24 @@ var ErrServiceNotRegistered = errors.New("requested service is not registered fo
 // ErrTargetNotFound is returned when the impersonation target user does not exist.
 var ErrTargetNotFound = errors.New("target user not found")
 
-// ErrCannotImpersonateSysAdmin guards against privilege escalation: an admin
-// must not acquire another sysadmin's identity.
-var ErrCannotImpersonateSysAdmin = errors.New("cannot impersonate a sysadmin user")
-
 // ErrInvalidCode is returned when a handoff code is unknown, already used, or expired.
 var ErrInvalidCode = errors.New("invalid or expired code")
 
 // ErrSessionRevoked is returned when exchanging a code for a session that has
 // already been revoked.
 var ErrSessionRevoked = errors.New("impersonation session revoked")
+
+// ErrPrivilegeEscalation is returned when the target user holds a sudo
+// (sysadmin-tier) role — impersonating a sysadmin is never allowed,
+// regardless of the impersonator's own privileges.
+var ErrPrivilegeEscalation = errors.New("cannot impersonate a user with sysadmin privileges")
+
+// RoleResolver resolves the falcon-assigned role assignments of an arbitrary
+// user by id. Used to check the impersonation target's privileges — not the
+// caller's, which already arrive resolved on the request JWT.
+type RoleResolver interface {
+	ResolveRoles(ctx context.Context, appID, userID, divisionID int) ([]auth.RoleAssignment, error)
+}
 
 // ImpersonationRepository defines the data access contract.
 type ImpersonationRepository interface {
@@ -66,12 +75,14 @@ type pendingCode struct {
 }
 
 type impersonationService struct {
-	repo      ImpersonationRepository
-	impJWT    *auth.JWTManager
-	impExpiry time.Duration
-	codeTTL   time.Duration
-	services  []ServiceInfo
-	audiences map[string]bool
+	repo         ImpersonationRepository
+	roleResolver RoleResolver
+	policyStore  *policy.Store
+	impJWT       *auth.JWTManager
+	impExpiry    time.Duration
+	codeTTL      time.Duration
+	services     []ServiceInfo
+	audiences    map[string]bool
 
 	// codes holds outstanding one-time handoff codes (in-memory, single-use).
 	codesMu sync.Mutex
@@ -85,21 +96,26 @@ type impersonationService struct {
 
 // NewImpersonationService creates the service. impJWT MUST be constructed with
 // the dedicated impersonation secret. services is the registered service
-// registry; its audiences form the set a session may target.
-func NewImpersonationService(repo ImpersonationRepository, impJWT *auth.JWTManager, impExpiry, codeTTL time.Duration, services []ServiceInfo) ImpersonationService {
+// registry; its audiences form the set a session may target. roleResolver and
+// policyStore resolve and check the impersonation *target's* privileges (the
+// caller's own are already resolved on the request JWT) — see Start's
+// privilege-escalation guard.
+func NewImpersonationService(repo ImpersonationRepository, roleResolver RoleResolver, policyStore *policy.Store, impJWT *auth.JWTManager, impExpiry, codeTTL time.Duration, services []ServiceInfo) ImpersonationService {
 	audiences := make(map[string]bool, len(services))
 	for _, s := range services {
 		audiences[s.Audience] = true
 	}
 	return &impersonationService{
-		repo:      repo,
-		impJWT:    impJWT,
-		impExpiry: impExpiry,
-		codeTTL:   codeTTL,
-		services:  services,
-		audiences: audiences,
-		codes:     make(map[string]pendingCode),
-		revoked:   make(map[string]struct{}),
+		repo:         repo,
+		roleResolver: roleResolver,
+		policyStore:  policyStore,
+		impJWT:       impJWT,
+		impExpiry:    impExpiry,
+		codeTTL:      codeTTL,
+		services:     services,
+		audiences:    audiences,
+		codes:        make(map[string]pendingCode),
+		revoked:      make(map[string]struct{}),
 	}
 }
 
@@ -120,10 +136,21 @@ func (s *impersonationService) Start(ctx context.Context, impersonatorUserID int
 		return nil, ErrTargetNotFound
 	}
 
-	// Privilege-escalation guard: never let an admin acquire a sysadmin identity.
-	if target.Role == auth.RoleSysAdmin {
-		slog.Warn("refused impersonation of sysadmin", "impersonator", impersonatorUserID, "target_user_id", req.TargetUserID)
-		return nil, ErrCannotImpersonateSysAdmin
+	// Privilege-escalation guard: never allow impersonating a sysadmin,
+	// regardless of who is asking. The target's roles aren't on any JWT
+	// (they belong to a different user than the caller), so resolve them
+	// fresh from falcon and check for a sudo grant.
+	targetRoles, err := s.roleResolver.ResolveRoles(ctx, target.AppID, target.ID, target.DivisionID)
+	if err != nil {
+		slog.Error("impersonation start failed: target role resolution unavailable", "target_user_id", target.ID, "error", err)
+		return nil, fmt.Errorf("resolve target roles: %w", err)
+	}
+	policies := s.policyStore.Policies(ctx)
+	for _, role := range targetRoles {
+		if policies[role.Name].IsSudo {
+			slog.Warn("impersonation refused: target holds a sudo role", "impersonator", impersonatorUserID, "target_user_id", target.ID, "role", role.Name)
+			return nil, ErrPrivilegeEscalation
+		}
 	}
 
 	sessionID, err := generateID("imps_")
@@ -201,7 +228,6 @@ func (s *impersonationService) Exchange(ctx context.Context, req ExchangeRequest
 		AppID:        pc.target.AppID,
 		UserID:       pc.target.ID,
 		DivisionID:   pc.target.DivisionID,
-		Role:         pc.target.Role,
 		Impersonator: pc.impersonator,
 		Audience:     pc.audience,
 		SessionID:    pc.sessionID,

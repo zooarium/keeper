@@ -21,7 +21,7 @@ type stubRoleResolver struct {
 	Err   error
 }
 
-func (s stubRoleResolver) ResolveRoles(ctx context.Context, appID, userID, divisionID, role int) ([]auth.RoleAssignment, error) {
+func (s stubRoleResolver) ResolveRoles(ctx context.Context, appID, userID, divisionID int) ([]auth.RoleAssignment, error) {
 	return s.Roles, s.Err
 }
 
@@ -146,7 +146,7 @@ func TestService_Authenticate(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		users, err := svc.List(ctx, a.ID, -1, 50, 0)
+		users, err := svc.List(ctx, a.ID, 50, 0)
 		assert.NoError(t, err)
 		var inactiveID int
 		for _, usr := range users {

@@ -77,3 +77,47 @@ func Can(ctx context.Context, store *Store, claims *auth.UserClaims, appID int, 
 	}
 	return false
 }
+
+// Scope resolves the effective row-level scope for resource+action — the
+// Tier 3 counterpart to Can(). It never inspects a target record: "any"
+// means the caller may act across every record the resource has (a global
+// sudo bypass, or a matching permission not restricted to "own"); "own"
+// means the caller is granted the action but only for records they own (a
+// sudo assignment pinned to one app, or a matching permission with
+// scope="own"); ok is false when nothing grants resource+action at all.
+//
+// Which column represents "ownership" is a per-entity mapping the caller
+// applies at the query layer (e.g. keeper's app entity compares id =
+// jwt.app_id) — Scope only answers "own" vs "any", never touches a record.
+// Multiple assignments union: any "any" grant wins over an "own" one.
+func Scope(ctx context.Context, store *Store, claims *auth.UserClaims, resource, action string) (scope string, ok bool) {
+	assignments := userRoleAssignments(claims, store.Policies(ctx))
+
+	for _, a := range assignments {
+		if a.IsSudo && a.AppID == nil {
+			return "any", true
+		}
+	}
+
+	sawOwn := false
+	for _, a := range assignments {
+		if a.IsSudo {
+			sawOwn = true // tenant-scoped sudo: full access, but only within its one app
+			continue
+		}
+		for _, p := range a.Permissions {
+			if p.Resource != resource || p.Action != action {
+				continue
+			}
+			if p.Scope == "own" {
+				sawOwn = true
+				continue
+			}
+			return "any", true
+		}
+	}
+	if sawOwn {
+		return "own", true
+	}
+	return "", false
+}

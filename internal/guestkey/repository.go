@@ -37,11 +37,16 @@ func (r *guestKeyRepository) Create(ctx context.Context, k GuestKey) (*GuestKey,
 	return r.mapToModel(created), nil
 }
 
-func (r *guestKeyRepository) GetByID(ctx context.Context, id int) (*GuestKey, error) {
-	k, err := r.client.GuestKey.Get(ctx, id)
+// GetByID returns a guest key by ID scoped to an app. appID=0 bypasses the app filter.
+func (r *guestKeyRepository) GetByID(ctx context.Context, appID, id int) (*GuestKey, error) {
+	q := r.client.GuestKey.Query().Where(entguestkey.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(entguestkey.AppID(appID))
+	}
+	k, err := q.Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			slog.Warn("guest key not found in database", "id", id)
+			slog.Warn("guest key not found in database", "id", id, "app_id", appID)
 			return nil, fmt.Errorf("guest key not found: %w", err)
 		}
 		slog.Error("database error: failed to get guest key by id", "id", id, "error", err)
@@ -107,8 +112,13 @@ func (r *guestKeyRepository) List(ctx context.Context, appID, limit, offset int)
 	return result, nil
 }
 
-func (r *guestKeyRepository) Update(ctx context.Context, id int, k *GuestKey) (*GuestKey, error) {
-	updated, err := r.client.GuestKey.UpdateOneID(id).
+// Update updates name and status of a guest key. appID=0 bypasses the app filter.
+func (r *guestKeyRepository) Update(ctx context.Context, appID, id int, k *GuestKey) (*GuestKey, error) {
+	q := r.client.GuestKey.Update().Where(entguestkey.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(entguestkey.AppID(appID))
+	}
+	count, err := q.
 		SetName(k.Name).
 		SetStatus(k.Status).
 		Save(ctx)
@@ -116,18 +126,27 @@ func (r *guestKeyRepository) Update(ctx context.Context, id int, k *GuestKey) (*
 		slog.Error("database error: failed to update guest key", "id", id, "error", err)
 		return nil, err
 	}
-	return r.mapToModel(updated), nil
+	if count == 0 {
+		slog.Warn("guest key not found for update", "id", id, "app_id", appID)
+		return nil, fmt.Errorf("guest key not found")
+	}
+	return r.GetByID(ctx, appID, id)
 }
 
-func (r *guestKeyRepository) Delete(ctx context.Context, id int) error {
-	err := r.client.GuestKey.DeleteOneID(id).Exec(ctx)
+// Delete removes a guest key scoped to an app. appID=0 bypasses the app filter.
+func (r *guestKeyRepository) Delete(ctx context.Context, appID, id int) error {
+	q := r.client.GuestKey.Delete().Where(entguestkey.IDEQ(id))
+	if appID != 0 {
+		q = q.Where(entguestkey.AppID(appID))
+	}
+	count, err := q.Exec(ctx)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			slog.Warn("guest key not found for deletion", "id", id)
-			return fmt.Errorf("guest key not found: %w", err)
-		}
 		slog.Error("database error: failed to delete guest key", "id", id, "error", err)
 		return err
+	}
+	if count == 0 {
+		slog.Warn("guest key not found for deletion", "id", id, "app_id", appID)
+		return fmt.Errorf("guest key not found")
 	}
 	return nil
 }

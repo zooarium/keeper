@@ -163,7 +163,6 @@ var (
 		{Name: "lastname", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password", Type: field.TypeString},
-		{Name: "role", Type: field.TypeInt8, Default: 0},
 		{Name: "status", Type: field.TypeInt8, Default: 1},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -178,13 +177,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "kpr_user_kpr_app_users",
-				Columns:    []*schema.Column{KprUserColumns[9]},
+				Columns:    []*schema.Column{KprUserColumns[8]},
 				RefColumns: []*schema.Column{KprAppColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "kpr_user_kpr_division_users",
-				Columns:    []*schema.Column{KprUserColumns[10]},
+				Columns:    []*schema.Column{KprUserColumns[9]},
 				RefColumns: []*schema.Column{KprDivisionColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -193,7 +192,7 @@ var (
 			{
 				Name:    "user_app_id",
 				Unique:  false,
-				Columns: []*schema.Column{KprUserColumns[9]},
+				Columns: []*schema.Column{KprUserColumns[8]},
 			},
 		},
 	}

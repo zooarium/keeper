@@ -27,7 +27,7 @@ func NewFetcher(httpClient *http.Client, falconBaseURL string, serviceID int, jw
 
 // Fetch calls GET /services/{id}/permissions/map and returns the raw rows.
 func (f *Fetcher) Fetch(ctx context.Context) ([]Row, error) {
-	token, err := f.jwt.Generate(0, 0, 0, auth.RoleSysAdmin)
+	token, err := f.jwt.Generate(0, 0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("sign s2s token: %w", err)
 	}

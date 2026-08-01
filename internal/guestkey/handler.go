@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"keeper/internal/policy"
 	"keeper/pkg/auth"
 	"keeper/pkg/render"
 
@@ -19,13 +20,15 @@ import (
 // GuestKeyHandler handles HTTP requests for guest keys.
 type GuestKeyHandler struct {
 	svc      GuestKeyService
+	policy   *policy.Store
 	validate *validator.Validate
 }
 
 // NewGuestKeyHandler creates a new guest key handler.
-func NewGuestKeyHandler(svc GuestKeyService) *GuestKeyHandler {
+func NewGuestKeyHandler(svc GuestKeyService, policyStore *policy.Store) *GuestKeyHandler {
 	return &GuestKeyHandler{
 		svc:      svc,
+		policy:   policyStore,
 		validate: validator.New(),
 	}
 }
@@ -169,7 +172,14 @@ func (h *GuestKeyHandler) CreateGuestKey(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if !claims.IsSysAdmin() && req.AppID != claims.AppID {
+	scope, ok := policy.Scope(r.Context(), h.policy, claims, "guestkey", "create")
+	if !ok {
+		slog.Warn("create guest key rejected: caller lacks guestkey.create permission", "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+	if scope == "own" && req.AppID != claims.AppID {
+		slog.Warn("create guest key rejected: cross-tenant create not permitted", "user_id", claims.UserID, "app_id", claims.AppID, "target_app_id", req.AppID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -208,9 +218,15 @@ func (h *GuestKeyHandler) ListGuestKeys(w http.ResponseWriter, r *http.Request) 
 
 	page := render.ParsePage(r)
 
-	appID := 0
-	if !claims.IsSysAdmin() {
-		appID = claims.AppID
+	scope, ok := policy.Scope(r.Context(), h.policy, claims, "guestkey", "read")
+	if !ok {
+		slog.Warn("list guest keys rejected: caller lacks guestkey.read permission", "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+	appID := claims.AppID
+	if scope == "any" {
+		appID = 0
 	}
 
 	keys, err := h.svc.List(r.Context(), appID, page.Limit, page.Offset)
@@ -236,11 +252,10 @@ func (h *GuestKeyHandler) ListGuestKeys(w http.ResponseWriter, r *http.Request) 
 // @Security Bearer
 // @Router /guest-keys/{id} [get]
 func (h *GuestKeyHandler) GetGuestKeyByID(w http.ResponseWriter, r *http.Request) {
-	claims, k, ok := h.loadScoped(w, r)
+	_, k, ok := h.loadScoped(w, r, "read")
 	if !ok {
 		return
 	}
-	_ = claims
 
 	render.JSON(w, http.StatusOK, k)
 }
@@ -261,7 +276,7 @@ func (h *GuestKeyHandler) GetGuestKeyByID(w http.ResponseWriter, r *http.Request
 // @Security Bearer
 // @Router /guest-keys/{id} [put]
 func (h *GuestKeyHandler) UpdateGuestKey(w http.ResponseWriter, r *http.Request) {
-	_, k, ok := h.loadScoped(w, r)
+	_, k, ok := h.loadScoped(w, r, "update")
 	if !ok {
 		return
 	}
@@ -279,7 +294,7 @@ func (h *GuestKeyHandler) UpdateGuestKey(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	updated, err := h.svc.Update(r.Context(), k.ID, req)
+	updated, err := h.svc.Update(r.Context(), k.AppID, k.ID, req)
 	if err != nil {
 		render.Error(w, http.StatusInternalServerError, err.Error())
 		return
@@ -302,12 +317,12 @@ func (h *GuestKeyHandler) UpdateGuestKey(w http.ResponseWriter, r *http.Request)
 // @Security Bearer
 // @Router /guest-keys/{id} [delete]
 func (h *GuestKeyHandler) DeleteGuestKey(w http.ResponseWriter, r *http.Request) {
-	_, k, ok := h.loadScoped(w, r)
+	_, k, ok := h.loadScoped(w, r, "delete")
 	if !ok {
 		return
 	}
 
-	if err := h.svc.Delete(r.Context(), k.ID); err != nil {
+	if err := h.svc.Delete(r.Context(), k.AppID, k.ID); err != nil {
 		render.Error(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -315,9 +330,12 @@ func (h *GuestKeyHandler) DeleteGuestKey(w http.ResponseWriter, r *http.Request)
 	render.JSON(w, http.StatusOK, map[string]string{"message": "guest key deleted"})
 }
 
-// loadScoped parses the id param, loads the key and enforces app scoping
-// (sysadmin or own app). Writes the error response itself when ok is false.
-func (h *GuestKeyHandler) loadScoped(w http.ResponseWriter, r *http.Request) (*auth.UserClaims, *GuestKey, bool) {
+// loadScoped parses the id param and loads the key scoped to the caller's
+// falcon-resolved permission for action (sysadmin/"any" grant sees every
+// tenant, "own" is restricted to the caller's app — a cross-tenant id then
+// 404s rather than leaking existence via a 403). Writes the error response
+// itself when ok is false.
+func (h *GuestKeyHandler) loadScoped(w http.ResponseWriter, r *http.Request, action string) (*auth.UserClaims, *GuestKey, bool) {
 	claims, ok := auth.GetClaimsFromContext(r.Context())
 	if !ok {
 		render.Error(w, http.StatusUnauthorized, "unauthorized")
@@ -332,14 +350,20 @@ func (h *GuestKeyHandler) loadScoped(w http.ResponseWriter, r *http.Request) (*a
 		return nil, nil, false
 	}
 
-	k, err := h.svc.GetByID(r.Context(), id)
-	if err != nil {
-		render.Error(w, http.StatusNotFound, "guest key not found")
+	scope, ok := policy.Scope(r.Context(), h.policy, claims, "guestkey", action)
+	if !ok {
+		slog.Warn("guest key access rejected: caller lacks guestkey permission", "action", action, "id", id, "user_id", claims.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
 		return nil, nil, false
 	}
+	appID := claims.AppID
+	if scope == "any" {
+		appID = 0
+	}
 
-	if !claims.IsSysAdmin() && k.AppID != claims.AppID {
-		render.Error(w, http.StatusForbidden, "access denied")
+	k, err := h.svc.GetByID(r.Context(), appID, id)
+	if err != nil {
+		render.Error(w, http.StatusNotFound, "guest key not found")
 		return nil, nil, false
 	}
 

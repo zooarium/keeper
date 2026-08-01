@@ -20,18 +20,20 @@ func NewJWTManager(secretKey string, tokenDuration time.Duration) *JWTManager {
 
 // UserClaims is a custom JWT claims that contains user's information.
 //
-// Impersonation tokens reuse this struct: AppID/UserID/DivisionID/Role carry
+// Impersonation tokens reuse this struct: AppID/UserID/DivisionID carry
 // the *impersonated* user's exact identity (so downstream claims-based authz
 // grants that user's full rights automatically), while the Imp* fields record
 // who is really driving and how the token is scoped/revoked. Standard login
 // and guest tokens leave the Imp* fields zero-valued, so existing consumers are
 // unaffected.
+//
+// TODO(falcon): role/permission is now resolved entirely from falcon via
+// Roles below — no local role identity is carried on the claims anymore.
 type UserClaims struct {
 	jwt.RegisteredClaims
 	AppID      int `json:"app_id"`
 	UserID     int `json:"user_id"`
 	DivisionID int `json:"division_id"`
-	Role       int `json:"role"`
 	// Roles carries fine-grained role assignments resolved from falcon at
 	// login time (empty on impersonation/guest tokens, which don't resolve
 	// them). ServiceID/AppID travel per-assignment because sudo's tenant
@@ -64,33 +66,6 @@ type RoleAssignment struct {
 	AppID     *int   `json:"app_id,omitempty"`
 }
 
-// Role values carried in JWT claims. Mirrors keeper's user roles
-// (RoleAdmin=0, RoleSysAdmin=1); RoleGuest marks short-lived tenant-scoped
-// guest tokens minted from a publishable site key. RoleManager marks a user
-// granted access to one or more apps via kpr_app.manager_id, independent of
-// their own tenant (app_id).
-const (
-	RoleAdmin    = 0
-	RoleSysAdmin = 1
-	RoleGuest    = 2
-	RoleManager  = 3
-)
-
-// IsSysAdmin returns true when the claims carry sysadmin role.
-func (c *UserClaims) IsSysAdmin() bool {
-	return c.Role == RoleSysAdmin
-}
-
-// IsManager returns true when the claims carry the manager role.
-func (c *UserClaims) IsManager() bool {
-	return c.Role == RoleManager
-}
-
-// IsGuest returns true when the claims belong to a guest (site-key) token.
-func (c *UserClaims) IsGuest() bool {
-	return c.Role == RoleGuest
-}
-
 // IsImpersonating returns true when the claims belong to an impersonation token.
 func (c *UserClaims) IsImpersonating() bool {
 	return c.Imp
@@ -111,7 +86,7 @@ func (c *UserClaims) HasAudience(aud string) bool {
 // Generate generates and signs a new token for a user. roles is optional —
 // pass falcon-resolved role assignments for a full login token, or omit it
 // for self-signed s2s/guest tokens that don't carry them.
-func (manager *JWTManager) Generate(appID, userID, divisionID, role int, roles ...RoleAssignment) (string, error) {
+func (manager *JWTManager) Generate(appID, userID, divisionID int, roles ...RoleAssignment) (string, error) {
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(manager.tokenDuration)),
@@ -119,7 +94,6 @@ func (manager *JWTManager) Generate(appID, userID, divisionID, role int, roles .
 		AppID:      appID,
 		UserID:     userID,
 		DivisionID: divisionID,
-		Role:       role,
 		Roles:      roles,
 	}
 
@@ -128,14 +102,13 @@ func (manager *JWTManager) Generate(appID, userID, divisionID, role int, roles .
 }
 
 // ImpersonationParams describes the impersonation token to mint. AppID/UserID/
-// DivisionID/Role are the *impersonated* user's identity; Impersonator is the
+// DivisionID are the *impersonated* user's identity; Impersonator is the
 // acting sysadmin; Audience scopes the token to a single service; SessionID and
 // JTI enable revocation; ReadOnly downgrades to view-only.
 type ImpersonationParams struct {
 	AppID        int
 	UserID       int
 	DivisionID   int
-	Role         int
 	Impersonator int
 	Audience     string
 	SessionID    string
@@ -157,7 +130,6 @@ func (manager *JWTManager) GenerateImpersonation(p ImpersonationParams) (string,
 		AppID:        p.AppID,
 		UserID:       p.UserID,
 		DivisionID:   p.DivisionID,
-		Role:         p.Role,
 		Imp:          true,
 		Impersonator: p.Impersonator,
 		ImpRO:        p.ReadOnly,

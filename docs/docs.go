@@ -50,7 +50,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
@@ -58,7 +58,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/internal_app.App"
+                                                "$ref": "#/definitions/app.App"
                                             }
                                         }
                                     }
@@ -69,13 +69,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -104,7 +104,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_app.CreateAppRequest"
+                            "$ref": "#/definitions/app.CreateAppRequest"
                         }
                     }
                 ],
@@ -114,13 +114,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_app.App"
+                                            "$ref": "#/definitions/app.App"
                                         }
                                     }
                                 }
@@ -130,25 +130,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -179,13 +179,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_app.PublicApp"
+                                            "$ref": "#/definitions/app.PublicApp"
                                         }
                                     }
                                 }
@@ -195,19 +195,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -243,13 +243,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_app.App"
+                                            "$ref": "#/definitions/app.App"
                                         }
                                     }
                                 }
@@ -259,19 +259,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -307,7 +307,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_app.UpdateAppRequest"
+                            "$ref": "#/definitions/app.UpdateAppRequest"
                         }
                     }
                 ],
@@ -317,13 +317,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_app.App"
+                                            "$ref": "#/definitions/app.App"
                                         }
                                     }
                                 }
@@ -333,19 +333,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -380,19 +380,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -423,13 +429,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_app.PublicApp"
+                                            "$ref": "#/definitions/app.PublicApp"
                                         }
                                     }
                                 }
@@ -439,19 +445,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -498,7 +504,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
@@ -506,7 +512,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/internal_division.Division"
+                                                "$ref": "#/definitions/division.Division"
                                             }
                                         }
                                     }
@@ -517,13 +523,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -552,7 +564,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_division.CreateDivisionRequest"
+                            "$ref": "#/definitions/division.CreateDivisionRequest"
                         }
                     }
                 ],
@@ -562,13 +574,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_division.Division"
+                                            "$ref": "#/definitions/division.Division"
                                         }
                                     }
                                 }
@@ -578,25 +590,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -632,13 +644,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_division.Division"
+                                            "$ref": "#/definitions/division.Division"
                                         }
                                     }
                                 }
@@ -648,19 +660,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -696,7 +714,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_division.UpdateDivisionRequest"
+                            "$ref": "#/definitions/division.UpdateDivisionRequest"
                         }
                     }
                 ],
@@ -706,13 +724,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_division.Division"
+                                            "$ref": "#/definitions/division.Division"
                                         }
                                     }
                                 }
@@ -722,19 +740,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -769,19 +793,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -817,7 +847,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
@@ -825,7 +855,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/internal_division.Division"
+                                                "$ref": "#/definitions/division.Division"
                                             }
                                         }
                                     }
@@ -836,19 +866,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -886,7 +922,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_division.MoveDivisionRequest"
+                            "$ref": "#/definitions/division.MoveDivisionRequest"
                         }
                     }
                 ],
@@ -896,13 +932,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_division.Division"
+                                            "$ref": "#/definitions/division.Division"
                                         }
                                     }
                                 }
@@ -912,19 +948,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -965,7 +1007,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
@@ -973,7 +1015,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/internal_guestkey.GuestKey"
+                                                "$ref": "#/definitions/guestkey.GuestKey"
                                             }
                                         }
                                     }
@@ -984,13 +1026,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1019,7 +1061,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_guestkey.CreateGuestKeyRequest"
+                            "$ref": "#/definitions/guestkey.CreateGuestKeyRequest"
                         }
                     }
                 ],
@@ -1029,13 +1071,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_guestkey.GuestKey"
+                                            "$ref": "#/definitions/guestkey.GuestKey"
                                         }
                                     }
                                 }
@@ -1045,25 +1087,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1089,7 +1131,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_guestkey.GuestAuthRequest"
+                            "$ref": "#/definitions/guestkey.GuestAuthRequest"
                         }
                     }
                 ],
@@ -1099,13 +1141,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_guestkey.GuestAuthResponse"
+                                            "$ref": "#/definitions/guestkey.GuestAuthResponse"
                                         }
                                     }
                                 }
@@ -1115,19 +1157,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1158,13 +1200,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_guestkey.SiteKeyLookupResponse"
+                                            "$ref": "#/definitions/guestkey.SiteKeyLookupResponse"
                                         }
                                     }
                                 }
@@ -1174,19 +1216,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1222,13 +1264,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_guestkey.GuestKey"
+                                            "$ref": "#/definitions/guestkey.GuestKey"
                                         }
                                     }
                                 }
@@ -1238,25 +1280,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1292,7 +1334,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_guestkey.UpdateGuestKeyRequest"
+                            "$ref": "#/definitions/guestkey.UpdateGuestKeyRequest"
                         }
                     }
                 ],
@@ -1302,13 +1344,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_guestkey.GuestKey"
+                                            "$ref": "#/definitions/guestkey.GuestKey"
                                         }
                                     }
                                 }
@@ -1318,25 +1360,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1368,31 +1410,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1412,7 +1454,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1425,7 +1467,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Sysadmin-only. Lists active impersonation sessions for audit.",
+                "description": "Requires impersonation.read (falcon-resolved). Lists active impersonation sessions for audit.",
                 "produces": [
                     "application/json"
                 ],
@@ -1453,7 +1495,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
@@ -1461,7 +1503,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/internal_impersonation.ImpersonationSession"
+                                                "$ref": "#/definitions/impersonation.ImpersonationSession"
                                             }
                                         }
                                     }
@@ -1472,19 +1514,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1495,7 +1537,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Sysadmin-only. Mints a one-time handoff code for logging in as another user on a registered downstream service. The code is exchanged (cross-origin) for the actual token. Refuses to target a sysadmin.",
+                "description": "Requires impersonation.create (falcon-resolved). Mints a one-time handoff code for logging in as another user on a registered downstream service. The code is exchanged (cross-origin) for the actual token. Refuses to target a sysadmin.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1513,7 +1555,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_impersonation.StartImpersonationRequest"
+                            "$ref": "#/definitions/impersonation.StartImpersonationRequest"
                         }
                     }
                 ],
@@ -1523,13 +1565,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_impersonation.StartImpersonationResponse"
+                                            "$ref": "#/definitions/impersonation.StartImpersonationResponse"
                                         }
                                     }
                                 }
@@ -1539,25 +1581,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1588,13 +1630,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_impersonation.SessionStatusResponse"
+                                            "$ref": "#/definitions/impersonation.SessionStatusResponse"
                                         }
                                     }
                                 }
@@ -1604,7 +1646,7 @@ const docTemplate = `{
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1630,7 +1672,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_impersonation.ExchangeRequest"
+                            "$ref": "#/definitions/impersonation.ExchangeRequest"
                         }
                     }
                 ],
@@ -1640,13 +1682,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_impersonation.ExchangeResponse"
+                                            "$ref": "#/definitions/impersonation.ExchangeResponse"
                                         }
                                     }
                                 }
@@ -1656,19 +1698,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1694,7 +1736,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_impersonation.LogoutRequest"
+                            "$ref": "#/definitions/impersonation.LogoutRequest"
                         }
                     }
                 ],
@@ -1702,19 +1744,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "429": {
                         "description": "Too Many Requests",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1727,7 +1769,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Sysadmin-only. Returns the services a sysadmin can impersonate a user into, for the UI service picker.",
+                "description": "Requires impersonation.read (falcon-resolved). Returns the registered services a caller can impersonate a user into, for the UI service picker.",
                 "produces": [
                     "application/json"
                 ],
@@ -1741,7 +1783,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
@@ -1749,7 +1791,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/internal_impersonation.ServiceInfo"
+                                                "$ref": "#/definitions/impersonation.ServiceInfo"
                                             }
                                         }
                                     }
@@ -1760,13 +1802,13 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1779,7 +1821,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Sysadmin-only.",
+                "description": "Requires impersonation.read (falcon-resolved).",
                 "produces": [
                     "application/json"
                 ],
@@ -1802,13 +1844,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_impersonation.ImpersonationSession"
+                                            "$ref": "#/definitions/impersonation.ImpersonationSession"
                                         }
                                     }
                                 }
@@ -1818,19 +1860,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1843,7 +1885,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "Sysadmin-only. Revokes a session server-side; downstream services reject its token on next request.",
+                "description": "Requires impersonation.create (falcon-resolved). Revokes a session server-side; downstream services reject its token on next request.",
                 "produces": [
                     "application/json"
                 ],
@@ -1866,13 +1908,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_impersonation.ImpersonationSession"
+                                            "$ref": "#/definitions/impersonation.ImpersonationSession"
                                         }
                                     }
                                 }
@@ -1882,91 +1924,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/managers": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Get a list of all users with the manager role, across all apps. Sysadmin only.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "List all managers",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Max results (default 50, max 500)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Result offset (default 0)",
-                        "name": "offset",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/internal_user.User"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -1999,12 +1969,6 @@ const docTemplate = `{
                         "description": "Result offset (default 0)",
                         "name": "offset",
                         "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Filter by role (0=user, 1=sysadmin, 3=manager)",
-                        "name": "role",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2013,7 +1977,7 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
@@ -2021,7 +1985,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/internal_user.User"
+                                                "$ref": "#/definitions/user.User"
                                             }
                                         }
                                     }
@@ -2032,19 +1996,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -2073,7 +2037,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_user.CreateUserRequest"
+                            "$ref": "#/definitions/user.CreateUserRequest"
                         }
                     }
                 ],
@@ -2083,13 +2047,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_user.User"
+                                            "$ref": "#/definitions/user.User"
                                         }
                                     }
                                 }
@@ -2099,19 +2063,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -2137,7 +2101,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_user.AuthRequest"
+                            "$ref": "#/definitions/user.AuthRequest"
                         }
                     }
                 ],
@@ -2147,13 +2111,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_user.AuthResponse"
+                                            "$ref": "#/definitions/user.AuthResponse"
                                         }
                                     }
                                 }
@@ -2163,13 +2127,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -2205,13 +2175,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_user.User"
+                                            "$ref": "#/definitions/user.User"
                                         }
                                     }
                                 }
@@ -2221,25 +2191,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -2275,7 +2245,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/internal_user.UpdateUserRequest"
+                            "$ref": "#/definitions/user.UpdateUserRequest"
                         }
                     }
                 ],
@@ -2285,13 +2255,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/keeper_pkg_render.Response"
+                                    "$ref": "#/definitions/render.Response"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/internal_user.User"
+                                            "$ref": "#/definitions/user.User"
                                         }
                                     }
                                 }
@@ -2301,25 +2271,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -2354,25 +2324,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/keeper_pkg_render.Response"
+                            "$ref": "#/definitions/render.Response"
                         }
                     }
                 }
@@ -2380,7 +2350,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "internal_app.About": {
+        "app.About": {
             "type": "object",
             "properties": {
                 "body": {
@@ -2392,7 +2362,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.AboutInput": {
+        "app.AboutInput": {
             "type": "object",
             "properties": {
                 "body": {
@@ -2403,7 +2373,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.Address": {
+        "app.Address": {
             "type": "object",
             "properties": {
                 "city": {
@@ -2426,7 +2396,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.AddressInput": {
+        "app.AddressInput": {
             "type": "object",
             "properties": {
                 "city": {
@@ -2449,14 +2419,14 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.App": {
+        "app.App": {
             "type": "object",
             "properties": {
                 "about": {
-                    "$ref": "#/definitions/internal_app.About"
+                    "$ref": "#/definitions/app.About"
                 },
                 "contact": {
-                    "$ref": "#/definitions/internal_app.Contact"
+                    "$ref": "#/definitions/app.Contact"
                 },
                 "created_at": {
                     "type": "string"
@@ -2496,11 +2466,11 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.Contact": {
+        "app.Contact": {
             "type": "object",
             "properties": {
                 "address": {
-                    "$ref": "#/definitions/internal_app.Address"
+                    "$ref": "#/definitions/app.Address"
                 },
                 "email": {
                     "type": "string"
@@ -2523,11 +2493,11 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.ContactInput": {
+        "app.ContactInput": {
             "type": "object",
             "properties": {
                 "address": {
-                    "$ref": "#/definitions/internal_app.AddressInput"
+                    "$ref": "#/definitions/app.AddressInput"
                 },
                 "email": {
                     "type": "string"
@@ -2549,7 +2519,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.CreateAppRequest": {
+        "app.CreateAppRequest": {
             "type": "object",
             "required": [
                 "currency",
@@ -2557,10 +2527,10 @@ const docTemplate = `{
             ],
             "properties": {
                 "about": {
-                    "$ref": "#/definitions/internal_app.AboutInput"
+                    "$ref": "#/definitions/app.AboutInput"
                 },
                 "contact": {
-                    "$ref": "#/definitions/internal_app.ContactInput"
+                    "$ref": "#/definitions/app.ContactInput"
                 },
                 "currency": {
                     "type": "string"
@@ -2591,14 +2561,14 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.PublicApp": {
+        "app.PublicApp": {
             "type": "object",
             "properties": {
                 "about": {
-                    "$ref": "#/definitions/internal_app.About"
+                    "$ref": "#/definitions/app.About"
                 },
                 "contact": {
-                    "$ref": "#/definitions/internal_app.Contact"
+                    "$ref": "#/definitions/app.Contact"
                 },
                 "currency": {
                     "type": "string"
@@ -2623,14 +2593,14 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_app.UpdateAppRequest": {
+        "app.UpdateAppRequest": {
             "type": "object",
             "properties": {
                 "about": {
-                    "$ref": "#/definitions/internal_app.AboutInput"
+                    "$ref": "#/definitions/app.AboutInput"
                 },
                 "contact": {
-                    "$ref": "#/definitions/internal_app.ContactInput"
+                    "$ref": "#/definitions/app.ContactInput"
                 },
                 "currency": {
                     "type": "string"
@@ -2661,7 +2631,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_division.CreateDivisionRequest": {
+        "division.CreateDivisionRequest": {
             "type": "object",
             "required": [
                 "app_id",
@@ -2680,7 +2650,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_division.Division": {
+        "division.Division": {
             "type": "object",
             "properties": {
                 "app_id": {
@@ -2712,7 +2682,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_division.MoveDivisionRequest": {
+        "division.MoveDivisionRequest": {
             "type": "object",
             "properties": {
                 "parent_id": {
@@ -2720,7 +2690,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_division.UpdateDivisionRequest": {
+        "division.UpdateDivisionRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -2736,7 +2706,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_guestkey.CreateGuestKeyRequest": {
+        "guestkey.CreateGuestKeyRequest": {
             "type": "object",
             "required": [
                 "app_id",
@@ -2767,7 +2737,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_guestkey.GuestAuthRequest": {
+        "guestkey.GuestAuthRequest": {
             "type": "object",
             "required": [
                 "site_key"
@@ -2778,7 +2748,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_guestkey.GuestAuthResponse": {
+        "guestkey.GuestAuthResponse": {
             "type": "object",
             "properties": {
                 "expires_at": {
@@ -2789,7 +2759,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_guestkey.GuestKey": {
+        "guestkey.GuestKey": {
             "type": "object",
             "properties": {
                 "app_id": {
@@ -2824,7 +2794,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_guestkey.SiteKeyLookupResponse": {
+        "guestkey.SiteKeyLookupResponse": {
             "type": "object",
             "properties": {
                 "site_key": {
@@ -2832,7 +2802,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_guestkey.UpdateGuestKeyRequest": {
+        "guestkey.UpdateGuestKeyRequest": {
             "type": "object",
             "properties": {
                 "name": {
@@ -2843,7 +2813,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.ExchangeRequest": {
+        "impersonation.ExchangeRequest": {
             "type": "object",
             "required": [
                 "code"
@@ -2854,7 +2824,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.ExchangeResponse": {
+        "impersonation.ExchangeResponse": {
             "type": "object",
             "properties": {
                 "audience": {
@@ -2870,11 +2840,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/internal_impersonation.TargetUser"
+                    "$ref": "#/definitions/impersonation.TargetUser"
                 }
             }
         },
-        "internal_impersonation.ImpersonationSession": {
+        "impersonation.ImpersonationSession": {
             "type": "object",
             "properties": {
                 "app_id": {
@@ -2918,7 +2888,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.LogoutRequest": {
+        "impersonation.LogoutRequest": {
             "type": "object",
             "required": [
                 "session_id"
@@ -2929,7 +2899,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.ServiceInfo": {
+        "impersonation.ServiceInfo": {
             "type": "object",
             "properties": {
                 "audience": {
@@ -2943,7 +2913,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.SessionStatusResponse": {
+        "impersonation.SessionStatusResponse": {
             "type": "object",
             "properties": {
                 "active": {
@@ -2951,7 +2921,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.StartImpersonationRequest": {
+        "impersonation.StartImpersonationRequest": {
             "type": "object",
             "required": [
                 "audience",
@@ -2972,7 +2942,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.StartImpersonationResponse": {
+        "impersonation.StartImpersonationResponse": {
             "type": "object",
             "properties": {
                 "audience": {
@@ -2989,7 +2959,7 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_impersonation.TargetUser": {
+        "impersonation.TargetUser": {
             "type": "object",
             "properties": {
                 "app_id": {
@@ -3010,15 +2980,24 @@ const docTemplate = `{
                 "lastname": {
                     "type": "string"
                 },
-                "role": {
+                "status": {
                     "type": "integer"
+                }
+            }
+        },
+        "render.Response": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "string"
                 },
                 "status": {
                     "type": "integer"
                 }
             }
         },
-        "internal_user.AuthRequest": {
+        "user.AuthRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -3033,18 +3012,18 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_user.AuthResponse": {
+        "user.AuthResponse": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/internal_user.User"
+                    "$ref": "#/definitions/user.User"
                 }
             }
         },
-        "internal_user.CreateUserRequest": {
+        "user.CreateUserRequest": {
             "type": "object",
             "required": [
                 "app_id",
@@ -3073,13 +3052,10 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "minLength": 8
-                },
-                "role": {
-                    "type": "integer"
                 }
             }
         },
-        "internal_user.UpdateUserRequest": {
+        "user.UpdateUserRequest": {
             "type": "object",
             "properties": {
                 "app_id": {
@@ -3101,15 +3077,12 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 8
                 },
-                "role": {
-                    "type": "integer"
-                },
                 "status": {
                     "type": "integer"
                 }
             }
         },
-        "internal_user.User": {
+        "user.User": {
             "type": "object",
             "properties": {
                 "app_id": {
@@ -3139,26 +3112,11 @@ const docTemplate = `{
                 "lastname": {
                     "type": "string"
                 },
-                "role": {
-                    "type": "integer"
-                },
                 "status": {
                     "type": "integer"
                 },
                 "updated_at": {
                     "type": "string"
-                }
-            }
-        },
-        "keeper_pkg_render.Response": {
-            "type": "object",
-            "properties": {
-                "data": {},
-                "error": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "integer"
                 }
             }
         }

@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  internal_app.About:
+  app.About:
     properties:
       body:
         description: may contain HTML
@@ -8,14 +8,14 @@ definitions:
       heading:
         type: string
     type: object
-  internal_app.AboutInput:
+  app.AboutInput:
     properties:
       body:
         type: string
       heading:
         type: string
     type: object
-  internal_app.Address:
+  app.Address:
     properties:
       city:
         type: string
@@ -30,7 +30,7 @@ definitions:
       state:
         type: string
     type: object
-  internal_app.AddressInput:
+  app.AddressInput:
     properties:
       city:
         type: string
@@ -45,12 +45,12 @@ definitions:
       state:
         type: string
     type: object
-  internal_app.App:
+  app.App:
     properties:
       about:
-        $ref: '#/definitions/internal_app.About'
+        $ref: '#/definitions/app.About'
       contact:
-        $ref: '#/definitions/internal_app.Contact'
+        $ref: '#/definitions/app.Contact'
       created_at:
         type: string
       currency:
@@ -76,10 +76,10 @@ definitions:
       updated_at:
         type: string
     type: object
-  internal_app.Contact:
+  app.Contact:
     properties:
       address:
-        $ref: '#/definitions/internal_app.Address'
+        $ref: '#/definitions/app.Address'
       email:
         type: string
       hours:
@@ -94,10 +94,10 @@ definitions:
           type: string
         type: object
     type: object
-  internal_app.ContactInput:
+  app.ContactInput:
     properties:
       address:
-        $ref: '#/definitions/internal_app.AddressInput'
+        $ref: '#/definitions/app.AddressInput'
       email:
         type: string
       hours:
@@ -111,12 +111,12 @@ definitions:
           type: string
         type: object
     type: object
-  internal_app.CreateAppRequest:
+  app.CreateAppRequest:
     properties:
       about:
-        $ref: '#/definitions/internal_app.AboutInput'
+        $ref: '#/definitions/app.AboutInput'
       contact:
-        $ref: '#/definitions/internal_app.ContactInput'
+        $ref: '#/definitions/app.ContactInput'
       currency:
         type: string
       logo_url:
@@ -140,12 +140,12 @@ definitions:
     - currency
     - name
     type: object
-  internal_app.PublicApp:
+  app.PublicApp:
     properties:
       about:
-        $ref: '#/definitions/internal_app.About'
+        $ref: '#/definitions/app.About'
       contact:
-        $ref: '#/definitions/internal_app.Contact'
+        $ref: '#/definitions/app.Contact'
       currency:
         type: string
       id:
@@ -161,12 +161,12 @@ definitions:
       tax_percent:
         type: number
     type: object
-  internal_app.UpdateAppRequest:
+  app.UpdateAppRequest:
     properties:
       about:
-        $ref: '#/definitions/internal_app.AboutInput'
+        $ref: '#/definitions/app.AboutInput'
       contact:
-        $ref: '#/definitions/internal_app.ContactInput'
+        $ref: '#/definitions/app.ContactInput'
       currency:
         type: string
       logo_url:
@@ -188,7 +188,7 @@ definitions:
         minimum: 0
         type: number
     type: object
-  internal_division.CreateDivisionRequest:
+  division.CreateDivisionRequest:
     properties:
       app_id:
         type: integer
@@ -201,7 +201,7 @@ definitions:
     - app_id
     - name
     type: object
-  internal_division.Division:
+  division.Division:
     properties:
       app_id:
         type: integer
@@ -222,12 +222,12 @@ definitions:
       updated_at:
         type: string
     type: object
-  internal_division.MoveDivisionRequest:
+  division.MoveDivisionRequest:
     properties:
       parent_id:
         type: integer
     type: object
-  internal_division.UpdateDivisionRequest:
+  division.UpdateDivisionRequest:
     properties:
       name:
         maxLength: 100
@@ -238,7 +238,7 @@ definitions:
         - 1
         type: integer
     type: object
-  internal_guestkey.CreateGuestKeyRequest:
+  guestkey.CreateGuestKeyRequest:
     properties:
       app_id:
         type: integer
@@ -263,21 +263,21 @@ definitions:
     - name
     - user_id
     type: object
-  internal_guestkey.GuestAuthRequest:
+  guestkey.GuestAuthRequest:
     properties:
       site_key:
         type: string
     required:
     - site_key
     type: object
-  internal_guestkey.GuestAuthResponse:
+  guestkey.GuestAuthResponse:
     properties:
       expires_at:
         type: string
       token:
         type: string
     type: object
-  internal_guestkey.GuestKey:
+  guestkey.GuestKey:
     properties:
       app_id:
         type: integer
@@ -300,26 +300,26 @@ definitions:
       user_id:
         type: integer
     type: object
-  internal_guestkey.SiteKeyLookupResponse:
+  guestkey.SiteKeyLookupResponse:
     properties:
       site_key:
         type: string
     type: object
-  internal_guestkey.UpdateGuestKeyRequest:
+  guestkey.UpdateGuestKeyRequest:
     properties:
       name:
         type: string
       status:
         type: integer
     type: object
-  internal_impersonation.ExchangeRequest:
+  impersonation.ExchangeRequest:
     properties:
       code:
         type: string
     required:
     - code
     type: object
-  internal_impersonation.ExchangeResponse:
+  impersonation.ExchangeResponse:
     properties:
       audience:
         type: string
@@ -330,9 +330,9 @@ definitions:
       token:
         type: string
       user:
-        $ref: '#/definitions/internal_impersonation.TargetUser'
+        $ref: '#/definitions/impersonation.TargetUser'
     type: object
-  internal_impersonation.ImpersonationSession:
+  impersonation.ImpersonationSession:
     properties:
       app_id:
         type: integer
@@ -361,14 +361,14 @@ definitions:
       target_user_id:
         type: integer
     type: object
-  internal_impersonation.LogoutRequest:
+  impersonation.LogoutRequest:
     properties:
       session_id:
         type: string
     required:
     - session_id
     type: object
-  internal_impersonation.ServiceInfo:
+  impersonation.ServiceInfo:
     properties:
       audience:
         type: string
@@ -377,12 +377,12 @@ definitions:
       ui_exchange_url:
         type: string
     type: object
-  internal_impersonation.SessionStatusResponse:
+  impersonation.SessionStatusResponse:
     properties:
       active:
         type: boolean
     type: object
-  internal_impersonation.StartImpersonationRequest:
+  impersonation.StartImpersonationRequest:
     properties:
       audience:
         type: string
@@ -396,7 +396,7 @@ definitions:
     - audience
     - target_user_id
     type: object
-  internal_impersonation.StartImpersonationResponse:
+  impersonation.StartImpersonationResponse:
     properties:
       audience:
         type: string
@@ -407,7 +407,7 @@ definitions:
       session_id:
         type: string
     type: object
-  internal_impersonation.TargetUser:
+  impersonation.TargetUser:
     properties:
       app_id:
         type: integer
@@ -421,12 +421,18 @@ definitions:
         type: integer
       lastname:
         type: string
-      role:
-        type: integer
       status:
         type: integer
     type: object
-  internal_user.AuthRequest:
+  render.Response:
+    properties:
+      data: {}
+      error:
+        type: string
+      status:
+        type: integer
+    type: object
+  user.AuthRequest:
     properties:
       email:
         type: string
@@ -436,14 +442,14 @@ definitions:
     - email
     - password
     type: object
-  internal_user.AuthResponse:
+  user.AuthResponse:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/internal_user.User'
+        $ref: '#/definitions/user.User'
     type: object
-  internal_user.CreateUserRequest:
+  user.CreateUserRequest:
     properties:
       app_id:
         type: integer
@@ -458,8 +464,6 @@ definitions:
       password:
         minLength: 8
         type: string
-      role:
-        type: integer
     required:
     - app_id
     - division_id
@@ -468,7 +472,7 @@ definitions:
     - lastname
     - password
     type: object
-  internal_user.UpdateUserRequest:
+  user.UpdateUserRequest:
     properties:
       app_id:
         type: integer
@@ -483,12 +487,10 @@ definitions:
       password:
         minLength: 8
         type: string
-      role:
-        type: integer
       status:
         type: integer
     type: object
-  internal_user.User:
+  user.User:
     properties:
       app_id:
         type: integer
@@ -508,20 +510,10 @@ definitions:
         type: integer
       lastname:
         type: string
-      role:
-        type: integer
       status:
         type: integer
       updated_at:
         type: string
-    type: object
-  keeper_pkg_render.Response:
-    properties:
-      data: {}
-      error:
-        type: string
-      status:
-        type: integer
     type: object
 host: localhost:8080
 info:
@@ -549,21 +541,21 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_app.App'
+                    $ref: '#/definitions/app.App'
                   type: array
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: List all apps
@@ -579,7 +571,7 @@ paths:
         name: app
         required: true
         schema:
-          $ref: '#/definitions/internal_app.CreateAppRequest'
+          $ref: '#/definitions/app.CreateAppRequest'
       produces:
       - application/json
       responses:
@@ -587,27 +579,27 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_app.App'
+                  $ref: '#/definitions/app.App'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Create a new app
@@ -630,15 +622,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Delete app
@@ -659,23 +655,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_app.App'
+                  $ref: '#/definitions/app.App'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Get app by ID
@@ -696,7 +692,7 @@ paths:
         name: app
         required: true
         schema:
-          $ref: '#/definitions/internal_app.UpdateAppRequest'
+          $ref: '#/definitions/app.UpdateAppRequest'
       produces:
       - application/json
       responses:
@@ -704,23 +700,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_app.App'
+                  $ref: '#/definitions/app.App'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Update app
@@ -745,23 +741,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_app.PublicApp'
+                  $ref: '#/definitions/app.PublicApp'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Get public app profile by ID
       tags:
       - apps
@@ -784,23 +780,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_app.PublicApp'
+                  $ref: '#/definitions/app.PublicApp'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Look up public app profile by site key
       tags:
       - apps
@@ -828,21 +824,25 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_division.Division'
+                    $ref: '#/definitions/division.Division'
                   type: array
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: List divisions
@@ -858,7 +858,7 @@ paths:
         name: division
         required: true
         schema:
-          $ref: '#/definitions/internal_division.CreateDivisionRequest'
+          $ref: '#/definitions/division.CreateDivisionRequest'
       produces:
       - application/json
       responses:
@@ -866,27 +866,27 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_division.Division'
+                  $ref: '#/definitions/division.Division'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Create a new division
@@ -909,15 +909,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Delete a division
@@ -938,23 +942,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_division.Division'
+                  $ref: '#/definitions/division.Division'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Get division by ID
@@ -975,7 +983,7 @@ paths:
         name: division
         required: true
         schema:
-          $ref: '#/definitions/internal_division.UpdateDivisionRequest'
+          $ref: '#/definitions/division.UpdateDivisionRequest'
       produces:
       - application/json
       responses:
@@ -983,23 +991,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_division.Division'
+                  $ref: '#/definitions/division.Division'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Update a division
@@ -1021,25 +1033,29 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_division.Division'
+                    $ref: '#/definitions/division.Division'
                   type: array
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Get all descendants of a division
@@ -1062,7 +1078,7 @@ paths:
         name: move
         required: true
         schema:
-          $ref: '#/definitions/internal_division.MoveDivisionRequest'
+          $ref: '#/definitions/division.MoveDivisionRequest'
       produces:
       - application/json
       responses:
@@ -1070,23 +1086,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_division.Division'
+                  $ref: '#/definitions/division.Division'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Move a division to a new parent
@@ -1111,21 +1131,21 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_guestkey.GuestKey'
+                    $ref: '#/definitions/guestkey.GuestKey'
                   type: array
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: List guest keys
@@ -1142,7 +1162,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_guestkey.CreateGuestKeyRequest'
+          $ref: '#/definitions/guestkey.CreateGuestKeyRequest'
       produces:
       - application/json
       responses:
@@ -1150,27 +1170,27 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_guestkey.GuestKey'
+                  $ref: '#/definitions/guestkey.GuestKey'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Create a new guest key
@@ -1192,23 +1212,23 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Delete guest key
@@ -1230,27 +1250,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_guestkey.GuestKey'
+                  $ref: '#/definitions/guestkey.GuestKey'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Get guest key by ID
@@ -1272,7 +1292,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_guestkey.UpdateGuestKeyRequest'
+          $ref: '#/definitions/guestkey.UpdateGuestKeyRequest'
       produces:
       - application/json
       responses:
@@ -1280,27 +1300,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_guestkey.GuestKey'
+                  $ref: '#/definitions/guestkey.GuestKey'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Update guest key
@@ -1318,7 +1338,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_guestkey.GuestAuthRequest'
+          $ref: '#/definitions/guestkey.GuestAuthRequest'
       produces:
       - application/json
       responses:
@@ -1326,23 +1346,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_guestkey.GuestAuthResponse'
+                  $ref: '#/definitions/guestkey.GuestAuthResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Exchange a site key for a guest token
       tags:
       - guest-keys
@@ -1365,23 +1385,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_guestkey.SiteKeyLookupResponse'
+                  $ref: '#/definitions/guestkey.SiteKeyLookupResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Look up a publishable site key by URL
       tags:
       - guest-keys
@@ -1394,13 +1414,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Check service health
       tags:
       - health
   /impersonations:
     get:
-      description: Sysadmin-only. Lists active impersonation sessions for audit.
+      description: Requires impersonation.read (falcon-resolved). Lists active impersonation
+        sessions for audit.
       parameters:
       - description: Max results (default 50, max 500)
         in: query
@@ -1417,25 +1438,25 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_impersonation.ImpersonationSession'
+                    $ref: '#/definitions/impersonation.ImpersonationSession'
                   type: array
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: List active impersonation sessions
@@ -1444,16 +1465,17 @@ paths:
     post:
       consumes:
       - application/json
-      description: Sysadmin-only. Mints a one-time handoff code for logging in as
-        another user on a registered downstream service. The code is exchanged (cross-origin)
-        for the actual token. Refuses to target a sysadmin.
+      description: Requires impersonation.create (falcon-resolved). Mints a one-time
+        handoff code for logging in as another user on a registered downstream service.
+        The code is exchanged (cross-origin) for the actual token. Refuses to target
+        a sysadmin.
       parameters:
       - description: Target user and audience
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_impersonation.StartImpersonationRequest'
+          $ref: '#/definitions/impersonation.StartImpersonationRequest'
       produces:
       - application/json
       responses:
@@ -1461,27 +1483,27 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_impersonation.StartImpersonationResponse'
+                  $ref: '#/definitions/impersonation.StartImpersonationResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Start an impersonation session
@@ -1489,7 +1511,7 @@ paths:
       - impersonation
   /impersonations/{id}:
     get:
-      description: Sysadmin-only.
+      description: Requires impersonation.read (falcon-resolved).
       parameters:
       - description: Session ID
         in: path
@@ -1503,23 +1525,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_impersonation.ImpersonationSession'
+                  $ref: '#/definitions/impersonation.ImpersonationSession'
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Get an impersonation session by ID
@@ -1527,8 +1549,8 @@ paths:
       - impersonation
   /impersonations/{id}/revoke:
     post:
-      description: Sysadmin-only. Revokes a session server-side; downstream services
-        reject its token on next request.
+      description: Requires impersonation.create (falcon-resolved). Revokes a session
+        server-side; downstream services reject its token on next request.
       parameters:
       - description: Session ID
         in: path
@@ -1542,23 +1564,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_impersonation.ImpersonationSession'
+                  $ref: '#/definitions/impersonation.ImpersonationSession'
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Revoke an impersonation session by ID
@@ -1581,15 +1603,15 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_impersonation.SessionStatusResponse'
+                  $ref: '#/definitions/impersonation.SessionStatusResponse'
               type: object
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Check whether an impersonation session is active
       tags:
       - impersonation
@@ -1606,7 +1628,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_impersonation.ExchangeRequest'
+          $ref: '#/definitions/impersonation.ExchangeRequest'
       produces:
       - application/json
       responses:
@@ -1614,23 +1636,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_impersonation.ExchangeResponse'
+                  $ref: '#/definitions/impersonation.ExchangeResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Exchange a handoff code for an impersonation token
       tags:
       - impersonation
@@ -1647,29 +1669,29 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/internal_impersonation.LogoutRequest'
+          $ref: '#/definitions/impersonation.LogoutRequest'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "429":
           description: Too Many Requests
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       summary: Revoke an impersonation session (self-service)
       tags:
       - impersonation
   /impersonations/services:
     get:
-      description: Sysadmin-only. Returns the services a sysadmin can impersonate
-        a user into, for the UI service picker.
+      description: Requires impersonation.read (falcon-resolved). Returns the registered
+        services a caller can impersonate a user into, for the UI service picker.
       produces:
       - application/json
       responses:
@@ -1677,70 +1699,26 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_impersonation.ServiceInfo'
+                    $ref: '#/definitions/impersonation.ServiceInfo'
                   type: array
               type: object
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: List registered impersonation target services
       tags:
       - impersonation
-  /managers:
-    get:
-      description: Get a list of all users with the manager role, across all apps.
-        Sysadmin only.
-      parameters:
-      - description: Max results (default 50, max 500)
-        in: query
-        name: limit
-        type: integer
-      - description: Result offset (default 0)
-        in: query
-        name: offset
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/internal_user.User'
-                  type: array
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
-      security:
-      - Bearer: []
-      summary: List all managers
-      tags:
-      - users
   /users:
     get:
       description: Get a list of all users belonging to the caller's app
@@ -1753,10 +1731,6 @@ paths:
         in: query
         name: offset
         type: integer
-      - description: Filter by role (0=user, 1=sysadmin, 3=manager)
-        in: query
-        name: role
-        type: integer
       produces:
       - application/json
       responses:
@@ -1764,25 +1738,25 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/internal_user.User'
+                    $ref: '#/definitions/user.User'
                   type: array
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: List all users
@@ -1798,7 +1772,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/internal_user.CreateUserRequest'
+          $ref: '#/definitions/user.CreateUserRequest'
       produces:
       - application/json
       responses:
@@ -1806,23 +1780,23 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_user.User'
+                  $ref: '#/definitions/user.User'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Create a new user
@@ -1845,19 +1819,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Delete user
@@ -1878,27 +1852,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_user.User'
+                  $ref: '#/definitions/user.User'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Get user by ID
@@ -1919,7 +1893,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/internal_user.UpdateUserRequest'
+          $ref: '#/definitions/user.UpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -1927,27 +1901,27 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_user.User'
+                  $ref: '#/definitions/user.User'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
       security:
       - Bearer: []
       summary: Update user
@@ -1964,7 +1938,7 @@ paths:
         name: credentials
         required: true
         schema:
-          $ref: '#/definitions/internal_user.AuthRequest'
+          $ref: '#/definitions/user.AuthRequest'
       produces:
       - application/json
       responses:
@@ -1972,19 +1946,23 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/keeper_pkg_render.Response'
+            - $ref: '#/definitions/render.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/internal_user.AuthResponse'
+                  $ref: '#/definitions/user.AuthResponse'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/keeper_pkg_render.Response'
+            $ref: '#/definitions/render.Response'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/render.Response'
       summary: Authenticate user
       tags:
       - users

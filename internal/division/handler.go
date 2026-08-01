@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"keeper/internal/policy"
 	"keeper/pkg/auth"
 	"keeper/pkg/render"
 
@@ -16,13 +17,15 @@ import (
 // DivisionHandler handles HTTP requests for divisions.
 type DivisionHandler struct {
 	svc      DivisionService
+	policy   *policy.Store
 	validate *validator.Validate
 }
 
 // NewDivisionHandler creates a new division handler.
-func NewDivisionHandler(svc DivisionService) *DivisionHandler {
+func NewDivisionHandler(svc DivisionService, policyStore *policy.Store) *DivisionHandler {
 	return &DivisionHandler{
 		svc:      svc,
+		policy:   policyStore,
 		validate: validator.New(),
 	}
 }
@@ -91,8 +94,14 @@ func (h *DivisionHandler) CreateDivision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if !c.IsSysAdmin() && req.AppID != c.AppID {
-		slog.Warn("create division rejected: app_id mismatch", "claims_app_id", c.AppID, "req_app_id", req.AppID)
+	scope, ok := policy.Scope(r.Context(), h.policy, c, "division", "create")
+	if !ok {
+		slog.Warn("create division rejected: caller lacks division.create permission", "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
+	if scope == "own" && req.AppID != c.AppID {
+		slog.Warn("create division rejected: cross-tenant create not permitted", "user_id", c.UserID, "app_id", c.AppID, "target_app_id", req.AppID)
 		render.Error(w, http.StatusForbidden, "access denied")
 		return
 	}
@@ -116,6 +125,7 @@ func (h *DivisionHandler) CreateDivision(w http.ResponseWriter, r *http.Request)
 // @Param offset query int false "Result offset (default 0)"
 // @Success 200 {object} render.Response{data=[]Division}
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /divisions [get]
@@ -137,8 +147,14 @@ func (h *DivisionHandler) ListDivisions(w http.ResponseWriter, r *http.Request) 
 		parentID = &pid
 	}
 
+	scope, ok := policy.Scope(r.Context(), h.policy, c, "division", "read")
+	if !ok {
+		slog.Warn("list divisions rejected: caller lacks division.read permission", "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
 	appID := c.AppID
-	if c.IsSysAdmin() {
+	if scope == "any" {
 		appID = 0
 	}
 
@@ -161,6 +177,7 @@ func (h *DivisionHandler) ListDivisions(w http.ResponseWriter, r *http.Request) 
 // @Success 200 {object} render.Response{data=Division}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 404 {object} render.Response
 // @Security Bearer
 // @Router /divisions/{id} [get]
@@ -178,8 +195,14 @@ func (h *DivisionHandler) GetDivisionByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	scope, ok := policy.Scope(r.Context(), h.policy, c, "division", "read")
+	if !ok {
+		slog.Warn("get division rejected: caller lacks division.read permission", "id", id, "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
 	appID := c.AppID
-	if c.IsSysAdmin() {
+	if scope == "any" {
 		appID = 0
 	}
 
@@ -202,6 +225,7 @@ func (h *DivisionHandler) GetDivisionByID(w http.ResponseWriter, r *http.Request
 // @Success 200 {object} render.Response{data=[]Division}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 404 {object} render.Response
 // @Security Bearer
 // @Router /divisions/{id}/descendants [get]
@@ -219,8 +243,14 @@ func (h *DivisionHandler) GetDescendants(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	scope, ok := policy.Scope(r.Context(), h.policy, c, "division", "read")
+	if !ok {
+		slog.Warn("get descendants rejected: caller lacks division.read permission", "id", id, "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
 	appID := c.AppID
-	if c.IsSysAdmin() {
+	if scope == "any" {
 		appID = 0
 	}
 
@@ -245,6 +275,7 @@ func (h *DivisionHandler) GetDescendants(w http.ResponseWriter, r *http.Request)
 // @Success 200 {object} render.Response{data=Division}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /divisions/{id} [put]
@@ -275,8 +306,14 @@ func (h *DivisionHandler) UpdateDivision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	scope, ok := policy.Scope(r.Context(), h.policy, c, "division", "update")
+	if !ok {
+		slog.Warn("update division rejected: caller lacks division.update permission", "id", id, "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
 	appID := c.AppID
-	if c.IsSysAdmin() {
+	if scope == "any" {
 		appID = 0
 	}
 
@@ -300,6 +337,7 @@ func (h *DivisionHandler) UpdateDivision(w http.ResponseWriter, r *http.Request)
 // @Success 200 {object} render.Response{data=Division}
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /divisions/{id}/move [put]
@@ -324,8 +362,14 @@ func (h *DivisionHandler) MoveDivision(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	scope, ok := policy.Scope(r.Context(), h.policy, c, "division", "move")
+	if !ok {
+		slog.Warn("move division rejected: caller lacks division.move permission", "id", id, "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
 	appID := c.AppID
-	if c.IsSysAdmin() {
+	if scope == "any" {
 		appID = 0
 	}
 
@@ -347,6 +391,7 @@ func (h *DivisionHandler) MoveDivision(w http.ResponseWriter, r *http.Request) {
 // @Success 204 "No Content"
 // @Failure 400 {object} render.Response
 // @Failure 401 {object} render.Response
+// @Failure 403 {object} render.Response
 // @Failure 500 {object} render.Response
 // @Security Bearer
 // @Router /divisions/{id} [delete]
@@ -364,8 +409,14 @@ func (h *DivisionHandler) DeleteDivision(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	scope, ok := policy.Scope(r.Context(), h.policy, c, "division", "delete")
+	if !ok {
+		slog.Warn("delete division rejected: caller lacks division.delete permission", "id", id, "user_id", c.UserID)
+		render.Error(w, http.StatusForbidden, "access denied")
+		return
+	}
 	appID := c.AppID
-	if c.IsSysAdmin() {
+	if scope == "any" {
 		appID = 0
 	}
 

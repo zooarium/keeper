@@ -24,7 +24,9 @@ func strPtr(s string) *string { return &s }
 // fields only (permission 10), never status/manager_id (permissions 11/12).
 var testPolicyStore = policy.NewStoreFromPolicies(policy.Compile([]policy.Row{
 	{Role: "sysadmin", IsSudo: true},
+	{Role: "admin", Resource: strPtr("app"), Action: strPtr("read"), Scope: strPtr("own")},
 	{Role: "admin", Resource: strPtr("app"), Action: strPtr("update")},
+	{Role: "admin", Resource: strPtr("app"), Action: strPtr("delete")},
 	{Role: "manager", Resource: strPtr("app"), Action: strPtr("update")},
 }))
 
@@ -126,7 +128,7 @@ func TestHandler_Create_SysAdmin(t *testing.T) {
 
 	body, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("POST", "/apps", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.CreateApp(rr, req)
@@ -147,7 +149,7 @@ func TestHandler_Create_TaxPercentOutOfRange(t *testing.T) {
 
 	body, _ := json.Marshal(CreateAppRequest{Name: "Test App", TaxPercent: 101})
 	req, _ := http.NewRequest("POST", "/apps", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.CreateApp(rr, req)
@@ -162,7 +164,7 @@ func TestHandler_Create_InvalidCurrency(t *testing.T) {
 
 	body, _ := json.Marshal(CreateAppRequest{Name: "Test App", Currency: "ZZZ"})
 	req, _ := http.NewRequest("POST", "/apps", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.CreateApp(rr, req)
@@ -177,7 +179,7 @@ func TestHandler_Create_NonSysAdmin_Forbidden(t *testing.T) {
 
 	body, _ := json.Marshal(CreateAppRequest{Name: "Test App"})
 	req, _ := http.NewRequest("POST", "/apps", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.CreateApp(rr, req)
@@ -212,7 +214,7 @@ func TestHandler_List_SysAdmin_All(t *testing.T) {
 	svc.On("List", mock.Anything, mock.Anything, mock.Anything).Return(expectedApps, nil)
 
 	req, _ := http.NewRequest("GET", "/apps", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.ListApps(rr, req)
@@ -227,15 +229,16 @@ func TestHandler_List_SysAdmin_All(t *testing.T) {
 	assert.Len(t, dataList, 2)
 }
 
-func TestHandler_List_NonSysAdmin_OwnAppOnly(t *testing.T) {
+func TestHandler_List_OwnScope_ReturnsOwnAppOnly(t *testing.T) {
 	svc := new(mockAppService)
 	handler := NewAppHandler(svc, testPolicyStore)
 
-	ownApp := &App{ID: 7, Name: "Own App", Status: 1}
-	svc.On("GetByID", mock.Anything, 7).Return(ownApp, nil)
+	ownApp := &App{ID: 1, Name: "Own App", Status: 1}
+	svc.On("GetByID", mock.Anything, 1).Return(ownApp, nil)
+	svc.On("ListByManager", mock.Anything, 1, 50, 0).Return([]*App{}, nil)
 
 	req, _ := http.NewRequest("GET", "/apps", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 7, UserID: 2, Role: auth.RoleAdmin})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.ListApps(rr, req)
@@ -249,24 +252,46 @@ func TestHandler_List_NonSysAdmin_OwnAppOnly(t *testing.T) {
 
 	dataList := resp.Data.([]interface{})
 	assert.Len(t, dataList, 1)
-	assert.Equal(t, "Own App", dataList[0].(map[string]interface{})["name"])
 }
 
-func TestHandler_List_Manager_AssignedAppsOnly(t *testing.T) {
+func TestHandler_List_OwnScope_MergesManagedApps(t *testing.T) {
 	svc := new(mockAppService)
 	handler := NewAppHandler(svc, testPolicyStore)
 
-	managedApp := &App{ID: 3, Name: "Managed App", Status: 1}
-	svc.On("ListByManager", mock.Anything, 9, 50, 0).Return([]*App{managedApp}, nil)
+	ownApp := &App{ID: 1, Name: "Own App", Status: 1}
+	managedApp := &App{ID: 2, Name: "Managed App", Status: 1}
+	svc.On("GetByID", mock.Anything, 1).Return(ownApp, nil)
+	svc.On("ListByManager", mock.Anything, 1, 50, 0).Return([]*App{managedApp}, nil)
 
 	req, _ := http.NewRequest("GET", "/apps", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	rr := httptest.NewRecorder()
 
 	handler.ListApps(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	svc.AssertCalled(t, "ListByManager", mock.Anything, 9, 50, 0)
+
+	var resp render.Response
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+
+	dataList := resp.Data.([]interface{})
+	assert.Len(t, dataList, 2)
+}
+
+func TestHandler_List_NoPermission_Forbidden(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc, testPolicyStore)
+
+	req, _ := http.NewRequest("GET", "/apps", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "unknown_role"}}})
+	rr := httptest.NewRecorder()
+
+	handler.ListApps(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "List", mock.Anything, mock.Anything, mock.Anything)
+	svc.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
 }
 
 func TestHandler_GetAppByID_Manager_Assigned_Allowed(t *testing.T) {
@@ -278,7 +303,7 @@ func TestHandler_GetAppByID_Manager_Assigned_Allowed(t *testing.T) {
 	svc.On("GetByID", mock.Anything, 5).Return(expectedApp, nil)
 
 	req, _ := http.NewRequest("GET", "/apps/5", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9})
 	req = withURLParam(req, "id", "5")
 	rr := httptest.NewRecorder()
 
@@ -296,7 +321,7 @@ func TestHandler_GetAppByID_Manager_NotAssigned_Forbidden(t *testing.T) {
 	svc.On("GetByID", mock.Anything, 5).Return(expectedApp, nil)
 
 	req, _ := http.NewRequest("GET", "/apps/5", nil)
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9})
 	req = withURLParam(req, "id", "5")
 	rr := httptest.NewRecorder()
 
@@ -316,7 +341,7 @@ func TestHandler_UpdateApp_Manager_CannotAssignManager(t *testing.T) {
 	newManager := 10
 	body, _ := json.Marshal(UpdateAppRequest{ManagerID: &newManager})
 	req, _ := http.NewRequest("PUT", "/apps/5", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager, Roles: []auth.RoleAssignment{{Name: "manager"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Roles: []auth.RoleAssignment{{Name: "manager"}}})
 	req = withURLParam(req, "id", "5")
 	rr := httptest.NewRecorder()
 
@@ -336,7 +361,7 @@ func TestHandler_UpdateApp_Admin_CannotAssignManager(t *testing.T) {
 	newManager := 10
 	body, _ := json.Marshal(UpdateAppRequest{ManagerID: &newManager})
 	req, _ := http.NewRequest("PUT", "/apps/1", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	req = withURLParam(req, "id", "1")
 	rr := httptest.NewRecorder()
 
@@ -356,7 +381,7 @@ func TestHandler_UpdateApp_OwnApp_CannotChangeStatus(t *testing.T) {
 	newStatus := int8(0)
 	body, _ := json.Marshal(UpdateAppRequest{Status: &newStatus})
 	req, _ := http.NewRequest("PUT", "/apps/1", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	req = withURLParam(req, "id", "1")
 	rr := httptest.NewRecorder()
 
@@ -379,7 +404,7 @@ func TestHandler_UpdateApp_Admin_CanUpdateBaseFields(t *testing.T) {
 
 	body, _ := json.Marshal(UpdateAppRequest{Name: &newName})
 	req, _ := http.NewRequest("PUT", "/apps/1", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Role: auth.RoleAdmin, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 3, Roles: []auth.RoleAssignment{{Name: "admin"}}})
 	req = withURLParam(req, "id", "1")
 	rr := httptest.NewRecorder()
 
@@ -400,7 +425,7 @@ func TestHandler_UpdateApp_Manager_CannotChangeStatus(t *testing.T) {
 	newStatus := int8(0)
 	body, _ := json.Marshal(UpdateAppRequest{Status: &newStatus})
 	req, _ := http.NewRequest("PUT", "/apps/5", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Role: auth.RoleManager, Roles: []auth.RoleAssignment{{Name: "manager"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 9, Roles: []auth.RoleAssignment{{Name: "manager"}}})
 	req = withURLParam(req, "id", "5")
 	rr := httptest.NewRecorder()
 
@@ -423,7 +448,7 @@ func TestHandler_UpdateApp_SysAdmin_CanChangeStatus(t *testing.T) {
 
 	body, _ := json.Marshal(UpdateAppRequest{Status: &newStatus})
 	req, _ := http.NewRequest("PUT", "/apps/1", bytes.NewBuffer(body))
-	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Role: auth.RoleSysAdmin, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
 	req = withURLParam(req, "id", "1")
 	rr := httptest.NewRecorder()
 
@@ -491,4 +516,70 @@ func TestHandler_LookupApp_NotFound(t *testing.T) {
 	handler.LookupApp(rr, req)
 
 	assert.Equal(t, http.StatusNotFound, rr.Code)
+}
+
+func TestHandler_DeleteApp_SysAdmin_CrossTenant_Allowed(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc, testPolicyStore)
+
+	svc.On("Delete", mock.Anything, 2).Return(nil)
+
+	req, _ := http.NewRequest("DELETE", "/apps/2", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "sysadmin"}}})
+	req = withURLParam(req, "id", "2")
+	rr := httptest.NewRecorder()
+
+	handler.DeleteApp(rr, req)
+
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestHandler_DeleteApp_OwnApp_Admin_Allowed(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc, testPolicyStore)
+
+	svc.On("Delete", mock.Anything, 1).Return(nil)
+
+	req, _ := http.NewRequest("DELETE", "/apps/1", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withURLParam(req, "id", "1")
+	rr := httptest.NewRecorder()
+
+	handler.DeleteApp(rr, req)
+
+	assert.Equal(t, http.StatusNoContent, rr.Code)
+	svc.AssertExpectations(t)
+}
+
+func TestHandler_DeleteApp_Manager_Forbidden(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc, testPolicyStore)
+
+	// Manager holds no app.delete permission and gets no ownership fallback
+	// for delete (CLAUDE.md: managers cannot delete apps).
+	req, _ := http.NewRequest("DELETE", "/apps/2", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "manager"}}})
+	req = withURLParam(req, "id", "2")
+	rr := httptest.NewRecorder()
+
+	handler.DeleteApp(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
+}
+
+func TestHandler_DeleteApp_OtherTenant_NoPermission_Forbidden(t *testing.T) {
+	svc := new(mockAppService)
+	handler := NewAppHandler(svc, testPolicyStore)
+
+	req, _ := http.NewRequest("DELETE", "/apps/2", nil)
+	req = withClaims(req, &auth.UserClaims{AppID: 1, UserID: 1, Roles: []auth.RoleAssignment{{Name: "admin"}}})
+	req = withURLParam(req, "id", "2")
+	rr := httptest.NewRecorder()
+
+	handler.DeleteApp(rr, req)
+
+	assert.Equal(t, http.StatusForbidden, rr.Code)
+	svc.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
 }

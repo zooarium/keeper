@@ -12,6 +12,7 @@ import (
 	"keeper/internal/division"
 	"keeper/internal/guestkey"
 	"keeper/internal/impersonation"
+	"keeper/internal/policy"
 	"keeper/internal/user"
 	"keeper/pkg/auth"
 	"keeper/pkg/config"
@@ -23,7 +24,7 @@ type mockUserService struct {
 	user.UserService
 }
 
-func (m *mockUserService) List(ctx context.Context, appID int, role int8, limit, offset int) ([]*user.User, error) {
+func (m *mockUserService) List(ctx context.Context, appID, limit, offset int) ([]*user.User, error) {
 	return []*user.User{}, nil
 }
 
@@ -65,12 +66,12 @@ func TestRouterAuthentication(t *testing.T) {
 	appHandler := app.NewAppHandler(appSvc, nil)
 
 	divSvc := &mockDivisionService{}
-	divHandler := division.NewDivisionHandler(divSvc)
+	divHandler := division.NewDivisionHandler(divSvc, nil)
 
 	gkSvc := &mockGuestKeyService{}
-	gkHandler := guestkey.NewGuestKeyHandler(gkSvc)
+	gkHandler := guestkey.NewGuestKeyHandler(gkSvc, nil)
 
-	impHandler := impersonation.NewImpersonationHandler(&mockImpersonationService{})
+	impHandler := impersonation.NewImpersonationHandler(&mockImpersonationService{}, nil)
 
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
@@ -117,19 +118,23 @@ func TestRouterAuthentication(t *testing.T) {
 func TestRouterAuthentication_ValidToken(t *testing.T) {
 	jwtManager := auth.NewJWTManager("secret", 1*time.Hour)
 
+	policyStore := policy.NewStoreFromPolicies(map[string]policy.RolePolicy{
+		"sysadmin": {IsSudo: true},
+	})
+
 	userSvc := &mockUserService{}
-	userHandler := user.NewUserHandler(userSvc, nil)
+	userHandler := user.NewUserHandler(userSvc, policyStore)
 
 	appSvc := &mockAppService{}
-	appHandler := app.NewAppHandler(appSvc, nil)
+	appHandler := app.NewAppHandler(appSvc, policyStore)
 
 	divSvc := &mockDivisionService{}
-	divHandler := division.NewDivisionHandler(divSvc)
+	divHandler := division.NewDivisionHandler(divSvc, policyStore)
 
 	gkSvc := &mockGuestKeyService{}
-	gkHandler := guestkey.NewGuestKeyHandler(gkSvc)
+	gkHandler := guestkey.NewGuestKeyHandler(gkSvc, policyStore)
 
-	impHandler := impersonation.NewImpersonationHandler(&mockImpersonationService{})
+	impHandler := impersonation.NewImpersonationHandler(&mockImpersonationService{}, policyStore)
 
 	cfg := &config.Config{
 		CORS: config.CORSConfig{
@@ -138,7 +143,7 @@ func TestRouterAuthentication_ValidToken(t *testing.T) {
 	}
 	router := NewRouter(userHandler, appHandler, divHandler, gkHandler, impHandler, jwtManager, cfg, nil)
 
-	token, _ := jwtManager.Generate(1, 1, 1, 0)
+	token, _ := jwtManager.Generate(1, 1, 1, auth.RoleAssignment{Name: "sysadmin", ServiceID: 1})
 
 	req, _ := http.NewRequest("GET", "/users", nil)
 	req.Header.Set("Authorization", "Bearer "+token)

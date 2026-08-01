@@ -4,13 +4,10 @@ import (
 	"time"
 )
 
-const (
-	RoleAdmin    int8 = 0
-	RoleSysAdmin int8 = 1
-	RoleManager  int8 = 3
-)
-
 // User represents the domain model for a user.
+//
+// TODO(falcon): role/permission no longer lives on the user record — it's
+// resolved entirely from falcon at login (see policy.Can()).
 type User struct {
 	ID           int       `json:"id"`
 	AppID        int       `json:"app_id"`
@@ -22,7 +19,6 @@ type User struct {
 	Lastname     string    `json:"lastname"`
 	Email        string    `json:"email"`
 	Password     string    `json:"-"`
-	Role         int8      `json:"role"`
 	Status       int8      `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
@@ -36,7 +32,6 @@ type CreateUserRequest struct {
 	Lastname   string `json:"lastname"    validate:"required"`
 	Email      string `json:"email"       validate:"required,email"`
 	Password   string `json:"password"    validate:"required,min=8"`
-	Role       int8   `json:"role"`
 }
 
 // UpdateUserRequest defines the payload for updating a user.
@@ -47,7 +42,6 @@ type UpdateUserRequest struct {
 	Lastname   *string `json:"lastname"`
 	Email      *string `json:"email"     validate:"omitempty,email"`
 	Password   *string `json:"password"  validate:"omitempty,min=8"`
-	Role       *int8   `json:"role"`
 	Status     *int8   `json:"status"`
 }
 

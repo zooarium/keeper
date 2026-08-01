@@ -191,7 +191,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 
 App profile fields (tagline, logo_url, about, contact, tax_number, tax_percent, currency) are editable by sysadmin (any app) or the tenant's own users (own app only); all optional except `currency`, which is required (NOT NULL, ISO 4217, validated via `iso4217`). API exposes `about` and `contact` as **nested JSON objects** (flat columns in DB); on update both sections replace wholesale when present. `logo_url` + each `contact.social` value get light http(s) URL validation; `contact.email` validated as email.
 
-`ManagerID` assigns one manager (a `RoleManager` user) per app; a single manager may be assigned to many apps. Only sysadmin can set/clear it (`PUT /apps/{id}`); an assigned manager gets `GET`/`PUT` access to that app (not `DELETE`) alongside sysadmin/own-tenant access, and `GET /apps` scoped to their assigned apps.
+`ManagerID` assigns one manager (a `RoleManager` user) per app; a single manager may be assigned to many apps. Only sysadmin can set/clear it (`PUT /apps/{id}`); an assigned manager gets `GET`/`PUT` access to that app (not `DELETE`) alongside sysadmin/own-tenant access. `GET /apps` list scoping (sysadmin-all / manager-assigned / own-app-only) is unenforced pending falcon permission resolution — see TODO(falcon) in `internal/app/handler.go` `ListApps`.
 
 ### Database Schema (kpr_division table)
 
@@ -252,10 +252,9 @@ Other microservices (e.g. squirrel) read `division_id` from the JWT claims and s
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
-- `GET /managers`: List all users with the manager role, across all apps (sysadmin only; 403 otherwise).
 - `GET /apps/lookup?site_key=...`: Public app profile by publishable guest site key (no auth, 10/1m per IP). Resolves site_key→app_id via guestkey, returns public-safe profile (id, name, tagline, logo_url, about, contact, currency — no status/timestamps) only for active apps; 404 otherwise (unknown/inactive key or inactive app, indistinguishable).
 - `POST /apps`: Create a new app (sysadmin only; 403 otherwise).
-- `GET /apps`: List apps (sysadmins: all; managers: apps they're assigned to via `manager_id`; other users: own app only).
+- `GET /apps`: List apps (all callers currently see all apps — scoping unenforced, TODO(falcon) in handler).
 - `GET /apps/{id}`: Get app by ID (sysadmin, own app, or assigned manager).
 - `PUT /apps/{id}`: Update app by ID (sysadmin, own app, or assigned manager). Setting/clearing `manager_id` and changing `status` are sysadmin only.
 - `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app — managers cannot delete).

@@ -122,7 +122,6 @@ func (r *impersonationRepository) GetUser(ctx context.Context, id int) (*TargetU
 			entuser.FieldFirstname,
 			entuser.FieldLastname,
 			entuser.FieldEmail,
-			entuser.FieldRole,
 			entuser.FieldStatus,
 		).
 		Only(ctx)
@@ -140,7 +139,6 @@ func (r *impersonationRepository) GetUser(ctx context.Context, id int) (*TargetU
 		Firstname:  u.Firstname,
 		Lastname:   u.Lastname,
 		Email:      u.Email,
-		Role:       int(u.Role),
 		Status:     u.Status,
 	}, nil
 }

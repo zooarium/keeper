@@ -65,7 +65,6 @@ func NewRouter(userHandler *user.UserHandler, appHandler *app.AppHandler, divisi
 	r.Handle("/metrics", promhttp.Handler())
 
 	r.Mount("/users", userHandler.Routes(jwtManager))
-	r.Mount("/managers", userHandler.ManagerRoutes(jwtManager))
 	r.Mount("/apps", appHandler.Routes(jwtManager))
 	r.Mount("/divisions", divisionHandler.Routes(jwtManager))
 	r.Mount("/guest-keys", guestKeyHandler.Routes(jwtManager))
