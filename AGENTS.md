@@ -80,7 +80,7 @@ Key facts:
 Keeper mints short-lived tenant-scoped guest JWTs for public surfaces (e.g. ant's `order-intake`). `internal/guestkey`: kpr_guest_key {app_id, division_id, user_id (designated guest identity), name, site_key (unique, server-generated `gk_`+48hex), domain (unique, normalized URL the UI is served from), status}. Flow: public UI optionally bootstraps its site key via `GET /guest-keys/lookup?url=...` (public, httprate 10/1m per IP — normalizes the URL the same way `domain` is stored, exact-matches it, returns site key only) → embeds the publishable site key → `POST /guest-keys/auth {site_key}` (public, httprate 10/1m per IP) → JWT with claims {app_id, division_id, user_id, role=guest}, signed with `AUTH.GUEST_JWT_SECRET` (NOT the primary secret — containment is cryptographic; only listeners configured with the guest secret accept these tokens), expiry `AUTH.GUEST_JWT_EXPIRY` (default 30m).
 
 Rules:
-- `pkg/auth`: `RoleUser=0, RoleSysAdmin=1, RoleGuest=2`, `claims.IsGuest()`. Changing `pkg/auth` requires re-vendoring ant + squirrel (`make vendor`).
+- `pkg/auth`: `RoleAdmin=0, RoleSysAdmin=1, RoleGuest=2, RoleManager=3`, `claims.IsGuest()`/`claims.IsManager()`. Changing `pkg/auth` requires re-vendoring ant + squirrel + camel (`make vendor`).
 - Guest key create validates the designated user exists in the given app+division (`UserBelongsTo`) and requires a non-empty `domain`. `domain` is normalized in `normalizeDomain()` (scheme/port stripped, host lowercased, `host[+path]`, trailing slash trimmed) on both create and lookup so they always agree. Tenant binding + site key + domain immutable — rotate by delete + create.
 - CRUD scoping: sysadmin = all; others = own app only.
 - Both secrets are placeholders in config.yaml — production must inject via env (`KEEPER_AUTH_JWT_SECRET`, `KEEPER_AUTH_GUEST_JWT_SECRET`).
@@ -106,6 +106,7 @@ Rules:
     - **Repositories**: `[Entity]Repository`.
     - **Models**: Use `[Entity]` for domain models and `[Action][Entity]Request/Response` for DTOs.
 - **Database**: Table names and Ent schemas **must** be singular and include the `kpr_` prefix (e.g., `kpr_user`).
+- **URL slugs**: hyphenated, never underscore (e.g. `/guest-keys`, not `/guest_keys`).
 
 ## Development Workflow
 
@@ -148,6 +149,7 @@ To ensure codebase health and consistency, the following steps **must** be compl
 - `make swag`: Regenerate Swagger documentation.
 - `make migrate-gen name=NAME`: Generate a new database migration.
 - `make migrate-apply`: Apply pending migrations.
+- `make release VERSION=x.y.z`: Release — rotates CHANGELOG.md `[Unreleased]` into dated version section, commits, tags `vx.y.z` (push tags manually).
 - `make run-script name=NAME args="ARGS"`: Run a script from the `scripts/` directory in a fresh Go container.
 - `make sql query=QUERY`: Run a SQL query against the SQLite database.
 - `make config-check`: Validate config (incl. secondary listeners) without starting servers.
@@ -181,11 +183,15 @@ To ensure codebase health and consistency, the following steps **must** be compl
 | ContactSocial         | json      | `platform→url` map, URL-validated    |
 | TaxNumber             | string    | Tax/VAT registration number (optional) |
 | TaxPercent            | float     | Tax percentage, 0–100 (default 0)    |
+| Currency              | string(3) | ISO 4217 currency code, e.g. `INR` (required, NOT NULL) |
+| ManagerID             | int       | Nullable FK to kpr_user (SET NULL on delete); assigned manager (optional) |
 | Status                | smallint  | 0 (Inactive), 1 (Active)             |
 | CreatedAt             | datetime  | Creation timestamp                   |
 | UpdatedAt             | datetime  | Last update timestamp                |
 
-App profile fields (tagline, logo_url, about, contact, tax_number, tax_percent) are optional and editable by sysadmin (any app) or the tenant's own users (own app only). API exposes `about` and `contact` as **nested JSON objects** (flat columns in DB); on update both sections replace wholesale when present. `logo_url` + each `contact.social` value get light http(s) URL validation; `contact.email` validated as email.
+App profile fields (tagline, logo_url, about, contact, tax_number, tax_percent, currency) are editable by sysadmin (any app) or the tenant's own users (own app only); all optional except `currency`, which is required (NOT NULL, ISO 4217, validated via `iso4217`). API exposes `about` and `contact` as **nested JSON objects** (flat columns in DB); on update both sections replace wholesale when present. `logo_url` + each `contact.social` value get light http(s) URL validation; `contact.email` validated as email.
+
+`ManagerID` assigns one manager (a `RoleManager` user) per app; a single manager may be assigned to many apps. Only sysadmin can set/clear it (`PUT /apps/{id}`); an assigned manager gets `GET`/`PUT` access to that app (not `DELETE`) alongside sysadmin/own-tenant access. `GET /apps` list scoping (sysadmin-all / manager-assigned / own-app-only) is unenforced pending falcon permission resolution — see TODO(falcon) in `internal/app/handler.go` `ListApps`.
 
 ### Database Schema (kpr_division table)
 
@@ -246,12 +252,12 @@ Other microservices (e.g. squirrel) read `division_id` from the JWT claims and s
 - `GET /users/{id}`: Get user by ID.
 - `PUT /users/{id}`: Update user by ID.
 - `DELETE /users/{id}`: Delete user by ID.
-- `GET /apps/lookup?site_key=...`: Public app profile by publishable guest site key (no auth, 10/1m per IP). Resolves site_key→app_id via guestkey, returns public-safe profile (id, name, tagline, logo_url, about, contact — no status/timestamps) only for active apps; 404 otherwise (unknown/inactive key or inactive app, indistinguishable).
+- `GET /apps/lookup?site_key=...`: Public app profile by publishable guest site key (no auth, 10/1m per IP). Resolves site_key→app_id via guestkey, returns public-safe profile (id, name, tagline, logo_url, about, contact, currency — no status/timestamps) only for active apps; 404 otherwise (unknown/inactive key or inactive app, indistinguishable).
 - `POST /apps`: Create a new app (sysadmin only; 403 otherwise).
-- `GET /apps`: List apps (sysadmins: all; other users: own app only).
-- `GET /apps/{id}`: Get app by ID (sysadmin or own app).
-- `PUT /apps/{id}`: Update app by ID (sysadmin or own app).
-- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app).
+- `GET /apps`: List apps (all callers currently see all apps — scoping unenforced, TODO(falcon) in handler).
+- `GET /apps/{id}`: Get app by ID (sysadmin, own app, or assigned manager).
+- `PUT /apps/{id}`: Update app by ID (sysadmin, own app, or assigned manager). Setting/clearing `manager_id` and changing `status` are sysadmin only.
+- `DELETE /apps/{id}`: Delete app by ID (sysadmin or own app — managers cannot delete).
 - `POST /divisions`: Create a new division.
 - `GET /divisions`: List divisions (query: `parent_id`).
 - `GET /divisions/{id}`: Get division by ID.
